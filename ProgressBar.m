@@ -65,6 +65,8 @@ methods
         if isempty(objList),
             t = timer();
             self.addToObjectList(t);
+            tVal = tic;
+            self.addToObjectList(tVal);
         end
         self.addToObjectList(self);
         
@@ -166,8 +168,7 @@ methods (Access = private)
     function [] = printStatus(self)        
         fprintf(1, backspace(self.NumWrittenCharacters));
         
-        t = self.getTimer();
-        
+        tVal = self.getTic();
         
         
         % 1: Title
@@ -245,10 +246,12 @@ methods (Access = private)
     
     function [timerObject] = getTimer(self)
         timerObject = self.getObjectList();
-        
-        if ~isempty(timerObject),
-            timerObject = timerObject{1};
-        end
+        timerObject = timerObject{1};
+    end
+    
+    function [tVal] = getTic(self)
+        tVal = self.getObjectList();
+        tVal = tVal{2};
     end
 end
 
@@ -259,7 +262,7 @@ methods (Access = private, Static = true)
         
         if nargin,
             switch class(newObject),
-                case {'timer', 'ProgressBar'},
+                case {'timer', 'ProgressBar', 'uint64'},
                     ProgObjects = [ProgObjects; {newObject}];
                 case 'numeric',
                     ProgObjects = ProgObjects(1:end-1);
