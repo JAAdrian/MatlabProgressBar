@@ -156,7 +156,7 @@ methods (Access = private)
         t = self.getTimer();
         
         if ~isempty(len),
-            backspace(len);
+            fprintf(1, backspace(len));
         end
         % 1: percent
         % 2. progBar string
@@ -269,8 +269,8 @@ blocks = [
 thisBlock = blocks(min(idx, length(blocks)));
 end
 
-function [] = backspace(numChars)
-fprintf(1, repmat('\b', 1, numChars));
+function [str] = backspace(numChars)
+str = repmat('\b', 1, numChars);
 end
 
 function [format, postString] = getProgBarFormatString()
