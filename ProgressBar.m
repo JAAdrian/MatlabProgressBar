@@ -90,6 +90,10 @@ methods
         
     end
     
+    function [] = summary(self)
+        
+    end
+    
     function [] = close(self)
         self.printStatus('nuke');
         
