@@ -94,7 +94,7 @@ methods
         self.printStatus('nuke');
         
         list = self.getObjectList();
-        if length(list) <= 2,
+        if ~isempty(list) && length(list) <= 2,
             self.clearObjectList();
         else
             self.removeMeFromObjectList();
@@ -159,7 +159,7 @@ methods (Access = private)
             backspace(len);
         end
         % 1: percent
-        % 2. progBar
+        % 2. progBar string
         % 3. interationCounter
         % 4. Total
         % 5. ET.minutes
