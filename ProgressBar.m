@@ -28,6 +28,8 @@ properties (Access = private)
     LastMainBlock = 1;
     FractionMainBlock;
     FractionBlock;
+    
+    TimerID;
 end
 
 
@@ -63,7 +65,12 @@ methods
         % ProgressBar object
         objList = self.getObjectList();
         if isempty(objList),
-            t = timer();
+            self.TimerID = char(java.util.UUID.randomUUID);
+            
+            t = timer(...
+                'Tag', self.TimerID, ...
+                'ObjectVisibility', 'off' ...
+                );
             self.addToObjectList(t);
             tVal = tic;
             self.addToObjectList(tVal);
@@ -73,6 +80,14 @@ methods
         self.setupBar();
         self.computeBlockFractions();
     end
+    
+    function [] = delete(self)
+        self.close();
+    end
+    
+    
+    
+    
     
     function [] = update(self, n, wasSuccessful)
         if nargin < 3 || isempty(wasSuccessful),
@@ -91,7 +106,10 @@ methods
             );
         
         self.incrementIterationCounter(n);
-        self.printStatus();
+        
+        if isempty(self.UpdateRate),
+            self.printStatus();
+        end
     end
     
     function [] = printMessage(self)
@@ -110,11 +128,38 @@ methods
             return;
         end
         
+        t = timerfindall('Tag', self.TimerID);
+        delete(t);
+        
         self.removeFromObjectList();
     end
     
-    function [] = delete(self)
-        self.close();
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%% Setter / Getter %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function [] = set.UpdateRate(self, rateHz)
+        validateattributes(...
+            rateHz, ...
+            {'numeric'}, ...
+            {'scalar', 'positive', 'nonnan', 'nonempty', 'real', 'finite'} ...
+            );
+        if rateHz > 10,
+            warning(['An update rate which is greater than 10 Hz might ', ...
+                'lead to high CPU load']);
+        end
+        
+        self.UpdateRate = rateHz;
+        
+        t = self.getTimer();
+        t.BusyMode = 'drop';
+        t.TimerFcn = @(~, ~) self.printStatus();
+        t.ExecutionMode = 'fixedSpacing';
+        t.Period = 1 / self.UpdateRate;
+        t.StartDelay = 1 / self.UpdateRate;
+        
+        start(t);
     end
 end
 
