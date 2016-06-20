@@ -59,10 +59,11 @@ obj.close();
 
 %% Desired update rate
 
-updateRateHz = 10;
+updateRateHz = 1;
 
 % pass the number of iterations and the update cycle in Hz
-obj = ProgressBar(numIterations, updateRateHz);
+obj = ProgressBar(numIterations);
+obj.UpdateRate = updateRateHz;
 
 for iIteration = 1:numIterations,
     pause(1e-2);
