@@ -136,10 +136,6 @@ methods (Access = private)
         self.setupBar();
     end
     
-    function [] = printTitle(self)
-        fprintf(1, '', self);
-    end
-    
     function [] = setupBar(self)
         [~, postBar] = getProgBarFormatString();
         
@@ -158,16 +154,19 @@ methods (Access = private)
         if ~isempty(len),
             fprintf(1, backspace(len));
         end
-        % 1: percent
-        % 2. progBar string
-        % 3. interationCounter
-        % 4. Total
-        % 5. ET.minutes
-        % 6. ET.seconds
-        % 7. ETA.minutes
-        % 8. ETA.seconds
-        % 9. it/s
+        
+        % 1: Title
+        % 2: percent
+        % 3: progBar string
+        % 4: interationCounter
+        % 5: Total
+        % 6: ET.minutes
+        % 7: ET.seconds
+        % 8: ETA.minutes
+        % 9: ETA.seconds
+        % 10: it/s
         len = fprintf(1, getProgBarFormatString(), ...
+            self.Title, ...
             round(self.IterationCounter / self.Total * 100), ...
             self.getCurrentBar, ...
             self.IterationCounter, ...
@@ -276,7 +275,7 @@ end
 function [format, postString] = getProgBarFormatString()
 % this is adapted from tqdm
 postString =  ' %i/%i [%02.0f:%02.0f<%02.0f:%02.0f, %.2f it/s]';
-format = ['%i%%  |%s|' postString];
+format = ['%s\t%i%%  |%s|' postString];
 end
 
 
