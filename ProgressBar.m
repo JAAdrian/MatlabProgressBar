@@ -43,7 +43,7 @@ properties (Access = public)
 end
 
 properties ( Constant, Access = private )
-    MaxColumnsOnScreen = 100;
+    MaxColumnsOnScreen = 80;
     NumBlocks = 8; % HTML 'left blocks' go in eigths
 end
 
