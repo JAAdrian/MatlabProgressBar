@@ -16,4 +16,6 @@ Feature Request
 - [ ] Section names etc.
 - [ ] nesting with global ProgressBar list
 - [ ] visual update interval
-- [ ]
+- [ ] printInfo() method for debug printing (or similar)
+- [ ] when no `numIterations` is passed we state the ET and number of iterations, maybe also it/s
+- [ ] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
