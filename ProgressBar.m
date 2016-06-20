@@ -95,6 +95,8 @@ methods
     end
     
     function [] = close(self)
+        fprintf('\n');
+        
         self.printStatus('nuke');
         
         list = self.getObjectList();
