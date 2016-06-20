@@ -6,8 +6,9 @@
 
 clear;
 close all;
+clc;
 
-numIterations = 1e5;
+numIterations = 1e4;
 
 
 %% Simple setup WITH known number of iterations
@@ -15,7 +16,7 @@ numIterations = 1e5;
 obj = ProgressBar(numIterations);
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(1e-2);
     
     obj.update();
 end
