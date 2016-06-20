@@ -10,7 +10,7 @@ close all;
 numIterations = 1e5;
 
 
-%% Simple setup
+%% Simple setup WITH known number of iterations
 
 obj = ProgressBar(numIterations);
 
@@ -19,8 +19,28 @@ for iIteration = 1:numIterations,
     
     obj.update();
 end
+obj.close();
 
-%% Pass information about the current iteration
+
+
+
+
+%% Simple setup WITHOUT known number of iterations
+
+obj = ProgressBar();
+
+for iIteration = 1:numIterations,
+    pause(1e-1);
+    
+    obj.update();
+end
+obj.close();
+
+
+
+
+
+%% Pass success information of the current iteration
 
 obj = ProgressBar(numIterations);
 
@@ -30,6 +50,11 @@ for iIteration = 1:numIterations,
     
     obj.update(wasSuccessful(iIteration));
 end
+obj.close();
+
+
+
+
 
 %% Desired update rate
 
@@ -43,6 +68,11 @@ for iIteration = 1:numIterations,
     
     obj.update();
 end
+obj.close();
+
+
+
+
 
 %% Different time estimators
 
@@ -56,6 +86,10 @@ for iIteration = 1:numIterations,
     
     obj.update();
 end
+obj.close();
+
+
+
 
 
 
