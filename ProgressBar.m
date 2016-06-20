@@ -20,8 +20,11 @@ classdef ProgressBar < handle
 
 
 properties (Access = private)
-    bar = '';
+    Bar = '';
     IterationCounter = 1;
+    NumBlocks = 8; % number of HTML 'left blocks'
+    
+    SelfIndex;
 end
 
 
@@ -36,6 +39,10 @@ properties (Access = public)
     UpdateRate;
 end
 
+properties ( Constant, Access = private )
+    MaxColumnsOnScreen = 80;
+end
+
 
 
 methods
@@ -48,14 +55,14 @@ methods
         self.parseInputs(total, varargin{:});
         
         
-        % see if there is already a timer object and register the new
+        % add a new timer object if there is none and register the new
         % ProgressBar object
         objList = self.getObjectList();
         if isempty(objList),
             t = timer();
-            self.setObjectList(t);
+            self.addToObjectList(t);
         end
-        
+        self.addToObjectList(self);
     end
     
     function [] = update(self, n, wasSuccessful)
@@ -74,9 +81,9 @@ methods
             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
             );
         
-        self.incrementIterationCounter(n);
+        self.printStatus();
         
-        self.printProgressBar();
+        self.incrementIterationCounter(n);
     end
     
     function [] = printMessage(self)
@@ -84,7 +91,14 @@ methods
     end
     
     function [] = close(self)
+        self.printStatus('nuke');
         
+        list = self.getObjectList();
+        if length(list) <= 2,
+            self.clearObjectList();
+        else
+            self.removeMeFromObjectList();
+        end
     end
     
     function [] = delete(self)
@@ -116,8 +130,10 @@ methods (Access = private)
         
         % grab inputs
         self.Total = p.Results.total;
-        self.Unit = p.Results.Unit;
+        self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
+        
+        self.setupBar();
     end
     
     function [] = printTitle(self)
@@ -125,40 +141,101 @@ methods (Access = private)
     end
     
     function [] = setupBar(self)
-        self.bar = sprintf('x', self);
+        [~, postBar] = getProgBarFormatString();
+        
+        self.Bar = blanks(self.MaxColumnsOnScreen - length(postBar));
     end
     
-    function [] = printProgressBar(self)
+    function [] = printStatus(self, clearFlag)
+        if nargin > 1 && ~isempty(clearFlag) && strcmp(clearFlag, 'nuke'),
+            clear('len');
+            return;
+        end
+        persistent len;
+        
         t = self.getTimer();
         
-        fprintf(1, 'x', self);
+        if ~isempty(len),
+            backspace(len);
+        end
+        % 1: percent
+        % 2. progBar
+        % 3. interationCounter
+        % 4. Total
+        % 5. ET.minutes
+        % 6. ET.seconds
+        % 7. ETA.minutes
+        % 8. ETA.seconds
+        % 9. it/s
+        len = fprintf(1, getProgBarFormatString(), ...
+            round(self.IterationCounter / self.Total * 100), ...
+            self.getCurrentBar, ...
+            self.IterationCounter, ...
+            self.Total, ...
+            0, ...
+            1, ...
+            0, ...
+            1, ...
+            5 ...
+            );
+    end
+    
+    function [barString] = getCurrentBar(self)
+        fractionOfOneBlock = 1 / length(self.Bar);
+        
+        if ~mod(self.IterationCounter / self.Total, fractionOfOneBlock),
+            idx = floor((self.IterationCounter - 1) / self.NumBlocks) + 1;
+            
+            self.Bar(idx) = ...
+            getBlock(mod(self.IterationCounter - 1, self.NumBlocks) + 1);
+        end
+        
+        barString = self.Bar;
     end
     
     function [] = incrementIterationCounter(self, n)
         self.IterationCounter = self.IterationCounter + n;
     end
     
-    function [] = setObjectList(self, newObj) %#ok<INUSL>
-        ProgressBar.objectList(newObj);
-    end
-    
     function [list] = getObjectList(self) %#ok<MANU>
         list = ProgressBar.objectList();
     end
     
-    function [timerObject] = getTimer(self) %#ok<MANU>
+    function [] = addToObjectList(self, newObj) %#ok<INUSL>
+        ProgressBar.objectList(newObj);
+    end
+    
+    function [] = removeMeFromObjectList(self) %#ok<MANU>
+        ProgressBar.objectList(-1);
+    end
+    
+    function [] = clearObjectList(self) %#ok<MANU>
+        ProgressBar.objectList('nuke');
+    end
+    
+    function [timerObject] = getTimer(self)
         timerObject = self.getObjectList();
-        timerObject = timerObject{1};
+        
+        if ~isempty(timerObject),
+            timerObject = timerObject{1};
+        end
     end
 end
 
 methods (Access = private, Static = true)
-    function list = objectList(newObject)
+    function [list] = objectList(newObject)
         % http://stackoverflow.com/a/14571266
         persistent ProgObjects;
         
         if nargin,
-            ProgObjects = [ProgObjects; {newObject}];
+            switch class(newObject),
+                case {'timer', 'ProgressBar'},
+                    ProgObjects = [ProgObjects; {newObject}];
+                case 'numeric',
+                    ProgObjects = ProgObjects(1:end-1);
+                case 'char',
+                    clear('ProgObjects');
+            end
         end
         
         list = ProgObjects;
@@ -179,7 +256,6 @@ function [thisBlock] = getBlock(idx)
 % block
 
 blocks = [
-    blanks(1);
     char(9615);
     char(9614);
     char(9613);
@@ -190,13 +266,18 @@ blocks = [
     char(9608);
     ];
 
-thisBlock = blocks(idx);
+thisBlock = blocks(min(idx, length(blocks)));
 end
 
 function [] = backspace(numChars)
 fprintf(1, repmat('\b', 1, numChars));
 end
 
+function [format, postString] = getProgBarFormatString()
+% this is adapted from tqdm
+postString =  ' %i/%i [%02.0f:%02.0f<%02.0f:%02.0f, %.2f it/s]';
+format = ['%i%%  |%s|' postString];
+end
 
 
 
