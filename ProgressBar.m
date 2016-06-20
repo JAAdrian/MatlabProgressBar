@@ -21,10 +21,13 @@ classdef ProgressBar < handle
 
 properties (Access = private)
     Bar = '';
-    IterationCounter = 1;
-    NumBlocks = 8; % number of HTML 'left blocks'
+    IterationCounter = 0;
     
-    SelfIndex;
+    NumWrittenCharacters = 0;
+    LastBlock = 0;
+    LastMainBlock = 1;
+    FractionMainBlock;
+    FractionBlock;
 end
 
 
@@ -40,7 +43,8 @@ properties (Access = public)
 end
 
 properties ( Constant, Access = private )
-    MaxColumnsOnScreen = 80;
+    MaxColumnsOnScreen = 100;
+    NumBlocks = 8; % HTML 'left blocks' go in eigths
 end
 
 
@@ -63,6 +67,9 @@ methods
             self.addToObjectList(t);
         end
         self.addToObjectList(self);
+        
+        self.setupBar();
+        self.computeBlockFractions();
     end
     
     function [] = update(self, n, wasSuccessful)
@@ -81,30 +88,27 @@ methods
             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
             );
         
-        self.printStatus();
-        
         self.incrementIterationCounter(n);
+        self.printStatus();
     end
     
     function [] = printMessage(self)
-        
+        error('Not yet implemented');
     end
     
     function [] = summary(self)
-        
+        error('Not yet implemented');
     end
     
     function [] = close(self)
         fprintf('\n');
         
-        self.printStatus('nuke');
-        
         list = self.getObjectList();
-        if ~isempty(list) && length(list) <= 2,
-            self.clearObjectList();
-        else
-            self.removeMeFromObjectList();
+        if isempty(list),
+            return;
         end
+        
+        self.removeFromObjectList();
     end
     
     function [] = delete(self)
@@ -138,28 +142,33 @@ methods (Access = private)
         self.Total = p.Results.total;
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
-        
-        self.setupBar();
+    end
+    
+    function [] = computeBlockFractions(self)
+        self.FractionMainBlock = 1 / length(self.Bar);
+        self.FractionBlock = self.FractionMainBlock / self.NumBlocks;
     end
     
     function [] = setupBar(self)
-        [~, postBar] = getProgBarFormatString();
+        [~, postBarFormat] = getProgBarFormatString();
         
-        self.Bar = blanks(self.MaxColumnsOnScreen - length(postBar));
+        postBar = sprintf(postBarFormat, ...
+            self.Total, ...
+            self.Total, ...
+            100, 100, 100, 100, 1e3);
+        self.Bar = blanks(...
+            self.MaxColumnsOnScreen ...
+            - length(postBar) ...
+            - length(self.Title) ...
+            );
     end
     
-    function [] = printStatus(self, clearFlag)
-        if nargin > 1 && ~isempty(clearFlag) && strcmp(clearFlag, 'nuke'),
-            clear('len');
-            return;
-        end
-        persistent len;
+    function [] = printStatus(self)        
+        fprintf(1, backspace(self.NumWrittenCharacters));
         
         t = self.getTimer();
         
-        if ~isempty(len),
-            fprintf(1, backspace(len));
-        end
+        
         
         % 1: Title
         % 2: percent
@@ -171,7 +180,7 @@ methods (Access = private)
         % 8: ETA.minutes
         % 9: ETA.seconds
         % 10: it/s
-        len = fprintf(1, getProgBarFormatString(), ...
+        self.NumWrittenCharacters = fprintf(1, getProgBarFormatString(), ...
             self.Title, ...
             round(self.IterationCounter / self.Total * 100), ...
             self.getCurrentBar, ...
@@ -185,14 +194,30 @@ methods (Access = private)
             );
     end
     
-    function [barString] = getCurrentBar(self)
-        fractionOfOneBlock = 1 / length(self.Bar);
+    function [barString] = getCurrentBar(self)        
+        currProgress = self.IterationCounter / self.Total;
         
-        if ~mod(self.IterationCounter / self.Total, fractionOfOneBlock),
-            idx = floor((self.IterationCounter - 1) / self.NumBlocks) + 1;
+        thisMainBlock = min(...
+            ceil(currProgress / self.FractionMainBlock), ...
+            length(self.Bar) ...
+            );
+        
+        continuousBlockIndex = ceil(currProgress / self.FractionBlock);
+        thisBlock = mod(continuousBlockIndex, self.NumBlocks) + 1;
+        
+        if thisBlock > self.LastBlock || thisMainBlock > self.LastMainBlock,
+            % fix for non-full last blocks when steps are large
+            self.Bar(1:max(thisMainBlock-1, 0)) = ...
+                repmat(getBlock(inf), 1, thisMainBlock - 1);
             
-            self.Bar(idx) = ...
-            getBlock(mod(self.IterationCounter - 1, self.NumBlocks) + 1);
+            if self.IterationCounter == self.Total,
+                self.Bar = repmat(getBlock(inf), 1, length(self.Bar));
+            else
+                self.Bar(thisMainBlock) = getBlock(thisBlock);
+            end
+            
+            self.LastBlock = thisBlock;
+            self.LastMainBlock = thisMainBlock;
         end
         
         barString = self.Bar;
@@ -210,7 +235,7 @@ methods (Access = private)
         ProgressBar.objectList(newObj);
     end
     
-    function [] = removeMeFromObjectList(self) %#ok<MANU>
+    function [] = removeFromObjectList(self) %#ok<MANU>
         ProgressBar.objectList(-1);
     end
     
@@ -281,7 +306,7 @@ end
 function [format, postString] = getProgBarFormatString()
 % this is adapted from tqdm
 postString =  ' %i/%i [%02.0f:%02.0f<%02.0f:%02.0f, %.2f it/s]';
-format = ['%s\t%i%%  |%s|' postString];
+format = ['%s\t%03.0f%%  |%s|' postString];
 end
 
 
