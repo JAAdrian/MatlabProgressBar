@@ -8,21 +8,21 @@ clear;
 close all;
 clc;
 
-numIterations = 1e4;
+numIterations = 1e2;
 
 
 %% Simple setup WITH known number of iterations
 
-obj = ProgressBar(numIterations);
+obj = ProgressBar(numIterations, 'title', 'Test Progress');
 
 for iIteration = 1:numIterations,
-    pause(1e-2);
+    pause(1e-1);
     
     obj.update();
 end
 obj.close();
 
-
+return;
 
 
 
@@ -31,7 +31,7 @@ obj.close();
 obj = ProgressBar();
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(1e-2);
     
     obj.update();
 end
@@ -47,7 +47,7 @@ obj = ProgressBar(numIterations);
 
 wasSuccessful = logical(binornd(1, 0.95), numIterations, 1);
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(1e-2);
     
     obj.update(wasSuccessful(iIteration));
 end
@@ -65,7 +65,7 @@ updateRateHz = 10;
 obj = ProgressBar(numIterations, updateRateHz);
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(1e-2);
     
     obj.update();
 end
@@ -83,7 +83,7 @@ obj = ProgressBar(numIterations);
 obj.EstimatorOrder = 5;
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(1e-2);
     
     obj.update();
 end
