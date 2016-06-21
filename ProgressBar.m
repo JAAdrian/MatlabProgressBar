@@ -31,6 +31,7 @@ properties (Access = private)
     
     HasTotalIterations = false;
     HasUpdateRate = false;
+    HasColor = true;
     
     TimerTagName;
 end
@@ -167,6 +168,13 @@ methods (Access = private)
                 {'scalar', 'positive', 'real', 'nonempty', 'nonnan', 'finite'} ...
                 ) ...
             );
+        
+        p.addParameter('ColoredBar', true, ...
+            @(in) validateattributes(in, ...
+                {'logical', 'numeric'}, ...
+                {'scalar', 'binary', 'nonempty', 'nonnan', 'finite', 'real'} ...
+                ) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -176,6 +184,7 @@ methods (Access = private)
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
         self.UpdateRate = p.Results.UpdateRate;
+        self.HasColor = p.Results.ColoredBar;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -199,10 +208,16 @@ methods (Access = private)
             else
                 preString  = '%03.0f%%  ';
             end
+            
+            if self.IterationCounter == self.Total || ~self.HasColor,
+                centerString = '|%s|';
+            else
+                centerString = '|[\b%s]\b|';
+            end
 
             postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
 
-            format = [preString, '|%s|', postString];
+            format = [preString, centerString, postString];
         else
             preString  = [];
             postString = [];
