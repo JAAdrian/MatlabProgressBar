@@ -133,12 +133,6 @@ methods
         
         self.removeMeFromObjectList();
     end
-    
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%% Setter / Getter %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
 
 
@@ -325,6 +319,7 @@ end
 
 methods (Access = private, Static = true)
     function [list] = objectList(newObject, shouldClearList)
+        % Behaviour of a static method inspired by:
         % http://stackoverflow.com/a/14571266
         persistent ProgObjects;
         
