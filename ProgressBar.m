@@ -216,6 +216,7 @@ methods (Access = private)
     function [] = setupBar(self)
         [~, preBarFormat, postBarFormat] = getProgBarFormatString();
         
+        % insert worst case inputs to get (almost) maximum length of bar
         preBar = sprintf(preBarFormat, self.Title, 100);
         postBar = sprintf(postBarFormat, ...
             self.Total, ...
@@ -240,15 +241,15 @@ methods (Access = private)
         [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
         
         
-        % 1: Title
-        % 2: percent
-        % 3: progBar string
-        % 4: interationCounter
-        % 5: Total
-        % 6: ET.hours
-        % 7: ET.minutes
-        % 8: ET.seconds
-        % 9: ETA.hours
+        % 1 : Title
+        % 2 : percent
+        % 3 : progBar string
+        % 4 : interationCounter
+        % 5 : Total
+        % 6 : ET.hours
+        % 7 : ET.minutes
+        % 8 : ET.seconds
+        % 9 : ETA.hours
         % 10: ETA.minutes
         % 11: ETA.seconds
         % 12: it/s
