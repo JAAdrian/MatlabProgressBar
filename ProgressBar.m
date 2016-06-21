@@ -93,7 +93,7 @@ methods
         % delete timer and reset object list if no nested bar exists
         % anymore
         list = self.getObjectList();
-        if length(list) == 1,
+        if isempty(list),
             self.resetObjectList();
             
             t = self.getTimer();
