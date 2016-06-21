@@ -86,11 +86,12 @@ methods
             fprintf('\n');
         end
         
-        % delete timer and reset object list
+        % remove the ticObject from list
         self.removeMeFromObjectList();
         
-        t = self.getTimer();
-        delete(t);
+        % delete timer
+        timerObject = self.getTimer();
+        delete(timerObject);
     end
     
     
@@ -117,6 +118,9 @@ methods
         
         if ~self.HasUpdateRate,
             self.printStatus();
+        end
+        if self.IterationCounter == self.Total,
+            self.stopTimer();
         end
     end
     
@@ -290,14 +294,26 @@ methods (Access = private)
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
     
-    function [] = startTimer(self, timerObject)
+    function [] = startTimer(self)
+        timerObject = self.getTimer();
+        
         timerObject.BusyMode = 'drop';
-        timerObject.TimerFcn = @(~, ~) self.printStatus();
         timerObject.ExecutionMode = 'fixedSpacing';
-        timerObject.Period = 1 / self.UpdateRate;
-        timerObject.StartDelay = 1 / self.UpdateRate;
+        
+        timerObject.TimerFcn = @(~, ~) self.printStatus();
+        timerObject.StopFcn  = @(~, ~) self.printStatus();
+        
+        updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
+        timerObject.Period     = updatePeriod;
+        timerObject.StartDelay = updatePeriod;
         
         start(timerObject);
+    end
+    
+    function [] = stopTimer(self)
+        timerObject = self.getTimer();
+        
+        stop(timerObject);
     end
     
     
