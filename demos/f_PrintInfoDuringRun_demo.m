@@ -1,95 +1,11 @@
-% Script to demonstrate the ProgressBar class
+% <purpose of this file>
 %
 % Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
-% Date   :  20-Jun-2016 13:01:01
+% Date   :  21-Jun-2016 17:48:22
 %
 
 clear;
 close all;
-clc;
-
-numIterations = 1e2;
-
-
-%% Simple setup WITH known number of iterations
-
-obj = ProgressBar(numIterations, 'title', 'Test Progress');
-
-for iIteration = 1:numIterations,
-    pause(1e-1);
-    
-    obj.update();
-end
-obj.close();
-
-return;
-
-
-
-%% Simple setup WITHOUT known number of iterations
-
-obj = ProgressBar();
-
-for iIteration = 1:numIterations,
-    pause(1e-2);
-    
-    obj.update();
-end
-obj.close();
-
-
-
-
-
-%% Pass success information of the current iteration
-
-obj = ProgressBar(numIterations);
-
-wasSuccessful = logical(binornd(1, 0.95), numIterations, 1);
-for iIteration = 1:numIterations,
-    pause(1e-2);
-    
-    obj.update(wasSuccessful(iIteration));
-end
-obj.close();
-
-
-
-
-
-%% Desired update rate
-
-updateRateHz = 1;
-
-% pass the number of iterations and the update cycle in Hz
-obj = ProgressBar(numIterations);
-obj.UpdateRate = updateRateHz;
-
-for iIteration = 1:numIterations,
-    pause(1e-2);
-    
-    obj.update();
-end
-obj.close();
-
-
-
-
-
-%% Different time estimators
-
-obj = ProgressBar(numIterations);
-
-% use the last 5 iterations for ETA estimate
-obj.EstimatorOrder = 5;
-
-for iIteration = 1:numIterations,
-    pause(1e-2);
-    
-    obj.update();
-end
-obj.close();
-
 
 
 
@@ -131,4 +47,4 @@ obj.close();
 % NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-% End of file: ProgressBar_demo.m
+% End of file: f_PrintInfoDuringRun_demo.m
