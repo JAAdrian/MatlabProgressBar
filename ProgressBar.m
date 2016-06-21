@@ -30,6 +30,7 @@ properties (Access = private)
     FractionBlock;
     
     HasTotalIterations = false;
+    HasUpdateRate = false;
     
     TimerTagName;
 end
@@ -73,6 +74,10 @@ methods
             self.setupBar();
             self.computeBlockFractions();
         end
+        
+        if self.HasUpdateRate,
+            self.startTimer();
+        end
     end
     
     function delete(self)
@@ -110,7 +115,9 @@ methods
         
         self.incrementIterationCounter(n);
         
-        self.printStatus();
+        if ~self.HasUpdateRate,
+            self.printStatus();
+        end
     end
     
     function [] = printMessage(self)
@@ -168,6 +175,9 @@ methods (Access = private)
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
+        end
+        if ~isinf(self.UpdateRate),
+            self.HasUpdateRate = true;
         end
     end
     
