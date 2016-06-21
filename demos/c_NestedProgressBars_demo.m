@@ -19,7 +19,9 @@ obj1 = ProgressBar(2, ...
     'Title', 'Loop 1' ...
     );
 
-for iOuterIteration = 1:2,
+for iOuterIteration = 1:5,
+    obj1.update()
+    
     obj2 = ProgressBar(numIterations / 10, ...
         'Title', 'Loop 2' ...
         );
@@ -29,8 +31,8 @@ for iOuterIteration = 1:2,
         
         obj2.update();
     end
-    
-    obj1.update()
+%     delete(obj2);
+    obj2.close();
 end
 obj1.close();
 
