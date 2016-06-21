@@ -35,9 +35,6 @@ properties (SetAccess = private, GetAccess = public)
     Title;
     Total;
     Unit;
-    
-    UpdateRate;
-    EstimatorOrder;
 end
 
 properties ( Constant, Access = private )
@@ -74,17 +71,6 @@ methods
         % initialize the progress bar and pre-compute some measures
         self.setupBar();
         self.computeBlockFractions();
-        
-        % if a specific update rate is specified start the timer
-        if ~isinf(self.UpdateRate),
-            self.startTimer(self.getTimer);
-        end
-        
-        % newline and indent if we are dealing with nested bars
-        list = self.getObjectList();
-        if length(list) > 1,
-            fprintf(1, '\n');
-        end
     end
     
     function delete(self)
@@ -123,9 +109,7 @@ methods
         
         self.incrementIterationCounter(n);
         
-        if isinf(self.UpdateRate),
-            self.printStatus();
-        end
+        self.printStatus();
     end
     
     function [] = printMessage(self)
@@ -153,14 +137,6 @@ methods
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%% Setter / Getter %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function [] = set.UpdateRate(self, rateHz)
-        if ~isinf(rateHz) && rateHz > 10,
-            warning(['An update rate which is greater than 10 Hz might ', ...
-                'lead to high CPU load']);
-        end
-        
-        self.UpdateRate = rateHz;
-    end
 end
 
 
@@ -186,23 +162,7 @@ methods (Access = private)
         p.addParameter('Title', '', ...
             @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
             );
-        
-        % update rate in Hz
-        p.addParameter('UpdateRate', inf, ...
-            @(in) validateattributes(in, ...
-                {'numeric'}, ...
-                {'scalar', 'positive', 'real', 'nonnan', 'nonempty'} ...
-                ) ...
-            );
-        
-        % estimation order
-        p.addParameter('EstimatorOrder', inf, ...
-            @(in) validateattributes(in, ...
-                {'numeric'}, ...
-                {'scalar', 'positive', 'real', 'nonnan', 'nonempty'} ...
-                ) ...
-            );
-        
+       
         % parse all arguments...
         p.parse(total, varargin{:});
         
@@ -210,8 +170,6 @@ methods (Access = private)
         self.Total = p.Results.Total;
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
-        self.UpdateRate = p.Results.UpdateRate;
-        self.EstimatorOrder = p.Results.EstimatorOrder;
     end
     
     function [] = computeBlockFractions(self)
@@ -305,11 +263,7 @@ methods (Access = private)
     function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
         progress = self.IterationCounter / self.Total;
         
-        if isinf(self.EstimatorOrder),
-            remainingSeconds = elapsedTime * ((1 / progress) - 1);
-        else
-            error('Not yet implemented');
-        end
+        remainingSeconds = elapsedTime * ((1 / progress) - 1);
         
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
