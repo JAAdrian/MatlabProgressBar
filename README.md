@@ -13,10 +13,11 @@ Feature Request
 - [ ] Time estimate
     - [x] over all last iterations
     - [ ] running mean/median
+- [ ] after x seconds without update (e.g. the processing step takes a lot of time) we show an idle icon
 - [x] Section names etc.
 - [ ] nesting with global ProgressBar list
 - [ ] visual update interval
 - [ ] printMessage() method for debug printing (or similar)
-- [ ] when no `numIterations` is passed we state the ET and number of iterations, maybe also it/s
+- [ ] when no `numIterations` is passed we state the ET and number of iterations and it/s
 - [ ] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
 - [ ] get width of the command window to adjust the prog. bar width
