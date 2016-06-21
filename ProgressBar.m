@@ -30,6 +30,9 @@ properties (Access = private)
     FractionBlock;
     
     HasTotalIterations = false;
+    HasUpdateRate = false;
+    
+    TimerTagName;
 end
 
 
@@ -37,12 +40,13 @@ properties (SetAccess = private, GetAccess = public)
     Title;
     Total;
     Unit;
+    UpdateRate;
 end
 
 properties ( Constant, Access = private )
     MaxColumnsOnScreen = 90;
     NumBlocks = 8; % HTML 'left blocks' go in eigths
-    TimerTagName = 'ProgressBar';
+    DefaultUpdateRate = inf; % every iteration gets printed
 end
 
 
@@ -54,15 +58,12 @@ methods
             self.parseInputs(total, varargin{:});
         end
         
-        % add a new timer object if there is none, i.e. this is the only
-        % ProgressBar object in the workspace (no nesting)
-        timerObject = self.getTimer();
-        if isempty(timerObject),
-            timer(...
-                'Tag', self.TimerTagName, ...
-                'ObjectVisibility', 'off' ...
-                );
-        end
+        % add a new timer object with unique tag
+        self.TimerTagName = char(java.util.UUID.randomUUID);
+        timer(...
+            'Tag', self.TimerTagName, ...
+            'ObjectVisibility', 'off' ...
+            );
 
         % register the new tic object
         ticObj = tic;
@@ -73,20 +74,24 @@ methods
             self.setupBar();
             self.computeBlockFractions();
         end
+        
+        if self.HasUpdateRate,
+            self.startTimer();
+        end
     end
     
     function delete(self)
-        self.close();
-        
-        % delete timer and reset object list if no nested bar exists
-        % anymore
-        list = self.getObjectList();
-        if isempty(list),
-            self.resetObjectList();
-            
-            t = self.getTimer();
-            delete(t);
+        % when a progress bar has been plot, hit return
+        if self.IterationCounter,
+            fprintf('\n');
         end
+        
+        % remove the ticObject from list
+        self.removeMeFromObjectList();
+        
+        % delete timer
+        timerObject = self.getTimer();
+        delete(timerObject);
     end
     
     
@@ -111,7 +116,12 @@ methods
         
         self.incrementIterationCounter(n);
         
-        self.printStatus();
+        if ~self.HasUpdateRate,
+            self.printStatus();
+        end
+        if self.IterationCounter == self.Total,
+            self.stopTimer();
+        end
     end
     
     function [] = printMessage(self)
@@ -127,18 +137,8 @@ methods
     end
     
     function [] = close(self)
-        if self.IterationCounter,
-            fprintf('\n');
-        end
-        
-        self.removeMeFromObjectList();
+        delete(self);
     end
-    
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%% Setter / Getter %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
 
 
@@ -159,6 +159,14 @@ methods (Access = private)
         p.addParameter('Title', '', ...
             @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
             );
+        
+        % update rate
+        p.addParameter('UpdateRate', self.DefaultUpdateRate, ...
+            @(in) validateattributes(in, ...
+                {'numeric'}, ...
+                {'scalar', 'positive', 'real', 'nonempty', 'nonnan', 'finite'} ...
+                ) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -167,9 +175,13 @@ methods (Access = private)
         self.Total = p.Results.Total;
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
+        self.UpdateRate = p.Results.UpdateRate;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
+        end
+        if ~isinf(self.UpdateRate),
+            self.HasUpdateRate = true;
         end
     end
     
@@ -282,14 +294,26 @@ methods (Access = private)
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
     
-    function [] = startTimer(self, timerObject)
+    function [] = startTimer(self)
+        timerObject = self.getTimer();
+        
         timerObject.BusyMode = 'drop';
-        timerObject.TimerFcn = @(~, ~) self.printStatus();
         timerObject.ExecutionMode = 'fixedSpacing';
-        timerObject.Period = 1 / self.UpdateRate;
-        timerObject.StartDelay = 1 / self.UpdateRate;
+        
+        timerObject.TimerFcn = @(~, ~) self.printStatus();
+        timerObject.StopFcn  = @(~, ~) self.printStatus();
+        
+        updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
+        timerObject.Period     = updatePeriod;
+        timerObject.StartDelay = updatePeriod;
         
         start(timerObject);
+    end
+    
+    function [] = stopTimer(self)
+        timerObject = self.getTimer();
+        
+        stop(timerObject);
     end
     
     
@@ -325,6 +349,7 @@ end
 
 methods (Access = private, Static = true)
     function [list] = objectList(newObject, shouldClearList)
+        % Behaviour of a static method inspired by:
         % http://stackoverflow.com/a/14571266
         persistent ProgObjects;
         

@@ -10,7 +10,7 @@ clc;
 
 addpath('..');
 
-numIterations = 1e3;
+numIterations = 1e6;
 
 %% Desired update rate is 10Hz
 
@@ -18,13 +18,11 @@ updateRateHz = 10;
 
 % pass the number of iterations and the update cycle in Hz
 obj = ProgressBar(numIterations, ...
-    'Title', 'Awesome Update Rate Test', ...
+    'Title', 'Update Rate', ...
     'UpdateRate', updateRateHz ...
     );
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
-    
     obj.update();
 end
 obj.close();
