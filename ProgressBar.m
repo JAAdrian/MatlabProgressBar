@@ -30,6 +30,8 @@ properties (Access = private)
     FractionBlock;
     
     HasTotalIterations = false;
+    
+    TimerTagName;
 end
 
 
@@ -43,7 +45,6 @@ end
 properties ( Constant, Access = private )
     MaxColumnsOnScreen = 90;
     NumBlocks = 8; % HTML 'left blocks' go in eigths
-    TimerTagName = 'ProgressBar';
     DefaultUpdateRate = inf; % every iteration gets printed
 end
 
@@ -56,15 +57,12 @@ methods
             self.parseInputs(total, varargin{:});
         end
         
-        % add a new timer object if there is none, i.e. this is the only
-        % ProgressBar object in the workspace (no nesting)
-        timerObject = self.getTimer();
-        if isempty(timerObject),
-            timer(...
-                'Tag', self.TimerTagName, ...
-                'ObjectVisibility', 'off' ...
-                );
-        end
+        % add a new timer object with unique tag
+        self.TimerTagName = char(java.util.UUID.randomUUID);
+        timer(...
+            'Tag', self.TimerTagName, ...
+            'ObjectVisibility', 'off' ...
+            );
 
         % register the new tic object
         ticObj = tic;
@@ -78,17 +76,16 @@ methods
     end
     
     function delete(self)
-        self.close();
-        
-        % delete timer and reset object list if no nested bar exists
-        % anymore
-        list = self.getObjectList();
-        if isempty(list),
-            self.resetObjectList();
-            
-            t = self.getTimer();
-            delete(t);
+        % when a progress bar has been plot, hit return
+        if self.IterationCounter,
+            fprintf('\n');
         end
+        
+        % delete timer and reset object list
+        self.removeMeFromObjectList();
+        
+        t = self.getTimer();
+        delete(t);
     end
     
     
@@ -129,11 +126,7 @@ methods
     end
     
     function [] = close(self)
-        if self.IterationCounter,
-            fprintf('\n');
-        end
-        
-        self.removeMeFromObjectList();
+        delete(self);
     end
 end
 
