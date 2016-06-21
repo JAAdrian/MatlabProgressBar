@@ -10,7 +10,7 @@ clc;
 
 addpath('..');
 
-numIterations = 1e3;
+numIterations = 1e6;
 
 %% Desired update rate is 10Hz
 
