@@ -232,7 +232,7 @@ methods (Access = private)
             self.MaxColumnsOnScreen - length(preBar) - length(postBar));
     end
     
-    function [] = printStatus(self)        
+    function [] = printStatus(self)
         fprintf(1, backspace(self.NumWrittenCharacters));
         
         % elapsed time (ET)
