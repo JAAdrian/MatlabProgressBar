@@ -20,52 +20,334 @@ classdef ProgressBar < handle
 
 
 properties (Access = private)
-
+    Bar = '';
+    IterationCounter = 0;
+    
+    NumWrittenCharacters = 0;
+    LastBlock = 0;
+    LastMainBlock = 1;
+    FractionMainBlock;
+    FractionBlock;
+    
+    HasTotalIterations = false;
 end
 
 
 properties (SetAccess = private, GetAccess = public)
-
+    Title;
+    Total;
+    Unit;
 end
 
-
-properties (Access = public)
-    Title = '';
-    minIteration = 0;
-    maxIteration;
+properties ( Constant, Access = private )
+    MaxColumnsOnScreen = 90;
+    NumBlocks = 8; % HTML 'left blocks' go in eigths
+    TimerTagName = 'ProgressBar';
 end
 
 
 
 methods
-    function [self] = ProgressBar(numIterations, minIterations)
-        if ~nargin,
-           return;
+    function [self] = ProgressBar(total, varargin)
+        if nargin,
+            % parse input arguments
+            self.parseInputs(total, varargin{:});
         end
         
-        if nargin < 2 || isempty (minIterations),
-            minIterations = 1;
+        % add a new timer object if there is none, i.e. this is the only
+        % ProgressBar object in the workspace (no nesting)
+        timerObject = self.getTimer();
+        if isempty(timerObject),
+            timer(...
+                'Tag', self.TimerTagName, ...
+                'ObjectVisibility', 'off' ...
+                );
         end
+
+        % register the new tic object
+        ticObj = tic;
+        self.addToObjectList(ticObj);
         
-        % see if there is already a timer object and register the new
-        % ProgressBar object
-        
-        
+        if self.HasTotalIterations,
+            % initialize the progress bar and pre-compute some measures
+            self.setupBar();
+            self.computeBlockFractions();
+        end
     end
+    
+    function delete(self)
+        self.close();
+        
+        % delete timer and reset object list if no nested bar exists
+        % anymore
+        list = self.getObjectList();
+        if isempty(list),
+            self.resetObjectList();
+            
+            t = self.getTimer();
+            delete(t);
+        end
+    end
+    
+    
+    
+    
+    
+    function [] = update(self, n, wasSuccessful)
+        if nargin < 3 || isempty(wasSuccessful),
+            wasSuccessful = true;
+        end
+        if nargin < 2 || isempty(n),
+            n = 1;
+        end
+        validateattributes(n, ...
+            {'numeric'}, ...
+            {'scalar', 'positive', 'real', 'nonnan', 'finite', 'nonempty'} ...
+            );
+        validateattributes(wasSuccessful, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+            );
+        
+        self.incrementIterationCounter(n);
+        
+        self.printStatus();
+    end
+    
+    function [] = printMessage(self)
+        error('Not yet implemented');
+    end
+    
+    function [] = summary(self)
+        error('Not yet implemented');
+        
+        if self.IterationCounter < self.Total,
+            return;
+        end
+    end
+    
+    function [] = close(self)
+        if self.IterationCounter,
+            fprintf('\n');
+        end
+        
+        self.removeMeFromObjectList();
+    end
+    
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%% Setter / Getter %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
 
 
 methods (Access = private)
-%     function [] = printHeader()
-%         fprintf(1, );
-%     end
-%
-%     function [] = printSection()
-%         fprintf(1, );
-%     end
+    function [] = parseInputs(self, total, varargin)        
+        p = inputParser;
+        p.FunctionName = mfilename;
+        
+        % total number of iterations
+        p.addRequired('Total', @checkInputOfTotal);
+        
+        % unit of progress measure
+        p.addParameter('Unit', 'Integers', ...
+            @(in) any(validatestring(in, {'Integers', 'Bytes'})) ...
+            );
+        
+        % bar title
+        p.addParameter('Title', '', ...
+            @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
+            );
+       
+        % parse all arguments...
+        p.parse(total, varargin{:});
+        
+        % ...and grab them
+        self.Total = p.Results.Total;
+        self.Unit  = p.Results.Unit;
+        self.Title = p.Results.Title;
+        
+        if ~isempty(self.Total),
+            self.HasTotalIterations = true;
+        end
+    end
+    
+    function [] = computeBlockFractions(self)
+        self.FractionMainBlock = 1 / length(self.Bar);
+        self.FractionBlock = self.FractionMainBlock / self.NumBlocks;
+    end
+    
+    function [] = setupBar(self)
+        [~, preBarFormat, postBarFormat] = getFormatStringTotal();
+        
+        % insert worst case inputs to get (almost) maximum length of bar
+        preBar = sprintf(preBarFormat, self.Title, 100);
+        postBar = sprintf(postBarFormat, ...
+            self.Total, ...
+            self.Total, ...
+            100, 100, 100, 100, 100, 100, 1e3);
+        self.Bar = blanks(...
+            self.MaxColumnsOnScreen - length(preBar) - length(postBar));
+    end
+    
+    function [] = printStatus(self)
+        fprintf(1, backspace(self.NumWrittenCharacters));
+        
+        % elapsed time (ET)
+        ticObj = self.getTic();
+        thisTimeSec = toc(ticObj);
+        etHoursMinsSecs = convertTime(thisTimeSec);
+        
+        % iterations per second
+        iterationsPerSecond = self.IterationCounter / thisTimeSec;
+        
+        
+        if self.HasTotalIterations,
+            % estimated time of arrival (ETA)
+            [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
+            
+            
+            % 1 : Title
+            % 2 : percent
+            % 3 : progBar string
+            % 4 : interationCounter
+            % 5 : Total
+            % 6 : ET.hours
+            % 7 : ET.minutes
+            % 8 : ET.seconds
+            % 9 : ETA.hours
+            % 10: ETA.minutes
+            % 11: ETA.seconds
+            % 12: it/s
+            self.NumWrittenCharacters = fprintf(1, getFormatStringTotal(), ...
+                self.Title, ...
+                round(self.IterationCounter / self.Total * 100), ...
+                self.getCurrentBar, ...
+                self.IterationCounter, ...
+                self.Total, ...
+                etHoursMinsSecs(1), ...
+                etHoursMinsSecs(2), ...
+                etHoursMinsSecs(3), ...
+                etaHoursMinsSecs(1), ...
+                etaHoursMinsSecs(2), ...
+                etaHoursMinsSecs(3), ...
+                iterationsPerSecond ...
+                );
+            
+        else
+            self.NumWrittenCharacters = fprintf(1, getFormatStringNoTotal(), ...
+                self.Title, ...
+                self.IterationCounter, ...
+                etHoursMinsSecs(1), ...
+                etHoursMinsSecs(2), ...
+                etHoursMinsSecs(3), ...
+                iterationsPerSecond ...
+                );
+        end
+    end
+    
+    function [barString] = getCurrentBar(self)
+        lenBar = length(self.Bar);
+        currProgress = self.IterationCounter / self.Total;
+        
+        thisMainBlock = min(ceil(currProgress / self.FractionMainBlock), lenBar);
+        
+        continuousBlockIndex = ceil(currProgress / self.FractionBlock);
+        thisBlock = mod(continuousBlockIndex, self.NumBlocks) + 1;
+        
+        if thisBlock > self.LastBlock || thisMainBlock > self.LastMainBlock,
+            % fix for non-full last blocks when steps are large
+            self.Bar(1:max(thisMainBlock-1, 0)) = ...
+                repmat(getBlock(inf), 1, thisMainBlock - 1);
+            
+            if self.IterationCounter == self.Total,
+                self.Bar = repmat(getBlock(inf), 1, lenBar);
+            else
+                self.Bar(thisMainBlock) = getBlock(thisBlock);
+            end
+            
+            self.LastBlock = thisBlock;
+            self.LastMainBlock = thisMainBlock;
+        end
+        
+        barString = self.Bar;
+    end
+    
+    function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
+        progress = self.IterationCounter / self.Total;
+        
+        remainingSeconds = elapsedTime * ((1 / progress) - 1);
+        
+        etaHoursMinsSecs = convertTime(remainingSeconds);
+    end
+    
+    function [] = startTimer(self, timerObject)
+        timerObject.BusyMode = 'drop';
+        timerObject.TimerFcn = @(~, ~) self.printStatus();
+        timerObject.ExecutionMode = 'fixedSpacing';
+        timerObject.Period = 1 / self.UpdateRate;
+        timerObject.StartDelay = 1 / self.UpdateRate;
+        
+        start(timerObject);
+    end
+    
+    
+    function [] = incrementIterationCounter(self, n)
+        self.IterationCounter = self.IterationCounter + n;
+    end
+    
+    function [list] = getObjectList(self) %#ok<MANU>
+        list = ProgressBar.objectList();
+    end
+    
+    function [] = addToObjectList(self, newObj) %#ok<INUSL>
+        ProgressBar.objectList(newObj, false);
+    end
+    
+    function [] = removeMeFromObjectList(self) %#ok<MANU>
+        ProgressBar.objectList(-1, false);
+    end
+    
+    function [] = resetObjectList(self) %#ok<MANU>
+        ProgressBar.objectList('Clears the object list', true);
+    end
+    
+    function [tVal] = getTic(self)
+        tVal = self.getObjectList();
+        tVal = tVal{end};
+    end
+    
+    function [timerObject] = getTimer(self)
+        timerObject = timerfindall('Tag', self.TimerTagName);
+    end
+end
 
-    function [] = printDashes(numDashes)
-        fprintf(1, repmat(self.dashSymbol, 1, numDashes));
+methods (Access = private, Static = true)
+    function [list] = objectList(newObject, shouldClearList)
+        % http://stackoverflow.com/a/14571266
+        persistent ProgObjects;
+        
+        if nargin,
+            if nargin < 2 || isempty(shouldClearList),
+                shouldClearList = false;
+            end
+            if shouldClearList,
+                ProgObjects = {};
+                return;
+            end
+            
+            switch class(newObject),
+                case {'timer', 'ProgressBar', 'uint64'},
+                    ProgObjects = [ProgObjects; {newObject}];
+                case 'double',
+                    ProgObjects = ProgObjects(1:end-1);
+                otherwise
+                    error('Unsupported Option to objectList()');
+            end
+        end
+        
+        list = ProgObjects;
     end
 end
 
@@ -74,6 +356,64 @@ end
 
 
 
+
+end
+
+function [thisBlock] = getBlock(idx)
+% idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
+% excluding the 'space' but this function also returns the space as first
+% block
+
+blocks = [
+    char(9615);
+    char(9614);
+    char(9613);
+    char(9612);
+    char(9611);
+    char(9610);
+    char(9609);
+    char(9608);
+    ];
+
+thisBlock = blocks(min(idx, length(blocks)));
+end
+
+function [str] = backspace(numChars)
+str = repmat('\b', 1, numChars);
+end
+
+function [format, preString, postString] = getFormatStringTotal()
+% this is adapted from tqdm
+preString  = '%s:\t%03.0f%%  ';
+postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
+
+format = [preString, '|%s|', postString];
+end
+function [format] = getFormatStringNoTotal()
+% this is also adapted from tqdm
+
+format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
+end
+
+function [hoursMinsSecs] = convertTime(secondsIn)
+% fast implementation using mod() from
+% http://stackoverflow.com/a/21233409
+
+hoursMinsSecs = floor(mod(secondsIn, [0, 3600, 60]) ./ [3600, 60, 1]);
+end
+
+function [yesNo] = checkInputOfTotal(total)
+isTotalEmpty = isempty(total);
+
+if isTotalEmpty,
+    yesNo = isTotalEmpty;
+    return;
+else
+    validateattributes(total, ...
+        {'numeric'}, ...
+        {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
+        );
+end
 
 end
 

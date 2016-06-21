@@ -9,11 +9,15 @@ How to set [static "properties"](http://stackoverflow.com/a/14571266) in MATLAB.
 Feature Request
 ----------------------
 
-- [ ] TQDM blocks
+- [x] TQDM blocks
 - [ ] Time estimate
-    - [ ] over all last iterations
+    - [x] over all last iterations
     - [ ] running mean/median
-- [ ] Section names etc.
+- [ ] after x seconds without update (e.g. the processing step takes a lot of time) we show an idle icon
+- [x] Section names etc.
 - [ ] nesting with global ProgressBar list
 - [ ] visual update interval
-- [ ]
+- [ ] printMessage() method for debug printing (or similar)
+- [ ] when no `numIterations` is passed we state the ET and number of iterations and it/s
+- [ ] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
+- [ ] get width of the command window to adjust the prog. bar width
