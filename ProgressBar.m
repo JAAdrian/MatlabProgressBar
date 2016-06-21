@@ -28,6 +28,8 @@ properties (Access = private)
     LastMainBlock = 1;
     FractionMainBlock;
     FractionBlock;
+    
+    HasTotalIterations = false;
 end
 
 
@@ -47,12 +49,10 @@ end
 
 methods
     function [self] = ProgressBar(total, varargin)
-        if ~nargin,
-           return;
+        if nargin,
+            % parse input arguments
+            self.parseInputs(total, varargin{:});
         end
-        
-        % parse input arguments
-        self.parseInputs(total, varargin{:});
         
         % add a new timer object if there is none, i.e. this is the only
         % ProgressBar object in the workspace (no nesting)
@@ -68,9 +68,11 @@ methods
         ticObj = tic;
         self.addToObjectList(ticObj);
         
-        % initialize the progress bar and pre-compute some measures
-        self.setupBar();
-        self.computeBlockFractions();
+        if self.HasTotalIterations,
+            % initialize the progress bar and pre-compute some measures
+            self.setupBar();
+            self.computeBlockFractions();
+        end
     end
     
     function delete(self)
@@ -141,15 +143,15 @@ end
 
 
 methods (Access = private)
-    function [] = parseInputs(self, total, varargin)
+    function [] = parseInputs(self, total, varargin)        
         p = inputParser;
         p.FunctionName = mfilename;
         
         % total number of iterations
-        p.addRequired('Total', ...
-            @(in) validateattributes(in, ...
+        p.addOptional('Total', inf, ...
+            @(in) isempty(in) || validateattributes(in, ...
             {'numeric'}, ...
-            {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
+            {'scalar', 'integer', 'positive', 'real', 'nonnan'} ...
             ) ...
             );
         
@@ -170,6 +172,10 @@ methods (Access = private)
         self.Total = p.Results.Total;
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
+        
+        if ~isempty(self.Total),
+            self.HasTotalIterations = true;
+        end
     end
     
     function [] = computeBlockFractions(self)
@@ -178,7 +184,7 @@ methods (Access = private)
     end
     
     function [] = setupBar(self)
-        [~, preBarFormat, postBarFormat] = getProgBarFormatString();
+        [~, preBarFormat, postBarFormat] = getFormatStringTotal();
         
         % insert worst case inputs to get (almost) maximum length of bar
         preBar = sprintf(preBarFormat, self.Title, 100);
@@ -201,36 +207,49 @@ methods (Access = private)
         % iterations per second
         iterationsPerSecond = self.IterationCounter / thisTimeSec;
         
-        % estimated time of arrival (ETA)
-        [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
         
-        
-        % 1 : Title
-        % 2 : percent
-        % 3 : progBar string
-        % 4 : interationCounter
-        % 5 : Total
-        % 6 : ET.hours
-        % 7 : ET.minutes
-        % 8 : ET.seconds
-        % 9 : ETA.hours
-        % 10: ETA.minutes
-        % 11: ETA.seconds
-        % 12: it/s
-        self.NumWrittenCharacters = fprintf(1, getProgBarFormatString(), ...
-            self.Title, ...
-            round(self.IterationCounter / self.Total * 100), ...
-            self.getCurrentBar, ...
-            self.IterationCounter, ...
-            self.Total, ...
-            etHoursMinsSecs(1), ...
-            etHoursMinsSecs(2), ...
-            etHoursMinsSecs(3), ...
-            etaHoursMinsSecs(1), ...
-            etaHoursMinsSecs(2), ...
-            etaHoursMinsSecs(3), ...
-            iterationsPerSecond ...
-            );
+        if self.HasTotalIterations,
+            % estimated time of arrival (ETA)
+            [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
+            
+            
+            % 1 : Title
+            % 2 : percent
+            % 3 : progBar string
+            % 4 : interationCounter
+            % 5 : Total
+            % 6 : ET.hours
+            % 7 : ET.minutes
+            % 8 : ET.seconds
+            % 9 : ETA.hours
+            % 10: ETA.minutes
+            % 11: ETA.seconds
+            % 12: it/s
+            self.NumWrittenCharacters = fprintf(1, getFormatStringTotal(), ...
+                self.Title, ...
+                round(self.IterationCounter / self.Total * 100), ...
+                self.getCurrentBar, ...
+                self.IterationCounter, ...
+                self.Total, ...
+                etHoursMinsSecs(1), ...
+                etHoursMinsSecs(2), ...
+                etHoursMinsSecs(3), ...
+                etaHoursMinsSecs(1), ...
+                etaHoursMinsSecs(2), ...
+                etaHoursMinsSecs(3), ...
+                iterationsPerSecond ...
+                );
+            
+        else
+            self.NumWrittenCharacters = fprintf(1, getFormatStringNoTotal(), ...
+                self.Title, ...
+                self.IterationCounter, ...
+                etHoursMinsSecs(1), ...
+                etHoursMinsSecs(2), ...
+                etHoursMinsSecs(3), ...
+                iterationsPerSecond ...
+                );
+        end
     end
     
     function [barString] = getCurrentBar(self)
@@ -368,12 +387,17 @@ function [str] = backspace(numChars)
 str = repmat('\b', 1, numChars);
 end
 
-function [format, preString, postString] = getProgBarFormatString()
+function [format, preString, postString] = getFormatStringTotal()
 % this is adapted from tqdm
 preString  = '%s:\t%03.0f%%  ';
 postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
 
 format = [preString, '|%s|', postString];
+end
+function [format] = getFormatStringNoTotal()
+% this is also adapted from tqdm
+
+format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
 end
 
 function [hoursMinsSecs] = convertTime(secondsIn)
