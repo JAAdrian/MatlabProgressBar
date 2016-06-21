@@ -79,6 +79,12 @@ methods
         if ~isinf(self.UpdateRate),
             self.startTimer(self.getTimer);
         end
+        
+        % newline and indent if we are dealing with nested bars
+        list = self.getObjectList();
+        if length(list) > 1,
+            fprintf(1, '\n');
+        end
     end
     
     function delete(self)
