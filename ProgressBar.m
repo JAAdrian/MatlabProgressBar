@@ -212,6 +212,9 @@ methods (Access = private)
             if self.IterationCounter == self.Total || ~self.HasColor,
                 centerString = '|%s|';
             else
+                % make the actual moving bar orange.
+                % Source:
+                % http://undocumentedmatlab.com/blog/another-command-window-text-color-hack
                 centerString = '|[\b%s]\b|';
             end
 
