@@ -37,12 +37,14 @@ properties (SetAccess = private, GetAccess = public)
     Title;
     Total;
     Unit;
+    UpdateRate;
 end
 
 properties ( Constant, Access = private )
     MaxColumnsOnScreen = 90;
     NumBlocks = 8; % HTML 'left blocks' go in eigths
     TimerTagName = 'ProgressBar';
+    DefaultUpdateRate = inf; % every iteration gets printed
 end
 
 
@@ -153,6 +155,14 @@ methods (Access = private)
         p.addParameter('Title', '', ...
             @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
             );
+        
+        % update rate
+        p.addParameter('UpdateRate', self.DefaultUpdateRate, ...
+            @(in) validateattributes(in, ...
+                {'numeric'}, ...
+                {'scalar', 'positive', 'real', 'nonempty', 'nonnan', 'finite'} ...
+                ) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -161,6 +171,7 @@ methods (Access = private)
         self.Total = p.Results.Total;
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
+        self.UpdateRate = p.Results.UpdateRate;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
