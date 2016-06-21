@@ -9,11 +9,11 @@ How to set [static "properties"](http://stackoverflow.com/a/14571266) in MATLAB.
 Feature Request
 ----------------------
 
-- [ ] TQDM blocks
+- [x] TQDM blocks
 - [ ] Time estimate
-    - [ ] over all last iterations
+    - [x] over all last iterations
     - [ ] running mean/median
-- [ ] Section names etc.
+- [x] Section names etc.
 - [ ] nesting with global ProgressBar list
 - [ ] visual update interval
 - [ ] printMessage() method for debug printing (or similar)
