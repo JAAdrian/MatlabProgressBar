@@ -445,19 +445,6 @@ function [str] = backspace(numChars)
 str = repmat('\b', 1, numChars);
 end
 
-function [format, preString, postString] = getFormatStringTotal()
-% this is adapted from tqdm
-preString  = '%s:\t%03.0f%%  ';
-postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
-
-format = [preString, '|%s|', postString];
-end
-function [format] = getFormatStringNoTotal()
-% this is also adapted from tqdm
-
-format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
-end
-
 function [hoursMinsSecs] = convertTime(secondsIn)
 % fast implementation using mod() from
 % http://stackoverflow.com/a/21233409
