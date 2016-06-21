@@ -143,7 +143,7 @@ end
 
 
 methods (Access = private)
-    function [] = parseInputs(self, total, varargin)        
+    function [] = parseInputs(self, total, varargin)
         p = inputParser;
         p.FunctionName = mfilename;
         
@@ -190,9 +190,91 @@ methods (Access = private)
         self.FractionBlock = self.FractionMainBlock / self.NumBlocks;
     end
     
-    function [] = setupBar(self)
-        [~, preBarFormat, postBarFormat] = getFormatStringTotal();
+    function [format, preString, postString] = returnFormatString(self)
+        % this is adapted from tqdm
+
+        if self.HasTotalIterations,
+            if ~isempty(self.Title),
+                preString  = '%s:\t%03.0f%%  ';
+            else
+                preString  = '%03.0f%%  ';
+            end
+
+            postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
+
+            format = [preString, '|%s|', postString];
+        else
+            preString  = [];
+            postString = [];
+
+            if ~isempty(self.Title),
+                format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
+            else
+                format = '%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
+            end
+        end
+    end
+
+    function [argList] = returnArgumentList(self)
+        % 1 : Title
+        % 2 : progress percent
+        % 3 : progBar string
+        % 4 : interationCounter
+        % 5 : Total
+        % 6 : ET.hours
+        % 7 : ET.minutes
+        % 8 : ET.seconds
+        % 9 : ETA.hours
+        % 10: ETA.minutes
+        % 11: ETA.seconds
+        % 12: it/s
+
         
+        % elapsed time (ET)
+        ticObj = self.getTic();
+        thisTimeSec = toc(ticObj);
+        etHoursMinsSecs = convertTime(thisTimeSec);
+
+        % iterations per second
+        iterationsPerSecond = self.IterationCounter / thisTimeSec;
+        
+        if self.HasTotalIterations,
+            % estimated time of arrival (ETA)
+            [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
+            
+            argList = {
+                self.Title
+                round(self.IterationCounter / self.Total * 100)
+                self.getCurrentBar
+                self.IterationCounter
+                self.Total
+                etHoursMinsSecs(1)
+                etHoursMinsSecs(2)
+                etHoursMinsSecs(3)
+                etaHoursMinsSecs(1)
+                etaHoursMinsSecs(2)
+                etaHoursMinsSecs(3)
+                iterationsPerSecond
+                };
+        else
+            argList = {
+                self.Title
+                self.IterationCounter
+                etHoursMinsSecs(1)
+                etHoursMinsSecs(2)
+                etHoursMinsSecs(3)
+                iterationsPerSecond
+                };
+        end
+
+        if isempty(self.Title),
+            argList = argList(2:end);
+        end
+    end
+
+    function [] = setupBar(self)
+        [~, preBarFormat, postBarFormat] = self.returnFormatString();
+
         % insert worst case inputs to get (almost) maximum length of bar
         preBar = sprintf(preBarFormat, self.Title, 100);
         postBar = sprintf(postBarFormat, ...
@@ -202,61 +284,17 @@ methods (Access = private)
         self.Bar = blanks(...
             self.MaxColumnsOnScreen - length(preBar) - length(postBar));
     end
-    
+
     function [] = printStatus(self)
         fprintf(1, backspace(self.NumWrittenCharacters));
         
-        % elapsed time (ET)
-        ticObj = self.getTic();
-        thisTimeSec = toc(ticObj);
-        etHoursMinsSecs = convertTime(thisTimeSec);
+        formatString = self.returnFormatString();
+        argumentList = self.returnArgumentList();
         
-        % iterations per second
-        iterationsPerSecond = self.IterationCounter / thisTimeSec;
-        
-        
-        if self.HasTotalIterations,
-            % estimated time of arrival (ETA)
-            [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
-            
-            
-            % 1 : Title
-            % 2 : percent
-            % 3 : progBar string
-            % 4 : interationCounter
-            % 5 : Total
-            % 6 : ET.hours
-            % 7 : ET.minutes
-            % 8 : ET.seconds
-            % 9 : ETA.hours
-            % 10: ETA.minutes
-            % 11: ETA.seconds
-            % 12: it/s
-            self.NumWrittenCharacters = fprintf(1, getFormatStringTotal(), ...
-                self.Title, ...
-                round(self.IterationCounter / self.Total * 100), ...
-                self.getCurrentBar, ...
-                self.IterationCounter, ...
-                self.Total, ...
-                etHoursMinsSecs(1), ...
-                etHoursMinsSecs(2), ...
-                etHoursMinsSecs(3), ...
-                etaHoursMinsSecs(1), ...
-                etaHoursMinsSecs(2), ...
-                etaHoursMinsSecs(3), ...
-                iterationsPerSecond ...
-                );
-            
-        else
-            self.NumWrittenCharacters = fprintf(1, getFormatStringNoTotal(), ...
-                self.Title, ...
-                self.IterationCounter, ...
-                etHoursMinsSecs(1), ...
-                etHoursMinsSecs(2), ...
-                etHoursMinsSecs(3), ...
-                iterationsPerSecond ...
-                );
-        end
+        self.NumWrittenCharacters = fprintf(1, ...
+            formatString, ...
+            argumentList{:} ...
+            );
     end
     
     function [barString] = getCurrentBar(self)
