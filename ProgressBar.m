@@ -148,12 +148,7 @@ methods (Access = private)
         p.FunctionName = mfilename;
         
         % total number of iterations
-        p.addOptional('Total', inf, ...
-            @(in) isempty(in) || validateattributes(in, ...
-            {'numeric'}, ...
-            {'scalar', 'integer', 'positive', 'real', 'nonnan'} ...
-            ) ...
-            );
+        p.addRequired('Total', @checkInputOfTotal);
         
         % unit of progress measure
         p.addParameter('Unit', 'Integers', ...
@@ -407,7 +402,20 @@ function [hoursMinsSecs] = convertTime(secondsIn)
 hoursMinsSecs = floor(mod(secondsIn, [0, 3600, 60]) ./ [3600, 60, 1]);
 end
 
+function [yesNo] = checkInputOfTotal(total)
+isTotalEmpty = isempty(total);
 
+if isTotalEmpty,
+    yesNo = isTotalEmpty;
+    return;
+else
+    validateattributes(total, ...
+        {'numeric'}, ...
+        {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
+        );
+end
+
+end
 
 
 
