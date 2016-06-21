@@ -28,25 +28,22 @@ properties (Access = private)
     LastMainBlock = 1;
     FractionMainBlock;
     FractionBlock;
-    
-    TimerID;
 end
 
 
 properties (SetAccess = private, GetAccess = public)
-    Title = '';
+    Title;
     Total;
-    Unit = '';
-end
-
-
-properties (Access = public)
+    Unit;
+    
     UpdateRate;
+    EstimatorOrder;
 end
 
 properties ( Constant, Access = private )
-    MaxColumnsOnScreen = 80;
+    MaxColumnsOnScreen = 90;
     NumBlocks = 8; % HTML 'left blocks' go in eigths
+    TimerTagName = 'ProgressBar';
 end
 
 
@@ -60,29 +57,42 @@ methods
         % parse input arguments
         self.parseInputs(total, varargin{:});
         
-        
-        % add a new timer object if there is none and register the new
-        % ProgressBar object
-        objList = self.getObjectList();
-        if isempty(objList),
-            self.TimerID = char(java.util.UUID.randomUUID);
-            
-            t = timer(...
-                'Tag', self.TimerID, ...
+        % add a new timer object if there is none, i.e. this is the only
+        % ProgressBar object in the workspace (no nesting)
+        timerObject = self.getTimer();
+        if isempty(timerObject),
+            timer(...
+                'Tag', self.TimerTagName, ...
                 'ObjectVisibility', 'off' ...
                 );
-            self.addToObjectList(t);
-            tVal = tic;
-            self.addToObjectList(tVal);
         end
-        self.addToObjectList(self);
+
+        % register the new tic object
+        ticObj = tic;
+        self.addToObjectList(ticObj);
         
+        % initialize the progress bar and pre-compute some measures
         self.setupBar();
         self.computeBlockFractions();
+        
+        % if a specific update rate is specified start the timer
+        if ~isinf(self.UpdateRate),
+            self.startTimer(self.getTimer);
+        end
     end
     
-    function [] = delete(self)
+    function delete(self)
         self.close();
+        
+        % delete timer and reset object list if no nested bar exists
+        % anymore
+        list = self.getObjectList();
+        if length(list) == 1,
+            self.resetObjectList();
+            
+            t = self.getTimer();
+            delete(t);
+        end
     end
     
     
@@ -107,7 +117,7 @@ methods
         
         self.incrementIterationCounter(n);
         
-        if isempty(self.UpdateRate),
+        if isinf(self.UpdateRate),
             self.printStatus();
         end
     end
@@ -118,20 +128,18 @@ methods
     
     function [] = summary(self)
         error('Not yet implemented');
+        
+        if self.IterationCounter < self.Total,
+            return;
+        end
     end
     
     function [] = close(self)
-        fprintf('\n');
-        
-        list = self.getObjectList();
-        if isempty(list),
-            return;
+        if self.IterationCounter,
+            fprintf('\n');
         end
         
-        t = timerfindall('Tag', self.TimerID);
-        delete(t);
-        
-        self.removeFromObjectList();
+        self.removeMeFromObjectList();
     end
     
     
@@ -140,26 +148,12 @@ methods
     %%%%% Setter / Getter %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function [] = set.UpdateRate(self, rateHz)
-        validateattributes(...
-            rateHz, ...
-            {'numeric'}, ...
-            {'scalar', 'positive', 'nonnan', 'nonempty', 'real', 'finite'} ...
-            );
-        if rateHz > 10,
+        if ~isinf(rateHz) && rateHz > 10,
             warning(['An update rate which is greater than 10 Hz might ', ...
                 'lead to high CPU load']);
         end
         
         self.UpdateRate = rateHz;
-        
-        t = self.getTimer();
-        t.BusyMode = 'drop';
-        t.TimerFcn = @(~, ~) self.printStatus();
-        t.ExecutionMode = 'fixedSpacing';
-        t.Period = 1 / self.UpdateRate;
-        t.StartDelay = 1 / self.UpdateRate;
-        
-        start(t);
     end
 end
 
@@ -169,26 +163,49 @@ methods (Access = private)
         p = inputParser;
         p.FunctionName = mfilename;
         
-        p.addRequired('total', ...
+        % total number of iterations
+        p.addRequired('Total', ...
             @(in) validateattributes(in, ...
             {'numeric'}, ...
             {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
             ) ...
             );
         
+        % unit of progress measure
         p.addParameter('Unit', 'Integers', ...
             @(in) any(validatestring(in, {'Integers', 'Bytes'})) ...
             );
+        
+        % bar title
         p.addParameter('Title', '', ...
             @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
             );
         
+        % update rate in Hz
+        p.addParameter('UpdateRate', inf, ...
+            @(in) validateattributes(in, ...
+                {'numeric'}, ...
+                {'scalar', 'positive', 'real', 'nonnan', 'nonempty'} ...
+                ) ...
+            );
+        
+        % estimation order
+        p.addParameter('EstimatorOrder', inf, ...
+            @(in) validateattributes(in, ...
+                {'numeric'}, ...
+                {'scalar', 'positive', 'real', 'nonnan', 'nonempty'} ...
+                ) ...
+            );
+        
+        % parse all arguments...
         p.parse(total, varargin{:});
         
-        % grab inputs
-        self.Total = p.Results.total;
+        % ...and grab them
+        self.Total = p.Results.Total;
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
+        self.UpdateRate = p.Results.UpdateRate;
+        self.EstimatorOrder = p.Results.EstimatorOrder;
     end
     
     function [] = computeBlockFractions(self)
@@ -197,23 +214,30 @@ methods (Access = private)
     end
     
     function [] = setupBar(self)
-        [~, postBarFormat] = getProgBarFormatString();
+        [~, preBarFormat, postBarFormat] = getProgBarFormatString();
         
+        preBar = sprintf(preBarFormat, self.Title, 100);
         postBar = sprintf(postBarFormat, ...
             self.Total, ...
             self.Total, ...
-            100, 100, 100, 100, 1e3);
+            100, 100, 100, 100, 100, 100, 1e3);
         self.Bar = blanks(...
-            self.MaxColumnsOnScreen ...
-            - length(postBar) ...
-            - length(self.Title) ...
-            );
+            self.MaxColumnsOnScreen - length(preBar) - length(postBar));
     end
     
     function [] = printStatus(self)        
         fprintf(1, backspace(self.NumWrittenCharacters));
         
-        tVal = self.getTic();
+        % elapsed time (ET)
+        ticObj = self.getTic();
+        thisTimeSec = toc(ticObj);
+        etHoursMinsSecs = convertTime(thisTimeSec);
+        
+        % iterations per second
+        iterationsPerSecond = self.IterationCounter / thisTimeSec;
+        
+        % estimated time of arrival (ETA)
+        [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
         
         
         % 1: Title
@@ -221,32 +245,34 @@ methods (Access = private)
         % 3: progBar string
         % 4: interationCounter
         % 5: Total
-        % 6: ET.minutes
-        % 7: ET.seconds
-        % 8: ETA.minutes
-        % 9: ETA.seconds
-        % 10: it/s
+        % 6: ET.hours
+        % 7: ET.minutes
+        % 8: ET.seconds
+        % 9: ETA.hours
+        % 10: ETA.minutes
+        % 11: ETA.seconds
+        % 12: it/s
         self.NumWrittenCharacters = fprintf(1, getProgBarFormatString(), ...
             self.Title, ...
             round(self.IterationCounter / self.Total * 100), ...
             self.getCurrentBar, ...
             self.IterationCounter, ...
             self.Total, ...
-            0, ...
-            1, ...
-            0, ...
-            1, ...
-            5 ...
+            etHoursMinsSecs(1), ...
+            etHoursMinsSecs(2), ...
+            etHoursMinsSecs(3), ...
+            etaHoursMinsSecs(1), ...
+            etaHoursMinsSecs(2), ...
+            etaHoursMinsSecs(3), ...
+            iterationsPerSecond ...
             );
     end
     
-    function [barString] = getCurrentBar(self)        
+    function [barString] = getCurrentBar(self)
+        lenBar = length(self.Bar);
         currProgress = self.IterationCounter / self.Total;
         
-        thisMainBlock = min(...
-            ceil(currProgress / self.FractionMainBlock), ...
-            length(self.Bar) ...
-            );
+        thisMainBlock = min(ceil(currProgress / self.FractionMainBlock), lenBar);
         
         continuousBlockIndex = ceil(currProgress / self.FractionBlock);
         thisBlock = mod(continuousBlockIndex, self.NumBlocks) + 1;
@@ -257,7 +283,7 @@ methods (Access = private)
                 repmat(getBlock(inf), 1, thisMainBlock - 1);
             
             if self.IterationCounter == self.Total,
-                self.Bar = repmat(getBlock(inf), 1, length(self.Bar));
+                self.Bar = repmat(getBlock(inf), 1, lenBar);
             else
                 self.Bar(thisMainBlock) = getBlock(thisBlock);
             end
@@ -269,6 +295,29 @@ methods (Access = private)
         barString = self.Bar;
     end
     
+    function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
+        progress = self.IterationCounter / self.Total;
+        
+        if isinf(self.EstimatorOrder),
+            remainingSeconds = elapsedTime * ((1 / progress) - 1);
+        else
+            error('Not yet implemented');
+        end
+        
+        etaHoursMinsSecs = convertTime(remainingSeconds);
+    end
+    
+    function [] = startTimer(self, timerObject)
+        timerObject.BusyMode = 'drop';
+        timerObject.TimerFcn = @(~, ~) self.printStatus();
+        timerObject.ExecutionMode = 'fixedSpacing';
+        timerObject.Period = 1 / self.UpdateRate;
+        timerObject.StartDelay = 1 / self.UpdateRate;
+        
+        start(timerObject);
+    end
+    
+    
     function [] = incrementIterationCounter(self, n)
         self.IterationCounter = self.IterationCounter + n;
     end
@@ -278,41 +327,48 @@ methods (Access = private)
     end
     
     function [] = addToObjectList(self, newObj) %#ok<INUSL>
-        ProgressBar.objectList(newObj);
+        ProgressBar.objectList(newObj, false);
     end
     
-    function [] = removeFromObjectList(self) %#ok<MANU>
-        ProgressBar.objectList(-1);
+    function [] = removeMeFromObjectList(self) %#ok<MANU>
+        ProgressBar.objectList(-1, false);
     end
     
-    function [] = clearObjectList(self) %#ok<MANU>
-        ProgressBar.objectList('nuke');
-    end
-    
-    function [timerObject] = getTimer(self)
-        timerObject = self.getObjectList();
-        timerObject = timerObject{1};
+    function [] = resetObjectList(self) %#ok<MANU>
+        ProgressBar.objectList('Clears the object list', true);
     end
     
     function [tVal] = getTic(self)
         tVal = self.getObjectList();
-        tVal = tVal{2};
+        tVal = tVal{end};
+    end
+    
+    function [timerObject] = getTimer(self)
+        timerObject = timerfindall('Tag', self.TimerTagName);
     end
 end
 
 methods (Access = private, Static = true)
-    function [list] = objectList(newObject)
+    function [list] = objectList(newObject, shouldClearList)
         % http://stackoverflow.com/a/14571266
         persistent ProgObjects;
         
         if nargin,
+            if nargin < 2 || isempty(shouldClearList),
+                shouldClearList = false;
+            end
+            if shouldClearList,
+                ProgObjects = {};
+                return;
+            end
+            
             switch class(newObject),
                 case {'timer', 'ProgressBar', 'uint64'},
                     ProgObjects = [ProgObjects; {newObject}];
-                case 'numeric',
+                case 'double',
                     ProgObjects = ProgObjects(1:end-1);
-                case 'char',
-                    clear('ProgObjects');
+                otherwise
+                    error('Unsupported Option to objectList()');
             end
         end
         
@@ -351,11 +407,22 @@ function [str] = backspace(numChars)
 str = repmat('\b', 1, numChars);
 end
 
-function [format, postString] = getProgBarFormatString()
+function [format, preString, postString] = getProgBarFormatString()
 % this is adapted from tqdm
-postString =  ' %i/%i [%02.0f:%02.0f<%02.0f:%02.0f, %.2f it/s]';
-format = ['%s\t%03.0f%%  |%s|' postString];
+preString  = '%s:\t%03.0f%%  ';
+postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
+
+format = [preString, '|%s|', postString];
 end
+
+function [hoursMinsSecs] = convertTime(secondsIn)
+% fast implementation using mod() from
+% http://stackoverflow.com/a/21233409
+
+hoursMinsSecs = floor(mod(secondsIn, [0, 3600, 60]) ./ [3600, 60, 1]);
+end
+
+
 
 
 
