@@ -10,7 +10,7 @@ clc;
 
 addpath('..');
 
-numIterations = 1e3;
+numIterations = 1e2;
 
 %% Simple setup WITH known number of iterations
 
