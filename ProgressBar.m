@@ -157,17 +157,6 @@ methods
     
     
     
-    function [] = summary(self)
-        error('Not yet implemented');
-        
-        if self.IterationCounter < self.Total,
-            return;
-        end
-    end
-    
-    
-    
-    
     function [] = close(self)
         delete(self);
     end
