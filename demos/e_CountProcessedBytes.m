@@ -1,23 +1,23 @@
 % <purpose of this file>
 %
 % Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
-% Date   :  21-Jun-2016 17:15:28
+% Date   :  22-Jun-2016 12:32:50
 %
 
 clear;
 close all;
+
 clc;
 
 addpath('..');
 
-numIterations = 1e3;
+numIterations = 1e2;
 
-%% Different time estimators
+%% Simple setup WITH known number of iterations
 
 obj = ProgressBar(numIterations, ...
-    'Title', 'Est. Order Test', ...
-    'EstimatorOrder', 5);
-
+    'Title', 'Test Progress' ...
+    );
 
 for iIteration = 1:numIterations,
     pause(1e-1);
@@ -27,4 +27,7 @@ end
 obj.close();
 
 
-% End of file: e_RunningTimeEstimator_demo.m
+
+
+
+% End of file: e_CountProcessedBytes.m

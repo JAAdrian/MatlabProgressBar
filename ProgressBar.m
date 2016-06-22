@@ -31,7 +31,6 @@ properties (Access = private)
     
     HasTotalIterations = false;
     HasUpdateRate = false;
-    HasColor = true;
     
     TimerTagName;
 end
@@ -45,7 +44,9 @@ properties (SetAccess = private, GetAccess = public)
 end
 
 properties ( Constant, Access = private )
+    MinBarLength = 10;
     MaxColumnsOnScreen = 90;
+    
     NumBlocks = 8; % HTML 'left blocks' go in eigths
     DefaultUpdateRate = inf; % every iteration gets printed
 end
@@ -98,7 +99,6 @@ methods
     
     
     
-    
     function [] = update(self, n, wasSuccessful)
         if nargin < 3 || isempty(wasSuccessful),
             wasSuccessful = true;
@@ -118,16 +118,22 @@ methods
         self.incrementIterationCounter(n);
         
         if ~self.HasUpdateRate,
-            self.printStatus();
+            self.printProgressBar();
         end
         if self.IterationCounter == self.Total,
             self.stopTimer();
         end
     end
     
+    
+    
+    
     function [] = printMessage(self)
         error('Not yet implemented');
     end
+    
+    
+    
     
     function [] = summary(self)
         error('Not yet implemented');
@@ -137,10 +143,16 @@ methods
         end
     end
     
+    
+    
+    
     function [] = close(self)
         delete(self);
     end
 end
+
+
+
 
 
 methods (Access = private)
@@ -168,13 +180,6 @@ methods (Access = private)
                 {'scalar', 'positive', 'real', 'nonempty', 'nonnan', 'finite'} ...
                 ) ...
             );
-        
-        p.addParameter('ColoredBar', true, ...
-            @(in) validateattributes(in, ...
-                {'logical', 'numeric'}, ...
-                {'scalar', 'binary', 'nonempty', 'nonnan', 'finite', 'real'} ...
-                ) ...
-            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -184,7 +189,6 @@ methods (Access = private)
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
         self.UpdateRate = p.Results.UpdateRate;
-        self.HasColor = p.Results.ColoredBar;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -194,42 +198,47 @@ methods (Access = private)
         end
     end
     
+    
+    
+    
     function [] = computeBlockFractions(self)
         self.FractionMainBlock = 1 / length(self.Bar);
         self.FractionBlock = self.FractionMainBlock / self.NumBlocks;
     end
+    
+    
+    
     
     function [format, preString, postString] = returnFormatString(self)
         % this is adapted from tqdm
 
         if self.HasTotalIterations,
             if ~isempty(self.Title),
-                preString  = '%s:\t%03.0f%%  ';
+                preString  = '%s:  %03.0f%%  ';
             else
                 preString  = '%03.0f%%  ';
             end
             
-            if self.IterationCounter == self.Total || ~self.HasColor,
-                centerString = '|%s|';
-            else
-                centerString = '|[\b%s]\b|';
-            end
+            centerString = '|%s|';
 
             postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
 
             format = [preString, centerString, postString];
         else
-            preString  = [];
-            postString = [];
-
+            preString  = '';
+            postString = '';
+            
             if ~isempty(self.Title),
-                format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
+                format = '%s:  %iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
             else
                 format = '%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
             end
         end
     end
 
+    
+    
+    
     function [argList] = returnArgumentList(self)
         % 1 : Title
         % 2 : progress percent
@@ -287,6 +296,9 @@ methods (Access = private)
         end
     end
 
+    
+    
+    
     function [] = setupBar(self)
         [~, preBarFormat, postBarFormat] = self.returnFormatString();
 
@@ -296,11 +308,17 @@ methods (Access = private)
             self.Total, ...
             self.Total, ...
             100, 100, 100, 100, 100, 100, 1e3);
-        self.Bar = blanks(...
-            self.MaxColumnsOnScreen - length(preBar) - length(postBar));
+        
+        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
+        lenBar = max(lenBar, self.MinBarLength);
+        
+        self.Bar = blanks(lenBar);
     end
 
-    function [] = printStatus(self)
+    
+    
+    
+    function [] = printProgressBar(self)
         fprintf(1, backspace(self.NumWrittenCharacters));
         
         formatString = self.returnFormatString();
@@ -311,6 +329,9 @@ methods (Access = private)
             argumentList{:} ...
             );
     end
+    
+    
+    
     
     function [barString] = getCurrentBar(self)
         lenBar = length(self.Bar);
@@ -339,6 +360,9 @@ methods (Access = private)
         barString = self.Bar;
     end
     
+    
+    
+    
     function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
         progress = self.IterationCounter / self.Total;
         
@@ -347,14 +371,24 @@ methods (Access = private)
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
     
+    
+    
+    
+    function [timerObject] = getTimer(self)
+        timerObject = timerfindall('Tag', self.TimerTagName);
+    end
+    
+    
+    
+    
     function [] = startTimer(self)
         timerObject = self.getTimer();
         
         timerObject.BusyMode = 'drop';
         timerObject.ExecutionMode = 'fixedSpacing';
         
-        timerObject.TimerFcn = @(~, ~) self.printStatus();
-        timerObject.StopFcn  = @(~, ~) self.printStatus();
+        timerObject.TimerFcn = @(~, ~) self.printProgressBar();
+        timerObject.StopFcn  = @(~, ~) self.printProgressBar();
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         timerObject.Period     = updatePeriod;
@@ -363,11 +397,16 @@ methods (Access = private)
         start(timerObject);
     end
     
+    
+    
+    
     function [] = stopTimer(self)
         timerObject = self.getTimer();
         
         stop(timerObject);
     end
+    
+    
     
     
     function [] = incrementIterationCounter(self, n)
@@ -393,10 +432,6 @@ methods (Access = private)
     function [tVal] = getTic(self)
         tVal = self.getObjectList();
         tVal = tVal{end};
-    end
-    
-    function [timerObject] = getTimer(self)
-        timerObject = timerfindall('Tag', self.TimerTagName);
     end
 end
 
@@ -430,12 +465,9 @@ methods (Access = private, Static = true)
 end
 
 
-
-
-
-
-
 end
+
+
 
 function [thisBlock] = getBlock(idx)
 % idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
@@ -457,7 +489,7 @@ thisBlock = blocks(min(idx, length(blocks)));
 end
 
 function [str] = backspace(numChars)
-str = repmat('\b', 1, numChars);
+str = repmat(sprintf('\b'), 1, numChars);
 end
 
 function [hoursMinsSecs] = convertTime(secondsIn)
@@ -484,39 +516,5 @@ end
 
 
 
-
-%-------------------- Licence ---------------------------------------------
-% Copyright (c) 2016, J.-A. Adrian
-% Institute for Hearing Technology and Audiology
-% Jade University of Applied Sciences
-% All rights reserved.
-%
-% Redistribution and use in source and binary forms, with or without
-% modification, are permitted provided that the following conditions are
-% met:
-%
-%	1. Redistributions of source code must retain the above copyright
-%	   notice, this list of conditions and the following disclaimer.
-%
-%	2. Redistributions in binary form must reproduce the above copyright
-%	   notice, this list of conditions and the following disclaimer in
-%	   the documentation and/or other materials provided with the
-%	   distribution.
-%
-%	3. Neither the name of the copyright holder nor the names of its
-%	   contributors may be used to endorse or promote products derived
-%	   from this software without specific prior written permission.
-%
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-% IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-% PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-% HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-% SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-% TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-% PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-% LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-% NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 % End of file: ProgressBar.m

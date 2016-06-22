@@ -15,13 +15,26 @@ numIterations = 1e2;
 %% Simple setup WITH known number of iterations
 
 obj = ProgressBar(numIterations, ...
-    'Title', 'Test Progress' ...
+    'Title', 'Progress' ...
     );
 
 for iIteration = 1:numIterations,
     pause(1e-1);
     
     obj.update();
+end
+obj.close();
+
+%% Now with different step size
+
+obj = ProgressBar(numIterations, ...
+    'Title', 'Step Size 2' ...
+    );
+
+for iIteration = 1:2:numIterations,
+    pause(1e-1);
+    
+    obj.update(2);
 end
 obj.close();
 
