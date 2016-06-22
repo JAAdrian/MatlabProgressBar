@@ -6,7 +6,28 @@
 
 clear;
 close all;
+clc;
 
+addpath('..');
+
+numIterations = 1e2;
+
+%% Simple setup WITH known number of iterations
+
+obj = ProgressBar(numIterations, ...
+    'Title', 'Progress' ...
+    );
+
+for iIteration = 1:numIterations,
+    obj.update();
+    
+    if iIteration == 30 || iIteration == 50 || iIteration == 70,
+        obj.printMessage(sprintf('Hello! @Iteration %i', iIteration));
+    end
+    
+    pause(1e-1);
+end
+obj.close();
 
 
 

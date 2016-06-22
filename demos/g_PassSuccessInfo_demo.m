@@ -6,18 +6,24 @@
 
 clear;
 close all;
+clc
 
+addpath('..');
+
+numIterations = 1e2;
 
 
 %% Pass success information of the current iteration
 
-obj = ProgressBar(numIterations);
+obj = ProgressBar(numIterations, ...
+    'Title', 'Test Success' ...
+    );
 
-wasSuccessful = logical(binornd(1, 0.95), numIterations, 1);
+wasSuccessful = logical(binornd(1, 0.95, numIterations, 1));
 for iIteration = 1:numIterations,
-    pause(1e-2);
+    pause(0.1);
     
-    obj.update(wasSuccessful(iIteration));
+    obj.update([], wasSuccessful(iIteration));
 end
 obj.close();
 
