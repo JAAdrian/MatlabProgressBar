@@ -19,7 +19,14 @@ classdef ProgressBar < handle
 %
 
 
-properties (Access = private)
+properties ( SetAccess = private, GetAccess = public )
+    Title;
+    Total;
+    Unit;
+    UpdateRate;
+end
+
+properties ( Access = private )
     Bar = '';
     IterationCounter = 0;
     
@@ -32,15 +39,8 @@ properties (Access = private)
     HasTotalIterations = false;
     HasUpdateRate = false;
     
-    TimerTagName;
-end
-
-
-properties (SetAccess = private, GetAccess = public)
-    Title;
-    Total;
-    Unit;
-    UpdateRate;
+    TicObject;
+    TimerObject;
 end
 
 properties ( Constant, Access = private )
