@@ -45,7 +45,9 @@ properties (SetAccess = private, GetAccess = public)
 end
 
 properties ( Constant, Access = private )
+    MinBarLength = 10;
     MaxColumnsOnScreen = 90;
+    
     NumBlocks = 8; % HTML 'left blocks' go in eigths
     DefaultUpdateRate = inf; % every iteration gets printed
 end
@@ -299,8 +301,11 @@ methods (Access = private)
             self.Total, ...
             self.Total, ...
             100, 100, 100, 100, 100, 100, 1e3);
-        self.Bar = blanks(...
-            self.MaxColumnsOnScreen - length(preBar) - length(postBar));
+        
+        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
+        lenBar = max(lenBar, self.MinBarLength);
+        
+        self.Bar = blanks(lenBar);
     end
 
     function [] = printStatus(self)
