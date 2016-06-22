@@ -150,8 +150,26 @@ methods
     
     
     
-    function [] = printMessage(self)
-        error('Not yet implemented');
+    function [] = printMessage(self, msg, shouldPrintNextProgBar)
+        if nargin < 3 || isempty(shouldPrintNextProgBar),
+            shouldPrintNextProgBar = false;
+        end
+        validateattributes(shouldPrintNextProgBar, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonempty', 'nonnan'} ...
+            );
+        
+        fprintf(1, backspace(self.NumWrittenCharacters));
+        
+        fprintf(1, '\t');
+        fprintf(1, msg);
+        fprintf(1, '\n');
+        
+        self.NumWrittenCharacters = 0;
+        
+        if shouldPrintNextProgBar,
+            self.printProgressBar();
+        end
     end
     
     
