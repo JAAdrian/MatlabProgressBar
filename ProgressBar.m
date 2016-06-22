@@ -19,7 +19,14 @@ classdef ProgressBar < handle
 %
 
 
-properties (Access = private)
+properties ( SetAccess = private, GetAccess = public )
+    Title;
+    Total;
+    Unit;
+    UpdateRate;
+end
+
+properties ( Access = private )
     Bar = '';
     IterationCounter = 0;
     
@@ -31,16 +38,10 @@ properties (Access = private)
     
     HasTotalIterations = false;
     HasUpdateRate = false;
+    wasStartMethodCalled = false;
     
-    TimerTagName;
-end
-
-
-properties (SetAccess = private, GetAccess = public)
-    Title;
-    Total;
-    Unit;
-    UpdateRate;
+    TicObject;
+    TimerObject;
 end
 
 properties ( Constant, Access = private )
@@ -49,6 +50,12 @@ properties ( Constant, Access = private )
     
     NumBlocks = 8; % HTML 'left blocks' go in eigths
     DefaultUpdateRate = inf; % every iteration gets printed
+    
+    TimerTagName = 'ProgressBar';
+end
+
+properties ( Dependent, Access = private )
+    IsNested;
 end
 
 
@@ -60,16 +67,14 @@ methods
             self.parseInputs(total, varargin{:});
         end
         
-        % add a new timer object with unique tag
-        self.TimerTagName = char(java.util.UUID.randomUUID);
-        timer(...
+        % add a new timer object with the standard tag name
+        self.TimerObject = timer(...
             'Tag', self.TimerTagName, ...
             'ObjectVisibility', 'off' ...
             );
 
         % register the new tic object
-        ticObj = tic;
-        self.addToObjectList(ticObj);
+        self.TicObject = tic;
         
         if self.HasTotalIterations,
             % initialize the progress bar and pre-compute some measures
@@ -80,20 +85,37 @@ methods
         if self.HasUpdateRate,
             self.startTimer();
         end
+        
+        if self.IsNested,
+            fprintf(1, '\n');
+        end
     end
     
     function delete(self)
-        % when a progress bar has been plot, hit return
-        if self.IterationCounter,
+        if self.IsNested,
+            % when this prog bar was nested, remove it from the command
+            % line. +1 due to the line break
+            fprintf(backspace(self.NumWrittenCharacters + 1));
+        end
+        
+        if self.IterationCounter && ~self.IsNested,
+            % when a progress bar has been plotted, hit return
             fprintf('\n');
         end
         
-        % remove the ticObject from list
-        self.removeMeFromObjectList();
-        
         % delete timer
-        timerObject = self.getTimer();
-        delete(timerObject);
+        delete(self.TimerObject);
+    end
+    
+    
+    
+    
+    function [] = start(self)
+        self.wasStartMethodCalled = true;
+        
+        self.printProgressBar();
+        
+        self.wasStartMethodCalled = false;
     end
     
     
@@ -148,6 +170,17 @@ methods
     
     function [] = close(self)
         delete(self);
+    end
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%% Setter / Getter %%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    function [yesNo] = get.IsNested(self)
+        timerList = self.findTimers();
+        
+        yesNo = length(timerList) > 1;
     end
 end
 
@@ -209,6 +242,45 @@ methods (Access = private)
     
     
     
+    function [] = setupBar(self)
+        [~, preBarFormat, postBarFormat] = self.returnFormatString();
+        
+        % insert worst case inputs to get (almost) maximum length of bar
+        preBar = sprintf(preBarFormat, self.Title, 100);
+        postBar = sprintf(postBarFormat, ...
+            self.Total, ...
+            self.Total, ...
+            100, 100, 100, 100, 100, 100, 1e3);
+        
+        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
+        lenBar = max(lenBar, self.MinBarLength);
+        
+        self.Bar = blanks(lenBar);
+    end
+    
+    
+    
+    
+    function [] = printProgressBar(self)
+        if ~self.IterationCounter && ~self.wasStartMethodCalled,
+            return;
+        end
+        
+        fprintf(1, backspace(self.NumWrittenCharacters));
+        
+        formatString = self.returnFormatString();
+        argumentList = self.returnArgumentList();
+        
+        self.NumWrittenCharacters = fprintf(1, ...
+            formatString, ...
+            argumentList{:} ...
+            );
+    end
+    
+    
+    
+    
+    
     function [format, preString, postString] = returnFormatString(self)
         % this is adapted from tqdm
 
@@ -221,7 +293,8 @@ methods (Access = private)
             
             centerString = '|%s|';
 
-            postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
+            postString = ...
+                ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
 
             format = [preString, centerString, postString];
         else
@@ -240,94 +313,82 @@ methods (Access = private)
     
     
     function [argList] = returnArgumentList(self)
-        % 1 : Title
-        % 2 : progress percent
-        % 3 : progBar string
-        % 4 : interationCounter
-        % 5 : Total
-        % 6 : ET.hours
-        % 7 : ET.minutes
-        % 8 : ET.seconds
-        % 9 : ETA.hours
-        % 10: ETA.minutes
-        % 11: ETA.seconds
-        % 12: it/s
-
-        
         % elapsed time (ET)
-        ticObj = self.getTic();
-        thisTimeSec = toc(ticObj);
+        thisTimeSec = toc(self.TicObject);
         etHoursMinsSecs = convertTime(thisTimeSec);
 
         % iterations per second
         iterationsPerSecond = self.IterationCounter / thisTimeSec;
         
         if self.HasTotalIterations,
+            % 1 : Title
+            % 2 : progress percent
+            % 3 : progBar string
+            % 4 : iterationCounter
+            % 5 : Total
+            % 6 : ET.hours
+            % 7 : ET.minutes
+            % 8 : ET.seconds
+            % 9 : ETA.hours
+            % 10: ETA.minutes
+            % 11: ETA.seconds
+            % 12: it/s
+            
             % estimated time of arrival (ETA)
             [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
             
-            argList = {
-                self.Title
-                round(self.IterationCounter / self.Total * 100)
-                self.getCurrentBar
-                self.IterationCounter
-                self.Total
-                etHoursMinsSecs(1)
-                etHoursMinsSecs(2)
-                etHoursMinsSecs(3)
-                etaHoursMinsSecs(1)
-                etaHoursMinsSecs(2)
-                etaHoursMinsSecs(3)
-                iterationsPerSecond
-                };
+            if ~self.wasStartMethodCalled,
+                argList = {
+                    self.Title, ...
+                    round(self.IterationCounter / self.Total * 100), ...
+                    self.getCurrentBar, ...
+                    self.IterationCounter, ...
+                    self.Total, ...
+                    etHoursMinsSecs(1), ...
+                    etHoursMinsSecs(2), ...
+                    etHoursMinsSecs(3), ...
+                    etaHoursMinsSecs(1), ...
+                    etaHoursMinsSecs(2), ...
+                    etaHoursMinsSecs(3), ...
+                    iterationsPerSecond ...
+                    };
+            else
+                argList = {
+                    self.Title, ...
+                    round(self.IterationCounter / self.Total * 100), ...
+                    self.Bar, ...
+                    self.IterationCounter, ...
+                    self.Total, ...
+                    etHoursMinsSecs(1), ...
+                    etHoursMinsSecs(2), ...
+                    etHoursMinsSecs(3), ...
+                    etaHoursMinsSecs(1), ...
+                    etaHoursMinsSecs(2), ...
+                    etaHoursMinsSecs(3), ...
+                    iterationsPerSecond ...
+                    };
+            end
         else
+            % 1: Title
+            % 2: iterationCounter
+            % 3: ET.hours
+            % 4: ET.minutes
+            % 5: ET.seconds
+            % 6: it/s
+            
             argList = {
-                self.Title
-                self.IterationCounter
-                etHoursMinsSecs(1)
-                etHoursMinsSecs(2)
-                etHoursMinsSecs(3)
-                iterationsPerSecond
+                self.Title, ...
+                self.IterationCounter, ...
+                etHoursMinsSecs(1), ...
+                etHoursMinsSecs(2), ...
+                etHoursMinsSecs(3), ...
+                iterationsPerSecond ...
                 };
         end
 
         if isempty(self.Title),
             argList = argList(2:end);
         end
-    end
-
-    
-    
-    
-    function [] = setupBar(self)
-        [~, preBarFormat, postBarFormat] = self.returnFormatString();
-
-        % insert worst case inputs to get (almost) maximum length of bar
-        preBar = sprintf(preBarFormat, self.Title, 100);
-        postBar = sprintf(postBarFormat, ...
-            self.Total, ...
-            self.Total, ...
-            100, 100, 100, 100, 100, 100, 1e3);
-        
-        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
-        lenBar = max(lenBar, self.MinBarLength);
-        
-        self.Bar = blanks(lenBar);
-    end
-
-    
-    
-    
-    function [] = printProgressBar(self)
-        fprintf(1, backspace(self.NumWrittenCharacters));
-        
-        formatString = self.returnFormatString();
-        argumentList = self.returnArgumentList();
-        
-        self.NumWrittenCharacters = fprintf(1, ...
-            formatString, ...
-            argumentList{:} ...
-            );
     end
     
     
@@ -374,36 +435,25 @@ methods (Access = private)
     
     
     
-    function [timerObject] = getTimer(self)
-        timerObject = timerfindall('Tag', self.TimerTagName);
-    end
-    
-    
-    
-    
     function [] = startTimer(self)
-        timerObject = self.getTimer();
+        self.TimerObject.BusyMode = 'drop';
+        self.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        timerObject.BusyMode = 'drop';
-        timerObject.ExecutionMode = 'fixedSpacing';
-        
-        timerObject.TimerFcn = @(~, ~) self.printProgressBar();
-        timerObject.StopFcn  = @(~, ~) self.printProgressBar();
+        self.TimerObject.TimerFcn = @(~, ~) self.printProgressBar();
+        self.TimerObject.StopFcn  = @(~, ~) self.printProgressBar();
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
-        timerObject.Period     = updatePeriod;
-        timerObject.StartDelay = updatePeriod;
+        self.TimerObject.Period     = updatePeriod;
+        self.TimerObject.StartDelay = updatePeriod;
         
-        start(timerObject);
+        start(self.TimerObject);
     end
     
     
     
     
     function [] = stopTimer(self)
-        timerObject = self.getTimer();
-        
-        stop(timerObject);
+        stop(self.TimerObject);
     end
     
     
@@ -413,54 +463,10 @@ methods (Access = private)
         self.IterationCounter = self.IterationCounter + n;
     end
     
-    function [list] = getObjectList(self) %#ok<MANU>
-        list = ProgressBar.objectList();
-    end
     
-    function [] = addToObjectList(self, newObj) %#ok<INUSL>
-        ProgressBar.objectList(newObj, false);
-    end
     
-    function [] = removeMeFromObjectList(self) %#ok<MANU>
-        ProgressBar.objectList(-1, false);
-    end
-    
-    function [] = resetObjectList(self) %#ok<MANU>
-        ProgressBar.objectList('Clears the object list', true);
-    end
-    
-    function [tVal] = getTic(self)
-        tVal = self.getObjectList();
-        tVal = tVal{end};
-    end
-end
-
-methods (Access = private, Static = true)
-    function [list] = objectList(newObject, shouldClearList)
-        % Behaviour of a static method inspired by:
-        % http://stackoverflow.com/a/14571266
-        persistent ProgObjects;
-        
-        if nargin,
-            if nargin < 2 || isempty(shouldClearList),
-                shouldClearList = false;
-            end
-            if shouldClearList,
-                ProgObjects = {};
-                return;
-            end
-            
-            switch class(newObject),
-                case {'timer', 'ProgressBar', 'uint64'},
-                    ProgObjects = [ProgObjects; {newObject}];
-                case 'double',
-                    ProgObjects = ProgObjects(1:end-1);
-                otherwise
-                    error('Unsupported Option to objectList()');
-            end
-        end
-        
-        list = ProgObjects;
+    function [timerList] = findTimers(self)
+        timerList = timerfindall('Tag', self.TimerTagName);
     end
 end
 
@@ -488,9 +494,11 @@ blocks = [
 thisBlock = blocks(min(idx, length(blocks)));
 end
 
+
 function [str] = backspace(numChars)
 str = repmat(sprintf('\b'), 1, numChars);
 end
+
 
 function [hoursMinsSecs] = convertTime(secondsIn)
 % fast implementation using mod() from
@@ -498,6 +506,7 @@ function [hoursMinsSecs] = convertTime(secondsIn)
 
 hoursMinsSecs = floor(mod(secondsIn, [0, 3600, 60]) ./ [3600, 60, 1]);
 end
+
 
 function [yesNo] = checkInputOfTotal(total)
 isTotalEmpty = isempty(total);
@@ -511,7 +520,6 @@ else
         {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
         );
 end
-
 end
 
 
