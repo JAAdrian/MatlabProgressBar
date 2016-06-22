@@ -120,7 +120,7 @@ methods
         self.incrementIterationCounter(n);
         
         if ~self.HasUpdateRate,
-            self.printStatus();
+            self.printProgressBar();
         end
         if self.IterationCounter == self.Total,
             self.stopTimer();
@@ -308,7 +308,7 @@ methods (Access = private)
         self.Bar = blanks(lenBar);
     end
 
-    function [] = printStatus(self)
+    function [] = printProgressBar(self)
         fprintf(1, backspace(self.NumWrittenCharacters));
         
         formatString = self.returnFormatString();
@@ -361,8 +361,8 @@ methods (Access = private)
         timerObject.BusyMode = 'drop';
         timerObject.ExecutionMode = 'fixedSpacing';
         
-        timerObject.TimerFcn = @(~, ~) self.printStatus();
-        timerObject.StopFcn  = @(~, ~) self.printStatus();
+        timerObject.TimerFcn = @(~, ~) self.printProgressBar();
+        timerObject.StopFcn  = @(~, ~) self.printProgressBar();
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         timerObject.Period     = updatePeriod;
