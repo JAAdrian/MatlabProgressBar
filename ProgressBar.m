@@ -121,7 +121,10 @@ methods
     
     
     
-    function [] = update(self, n, wasSuccessful)
+    function [] = update(self, n, wasSuccessful, shouldPrintNextProgBar)
+        if nargin < 4 || isempty(shouldPrintNextProgBar),
+            shouldPrintNextProgBar = false;
+        end
         if nargin < 3 || isempty(wasSuccessful),
             wasSuccessful = true;
         end
@@ -136,9 +139,18 @@ methods
             {'logical', 'numeric'}, ...
             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
             );
+        validateattributes(shouldPrintNextProgBar, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+            );
         
         self.incrementIterationCounter(n);
         
+        if ~wasSuccessful,
+            infoMsg = sprintf('Iteration %i was not successful!', ...
+                self.IterationCounter);
+            self.printMessage(infoMsg, shouldPrintNextProgBar);
+        end
         if ~self.HasUpdateRate,
             self.printProgressBar();
         end
