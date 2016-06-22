@@ -35,9 +35,10 @@ Feature Request
 - [x] visual update interval
 - [x] when no `numIterations` is passed we state the ET and number of iterations and it/s
 - [x] nested bars
+- [x] printMessage() method for debug printing (or similar)
+- [x] print an info when a run was not successful
 - [ ] Time estimate
     - [x] over all last iterations
     - [ ] running mean/median
 - [ ] after x seconds without update (e.g. the processing step takes a lot of time) we show an idle icon
-- [ ] printMessage() method for debug printing (or similar)
 - [ ] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
