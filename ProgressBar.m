@@ -49,6 +49,12 @@ properties ( Constant, Access = private )
     
     NumBlocks = 8; % HTML 'left blocks' go in eigths
     DefaultUpdateRate = inf; % every iteration gets printed
+    
+    TimerTagName = 'ProgressBar';
+end
+
+properties ( Dependent, Access = private )
+    IsNested;
 end
 
 
@@ -78,11 +84,21 @@ methods
         if self.HasUpdateRate,
             self.startTimer();
         end
+        
+        if self.IsNested,
+            fprintf(1, '\n');
+        end
     end
     
     function delete(self)
-        % when a progress bar has been plot, hit return
-        if self.IterationCounter,
+        if self.IsNested,
+            % when this prog bar was nested, remove it from the command
+            % line. +1 due to the line break
+            fprintf(backspace(self.NumWrittenCharacters + 1));
+        end
+        
+        if self.IterationCounter && ~self.IsNested,
+            % when a progress bar has been plotted, hit return
             fprintf('\n');
         end
         
@@ -142,6 +158,17 @@ methods
     
     function [] = close(self)
         delete(self);
+    end
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%% Setter / Getter %%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    function [yesNo] = get.IsNested(self)
+        timerList = self.findTimers();
+        
+        yesNo = length(timerList) > 1;
     end
 end
 
