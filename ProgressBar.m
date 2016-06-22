@@ -31,7 +31,6 @@ properties (Access = private)
     
     HasTotalIterations = false;
     HasUpdateRate = false;
-    HasColor = true;
     
     TimerTagName;
 end
@@ -170,13 +169,6 @@ methods (Access = private)
                 {'scalar', 'positive', 'real', 'nonempty', 'nonnan', 'finite'} ...
                 ) ...
             );
-        
-        p.addParameter('ColoredBar', true, ...
-            @(in) validateattributes(in, ...
-                {'logical', 'numeric'}, ...
-                {'scalar', 'binary', 'nonempty', 'nonnan', 'finite', 'real'} ...
-                ) ...
-            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -186,7 +178,6 @@ methods (Access = private)
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
         self.UpdateRate = p.Results.UpdateRate;
-        self.HasColor = p.Results.ColoredBar;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -211,21 +202,14 @@ methods (Access = private)
                 preString  = '%03.0f%%  ';
             end
             
-            if self.IterationCounter == self.Total || ~self.HasColor,
-                centerString = '|%s|';
-            else
-                % make the actual moving bar orange.
-                % Source:
-                % http://undocumentedmatlab.com/blog/another-command-window-text-color-hack
-                centerString = '|[\b%s]\b|';
-            end
+            centerString = '|%s|';
 
             postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
 
             format = [preString, centerString, postString];
         else
-            preString  = [];
-            postString = [];
+            preString  = '';
+            postString = '';
 
             if ~isempty(self.Title),
                 format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
