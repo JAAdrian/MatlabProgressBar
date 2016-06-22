@@ -10,29 +10,56 @@ clc;
 
 addpath('..');
 
-numIterations = 1e3;
+numOuterIterations = 3;
+numInnerIterations = 1e2;
 
 
-%% Nested Bars
+%% Nested Bars without update rate
 
-obj1 = ProgressBar(5, ...
+obj1 = ProgressBar(numOuterIterations, ...
     'Title', 'Loop 1' ...
     );
 
-for iOuterIteration = 1:5,
-    obj1.update()
-    
-    obj2 = ProgressBar(numIterations / 10, ...
+obj1.start();
+for iOuterIteration = 1:numOuterIterations,
+    obj2 = ProgressBar(numInnerIterations, ...
         'Title', 'Loop 2' ...
         );
     
-    for jInnerIteration = 1:numIterations/10,
-        pause(1e-2);
+    for jInnerIteration = 1:numInnerIterations,        
+        obj2.update();
         
+        pause(0.1);
+    end
+    obj2.close();
+    
+    obj1.update();
+end
+obj1.close();
+
+
+%% Nested Bars WITH update rate
+
+numInnerIterations = 500e3;
+
+% Don't have an update rate here!!!!
+obj1 = ProgressBar(numOuterIterations, ...
+    'Title', 'Loop 1' ...
+    );
+
+obj1.start();
+for iOuterIteration = 1:numOuterIterations,
+    obj2 = ProgressBar(numInnerIterations, ...
+        'UpdateRate', 10, ...
+        'Title', 'Loop 2' ...
+        );
+    
+    for jInnerIteration = 1:numInnerIterations,        
         obj2.update();
     end
-%     delete(obj2);
     obj2.close();
+    
+    obj1.update();
 end
 obj1.close();
 
