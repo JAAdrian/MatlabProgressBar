@@ -99,7 +99,6 @@ methods
     
     
     
-    
     function [] = update(self, n, wasSuccessful)
         if nargin < 3 || isempty(wasSuccessful),
             wasSuccessful = true;
@@ -126,9 +125,15 @@ methods
         end
     end
     
+    
+    
+    
     function [] = printMessage(self)
         error('Not yet implemented');
     end
+    
+    
+    
     
     function [] = summary(self)
         error('Not yet implemented');
@@ -138,10 +143,16 @@ methods
         end
     end
     
+    
+    
+    
     function [] = close(self)
         delete(self);
     end
 end
+
+
+
 
 
 methods (Access = private)
@@ -187,10 +198,16 @@ methods (Access = private)
         end
     end
     
+    
+    
+    
     function [] = computeBlockFractions(self)
         self.FractionMainBlock = 1 / length(self.Bar);
         self.FractionBlock = self.FractionMainBlock / self.NumBlocks;
     end
+    
+    
+    
     
     function [format, preString, postString] = returnFormatString(self)
         % this is adapted from tqdm
@@ -219,6 +236,9 @@ methods (Access = private)
         end
     end
 
+    
+    
+    
     function [argList] = returnArgumentList(self)
         % 1 : Title
         % 2 : progress percent
@@ -276,6 +296,9 @@ methods (Access = private)
         end
     end
 
+    
+    
+    
     function [] = setupBar(self)
         [~, preBarFormat, postBarFormat] = self.returnFormatString();
 
@@ -292,6 +315,9 @@ methods (Access = private)
         self.Bar = blanks(lenBar);
     end
 
+    
+    
+    
     function [] = printProgressBar(self)
         fprintf(1, backspace(self.NumWrittenCharacters));
         
@@ -303,6 +329,9 @@ methods (Access = private)
             argumentList{:} ...
             );
     end
+    
+    
+    
     
     function [barString] = getCurrentBar(self)
         lenBar = length(self.Bar);
@@ -331,6 +360,9 @@ methods (Access = private)
         barString = self.Bar;
     end
     
+    
+    
+    
     function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
         progress = self.IterationCounter / self.Total;
         
@@ -339,9 +371,15 @@ methods (Access = private)
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
     
+    
+    
+    
     function [timerObject] = getTimer(self)
         timerObject = timerfindall('Tag', self.TimerTagName);
     end
+    
+    
+    
     
     function [] = startTimer(self)
         timerObject = self.getTimer();
@@ -359,11 +397,16 @@ methods (Access = private)
         start(timerObject);
     end
     
+    
+    
+    
     function [] = stopTimer(self)
         timerObject = self.getTimer();
         
         stop(timerObject);
     end
+    
+    
     
     
     function [] = incrementIterationCounter(self, n)
@@ -422,12 +465,9 @@ methods (Access = private, Static = true)
 end
 
 
-
-
-
-
-
 end
+
+
 
 function [thisBlock] = getBlock(idx)
 % idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
