@@ -7,6 +7,8 @@ Should look like [TQDM](https://github.com/tqdm/tqdm) and uses [left blocks](htt
 Dependencies
 -------------------------
 
+No dependencies to toolboxes. The code has been tested with MATLAB r2016a.
+
 
 Installation
 -------------------------
