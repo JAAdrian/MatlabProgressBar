@@ -38,6 +38,7 @@ properties ( Access = private )
     
     HasTotalIterations = false;
     HasUpdateRate = false;
+    wasStartMethodCalled = false;
     
     TicObject;
     TimerObject;
@@ -104,6 +105,17 @@ methods
         
         % delete timer
         delete(self.TimerObject);
+    end
+    
+    
+    
+    
+    function [] = start(self)
+        self.wasStartMethodCalled = true;
+        
+        self.printProgressBar();
+        
+        self.wasStartMethodCalled = false;
     end
     
     
@@ -250,7 +262,7 @@ methods (Access = private)
     
     
     function [] = printProgressBar(self)
-        if ~self.IterationCounter,
+        if ~self.IterationCounter && ~self.wasStartMethodCalled,
             return;
         end
         
@@ -264,6 +276,7 @@ methods (Access = private)
             argumentList{:} ...
             );
     end
+    
     
     
     
@@ -324,20 +337,37 @@ methods (Access = private)
             % estimated time of arrival (ETA)
             [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
             
-            argList = {
-                self.Title
-                round(self.IterationCounter / self.Total * 100)
-                self.getCurrentBar
-                self.IterationCounter
-                self.Total
-                etHoursMinsSecs(1)
-                etHoursMinsSecs(2)
-                etHoursMinsSecs(3)
-                etaHoursMinsSecs(1)
-                etaHoursMinsSecs(2)
-                etaHoursMinsSecs(3)
-                iterationsPerSecond
-                };
+            if ~self.wasStartMethodCalled,
+                argList = {
+                    self.Title, ...
+                    round(self.IterationCounter / self.Total * 100), ...
+                    self.getCurrentBar, ...
+                    self.IterationCounter, ...
+                    self.Total, ...
+                    etHoursMinsSecs(1), ...
+                    etHoursMinsSecs(2), ...
+                    etHoursMinsSecs(3), ...
+                    etaHoursMinsSecs(1), ...
+                    etaHoursMinsSecs(2), ...
+                    etaHoursMinsSecs(3), ...
+                    iterationsPerSecond ...
+                    };
+            else
+                argList = {
+                    self.Title, ...
+                    round(self.IterationCounter / self.Total * 100), ...
+                    self.Bar, ...
+                    self.IterationCounter, ...
+                    self.Total, ...
+                    etHoursMinsSecs(1), ...
+                    etHoursMinsSecs(2), ...
+                    etHoursMinsSecs(3), ...
+                    etaHoursMinsSecs(1), ...
+                    etaHoursMinsSecs(2), ...
+                    etaHoursMinsSecs(3), ...
+                    iterationsPerSecond ...
+                    };
+            end
         else
             % 1: Title
             % 2: iterationCounter
@@ -347,12 +377,12 @@ methods (Access = private)
             % 6: it/s
             
             argList = {
-                self.Title
-                self.IterationCounter
-                etHoursMinsSecs(1)
-                etHoursMinsSecs(2)
-                etHoursMinsSecs(3)
-                iterationsPerSecond
+                self.Title, ...
+                self.IterationCounter, ...
+                etHoursMinsSecs(1), ...
+                etHoursMinsSecs(2), ...
+                etHoursMinsSecs(3), ...
+                iterationsPerSecond ...
                 };
         end
 
