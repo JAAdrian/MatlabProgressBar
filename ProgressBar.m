@@ -355,6 +355,10 @@ methods (Access = private)
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
     
+    function [timerObject] = getTimer(self)
+        timerObject = timerfindall('Tag', self.TimerTagName);
+    end
+    
     function [] = startTimer(self)
         timerObject = self.getTimer();
         
@@ -401,10 +405,6 @@ methods (Access = private)
     function [tVal] = getTic(self)
         tVal = self.getObjectList();
         tVal = tVal{end};
-    end
-    
-    function [timerObject] = getTimer(self)
-        timerObject = timerfindall('Tag', self.TimerTagName);
     end
 end
 
