@@ -95,12 +95,12 @@ methods
         if self.IsNested,
             % when this prog bar was nested, remove it from the command
             % line. +1 due to the line break
-            fprintf(backspace(self.NumWrittenCharacters + 1));
+            fprintf(1, backspace(self.NumWrittenCharacters + 1));
         end
         
         if self.IterationCounter && ~self.IsNested,
             % when a progress bar has been plotted, hit return
-            fprintf('\n');
+            fprintf(1, '\n');
         end
         
         % delete timer
