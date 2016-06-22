@@ -31,13 +31,13 @@ Feature Request
 ----------------------
 
 - [x] TQDM blocks
-- [ ] Time estimate
-    - [x] over all last iterations
-    - [ ] running mean/median
 - [x] Section names etc.
 - [x] visual update interval
 - [x] when no `numIterations` is passed we state the ET and number of iterations and it/s
+- [x] nested bars
+- [ ] Time estimate
+    - [x] over all last iterations
+    - [ ] running mean/median
 - [ ] after x seconds without update (e.g. the processing step takes a lot of time) we show an idle icon
-- [ ] nesting with global ProgressBar list
 - [ ] printMessage() method for debug printing (or similar)
 - [ ] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)

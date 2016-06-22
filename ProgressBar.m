@@ -95,12 +95,12 @@ methods
         if self.IsNested,
             % when this prog bar was nested, remove it from the command
             % line. +1 due to the line break
-            fprintf(backspace(self.NumWrittenCharacters + 1));
+            fprintf(1, backspace(self.NumWrittenCharacters + 1));
         end
         
         if self.IterationCounter && ~self.IsNested,
             % when a progress bar has been plotted, hit return
-            fprintf('\n');
+            fprintf(1, '\n');
         end
         
         % delete timer
@@ -121,7 +121,10 @@ methods
     
     
     
-    function [] = update(self, n, wasSuccessful)
+    function [] = update(self, n, wasSuccessful, shouldPrintNextProgBar)
+        if nargin < 4 || isempty(shouldPrintNextProgBar),
+            shouldPrintNextProgBar = false;
+        end
         if nargin < 3 || isempty(wasSuccessful),
             wasSuccessful = true;
         end
@@ -136,9 +139,18 @@ methods
             {'logical', 'numeric'}, ...
             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
             );
+        validateattributes(shouldPrintNextProgBar, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+            );
         
         self.incrementIterationCounter(n);
         
+        if ~wasSuccessful,
+            infoMsg = sprintf('Iteration %i was not successful!', ...
+                self.IterationCounter);
+            self.printMessage(infoMsg, shouldPrintNextProgBar);
+        end
         if ~self.HasUpdateRate,
             self.printProgressBar();
         end
@@ -150,18 +162,25 @@ methods
     
     
     
-    function [] = printMessage(self)
-        error('Not yet implemented');
-    end
-    
-    
-    
-    
-    function [] = summary(self)
-        error('Not yet implemented');
+    function [] = printMessage(self, msg, shouldPrintNextProgBar)
+        if nargin < 3 || isempty(shouldPrintNextProgBar),
+            shouldPrintNextProgBar = false;
+        end
+        validateattributes(shouldPrintNextProgBar, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonempty', 'nonnan'} ...
+            );
         
-        if self.IterationCounter < self.Total,
-            return;
+        fprintf(1, backspace(self.NumWrittenCharacters));
+        
+        fprintf(1, '\t');
+        fprintf(1, msg);
+        fprintf(1, '\n');
+        
+        self.NumWrittenCharacters = 0;
+        
+        if shouldPrintNextProgBar,
+            self.printProgressBar();
         end
     end
     
