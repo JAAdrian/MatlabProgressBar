@@ -60,16 +60,14 @@ methods
             self.parseInputs(total, varargin{:});
         end
         
-        % add a new timer object with unique tag
-        self.TimerTagName = char(java.util.UUID.randomUUID);
-        timer(...
+        % add a new timer object with the standard tag name
+        self.TimerObject = timer(...
             'Tag', self.TimerTagName, ...
             'ObjectVisibility', 'off' ...
             );
 
         % register the new tic object
-        ticObj = tic;
-        self.addToObjectList(ticObj);
+        self.TicObject = tic;
         
         if self.HasTotalIterations,
             % initialize the progress bar and pre-compute some measures
@@ -88,12 +86,8 @@ methods
             fprintf('\n');
         end
         
-        % remove the ticObject from list
-        self.removeMeFromObjectList();
-        
         % delete timer
-        timerObject = self.getTimer();
-        delete(timerObject);
+        delete(self.TimerObject);
     end
     
     
@@ -374,36 +368,25 @@ methods (Access = private)
     
     
     
-    function [timerObject] = getTimer(self)
-        timerObject = timerfindall('Tag', self.TimerTagName);
-    end
-    
-    
-    
-    
     function [] = startTimer(self)
-        timerObject = self.getTimer();
+        self.TimerObject.BusyMode = 'drop';
+        self.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        timerObject.BusyMode = 'drop';
-        timerObject.ExecutionMode = 'fixedSpacing';
-        
-        timerObject.TimerFcn = @(~, ~) self.printProgressBar();
-        timerObject.StopFcn  = @(~, ~) self.printProgressBar();
+        self.TimerObject.TimerFcn = @(~, ~) self.printProgressBar();
+        self.TimerObject.StopFcn  = @(~, ~) self.printProgressBar();
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
-        timerObject.Period     = updatePeriod;
-        timerObject.StartDelay = updatePeriod;
+        self.TimerObject.Period     = updatePeriod;
+        self.TimerObject.StartDelay = updatePeriod;
         
-        start(timerObject);
+        start(self.TimerObject);
     end
     
     
     
     
     function [] = stopTimer(self)
-        timerObject = self.getTimer();
-        
-        stop(timerObject);
+        stop(self.TimerObject);
     end
     
     
@@ -413,54 +396,10 @@ methods (Access = private)
         self.IterationCounter = self.IterationCounter + n;
     end
     
-    function [list] = getObjectList(self) %#ok<MANU>
-        list = ProgressBar.objectList();
-    end
     
-    function [] = addToObjectList(self, newObj) %#ok<INUSL>
-        ProgressBar.objectList(newObj, false);
-    end
     
-    function [] = removeMeFromObjectList(self) %#ok<MANU>
-        ProgressBar.objectList(-1, false);
-    end
-    
-    function [] = resetObjectList(self) %#ok<MANU>
-        ProgressBar.objectList('Clears the object list', true);
-    end
-    
-    function [tVal] = getTic(self)
-        tVal = self.getObjectList();
-        tVal = tVal{end};
-    end
-end
-
-methods (Access = private, Static = true)
-    function [list] = objectList(newObject, shouldClearList)
-        % Behaviour of a static method inspired by:
-        % http://stackoverflow.com/a/14571266
-        persistent ProgObjects;
-        
-        if nargin,
-            if nargin < 2 || isempty(shouldClearList),
-                shouldClearList = false;
-            end
-            if shouldClearList,
-                ProgObjects = {};
-                return;
-            end
-            
-            switch class(newObject),
-                case {'timer', 'ProgressBar', 'uint64'},
-                    ProgObjects = [ProgObjects; {newObject}];
-                case 'double',
-                    ProgObjects = ProgObjects(1:end-1);
-                otherwise
-                    error('Unsupported Option to objectList()');
-            end
-        end
-        
-        list = ProgObjects;
+    function [timerList] = findTimers(self)
+        timerList = timerfindall('Tag', self.TimerTagName);
     end
 end
 
