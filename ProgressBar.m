@@ -449,7 +449,7 @@ thisBlock = blocks(min(idx, length(blocks)));
 end
 
 function [str] = backspace(numChars)
-str = repmat('\b', 1, numChars);
+str = repmat(sprintf('\b'), 1, numChars);
 end
 
 function [hoursMinsSecs] = convertTime(secondsIn)
