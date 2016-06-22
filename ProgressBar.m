@@ -197,7 +197,7 @@ methods (Access = private)
 
         if self.HasTotalIterations,
             if ~isempty(self.Title),
-                preString  = '%s:\t%03.0f%%  ';
+                preString  = '%s:  %03.0f%%  ';
             else
                 preString  = '%03.0f%%  ';
             end
@@ -210,9 +210,9 @@ methods (Access = private)
         else
             preString  = '';
             postString = '';
-
+            
             if ~isempty(self.Title),
-                format = '%s:\t%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
+                format = '%s:  %iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
             else
                 format = '%iit [%02.0f:%02.0f:%02.0f, %.2f it/s]';
             end
