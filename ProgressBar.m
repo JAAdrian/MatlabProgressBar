@@ -230,6 +230,44 @@ methods (Access = private)
     
     
     
+    function [] = setupBar(self)
+        [~, preBarFormat, postBarFormat] = self.returnFormatString();
+        
+        % insert worst case inputs to get (almost) maximum length of bar
+        preBar = sprintf(preBarFormat, self.Title, 100);
+        postBar = sprintf(postBarFormat, ...
+            self.Total, ...
+            self.Total, ...
+            100, 100, 100, 100, 100, 100, 1e3);
+        
+        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
+        lenBar = max(lenBar, self.MinBarLength);
+        
+        self.Bar = blanks(lenBar);
+    end
+    
+    
+    
+    
+    function [] = printProgressBar(self)
+        if ~self.IterationCounter,
+            return;
+        end
+        
+        fprintf(1, backspace(self.NumWrittenCharacters));
+        
+        formatString = self.returnFormatString();
+        argumentList = self.returnArgumentList();
+        
+        self.NumWrittenCharacters = fprintf(1, ...
+            formatString, ...
+            argumentList{:} ...
+            );
+    end
+    
+    
+    
+    
     function [format, preString, postString] = returnFormatString(self)
         % this is adapted from tqdm
 
@@ -242,7 +280,8 @@ methods (Access = private)
             
             centerString = '|%s|';
 
-            postString = ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
+            postString = ...
+                ' %i/%i [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f it/s]';
 
             format = [preString, centerString, postString];
         else
@@ -261,29 +300,27 @@ methods (Access = private)
     
     
     function [argList] = returnArgumentList(self)
-        % 1 : Title
-        % 2 : progress percent
-        % 3 : progBar string
-        % 4 : interationCounter
-        % 5 : Total
-        % 6 : ET.hours
-        % 7 : ET.minutes
-        % 8 : ET.seconds
-        % 9 : ETA.hours
-        % 10: ETA.minutes
-        % 11: ETA.seconds
-        % 12: it/s
-
-        
         % elapsed time (ET)
-        ticObj = self.getTic();
-        thisTimeSec = toc(ticObj);
+        thisTimeSec = toc(self.TicObject);
         etHoursMinsSecs = convertTime(thisTimeSec);
 
         % iterations per second
         iterationsPerSecond = self.IterationCounter / thisTimeSec;
         
         if self.HasTotalIterations,
+            % 1 : Title
+            % 2 : progress percent
+            % 3 : progBar string
+            % 4 : iterationCounter
+            % 5 : Total
+            % 6 : ET.hours
+            % 7 : ET.minutes
+            % 8 : ET.seconds
+            % 9 : ETA.hours
+            % 10: ETA.minutes
+            % 11: ETA.seconds
+            % 12: it/s
+            
             % estimated time of arrival (ETA)
             [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
             
@@ -302,6 +339,13 @@ methods (Access = private)
                 iterationsPerSecond
                 };
         else
+            % 1: Title
+            % 2: iterationCounter
+            % 3: ET.hours
+            % 4: ET.minutes
+            % 5: ET.seconds
+            % 6: it/s
+            
             argList = {
                 self.Title
                 self.IterationCounter
@@ -315,40 +359,6 @@ methods (Access = private)
         if isempty(self.Title),
             argList = argList(2:end);
         end
-    end
-
-    
-    
-    
-    function [] = setupBar(self)
-        [~, preBarFormat, postBarFormat] = self.returnFormatString();
-
-        % insert worst case inputs to get (almost) maximum length of bar
-        preBar = sprintf(preBarFormat, self.Title, 100);
-        postBar = sprintf(postBarFormat, ...
-            self.Total, ...
-            self.Total, ...
-            100, 100, 100, 100, 100, 100, 1e3);
-        
-        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
-        lenBar = max(lenBar, self.MinBarLength);
-        
-        self.Bar = blanks(lenBar);
-    end
-
-    
-    
-    
-    function [] = printProgressBar(self)
-        fprintf(1, backspace(self.NumWrittenCharacters));
-        
-        formatString = self.returnFormatString();
-        argumentList = self.returnArgumentList();
-        
-        self.NumWrittenCharacters = fprintf(1, ...
-            formatString, ...
-            argumentList{:} ...
-            );
     end
     
     
@@ -454,9 +464,11 @@ blocks = [
 thisBlock = blocks(min(idx, length(blocks)));
 end
 
+
 function [str] = backspace(numChars)
 str = repmat(sprintf('\b'), 1, numChars);
 end
+
 
 function [hoursMinsSecs] = convertTime(secondsIn)
 % fast implementation using mod() from
@@ -464,6 +476,7 @@ function [hoursMinsSecs] = convertTime(secondsIn)
 
 hoursMinsSecs = floor(mod(secondsIn, [0, 3600, 60]) ./ [3600, 60, 1]);
 end
+
 
 function [yesNo] = checkInputOfTotal(total)
 isTotalEmpty = isempty(total);
@@ -477,7 +490,6 @@ else
         {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
         );
 end
-
 end
 
 
