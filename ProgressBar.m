@@ -37,8 +37,8 @@ properties ( Access = private )
     FractionBlock;
     
     HasTotalIterations = false;
-    HasUpdateRate = false;
-    wasStartMethodCalled = false;
+    HasBeenUpdated = false;
+    HasFiniteUpdateRate = true;
     
     TicObject;
     TimerObject;
@@ -49,7 +49,7 @@ properties ( Constant, Access = private )
     MaxColumnsOnScreen = 90;
     
     NumBlocks = 8; % HTML 'left blocks' go in eigths
-    DefaultUpdateRate = inf; % every iteration gets printed
+    DefaultUpdateRate = 10; % 10 updates per second
     
     TimerTagName = 'ProgressBar';
 end
@@ -82,8 +82,9 @@ methods
             self.computeBlockFractions();
         end
         
-        if self.HasUpdateRate,
+        if self.HasFiniteUpdateRate,
             self.startTimer();
+            self.printProgressBar();
         end
         
         if self.IsNested,
@@ -105,17 +106,6 @@ methods
         
         % delete timer
         delete(self.TimerObject);
-    end
-    
-    
-    
-    
-    function [] = start(self)
-        self.wasStartMethodCalled = true;
-        
-        self.printProgressBar();
-        
-        self.wasStartMethodCalled = false;
     end
     
     
@@ -151,7 +141,7 @@ methods
                 self.IterationCounter);
             self.printMessage(infoMsg, shouldPrintNextProgBar);
         end
-        if ~self.HasUpdateRate,
+        if ~self.HasFiniteUpdateRate,
             self.printProgressBar();
         end
         if self.IterationCounter == self.Total,
@@ -245,8 +235,8 @@ methods (Access = private)
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
         end
-        if ~isinf(self.UpdateRate),
-            self.HasUpdateRate = true;
+        if isinf(self.UpdateRate),
+            self.HasFiniteUpdateRate = false;
         end
     end
     
@@ -377,7 +367,7 @@ methods (Access = private)
             % estimated time of arrival (ETA)
             [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
             
-            if ~self.wasStartMethodCalled,
+            if self.IterationCounter,
                 argList = {
                     self.Title, ...
                     round(self.IterationCounter / self.Total * 100), ...
@@ -485,8 +475,7 @@ methods (Access = private)
         self.TimerObject.StopFcn  = @(~, ~) self.printProgressBar();
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
-        self.TimerObject.Period     = updatePeriod;
-        self.TimerObject.StartDelay = updatePeriod;
+        self.TimerObject.Period = updatePeriod;
         
         start(self.TimerObject);
     end
