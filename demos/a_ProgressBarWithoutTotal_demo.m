@@ -10,14 +10,14 @@ clc;
 
 addpath('..');
 
-numIterations = 1e2;
+numIterations = 20;
 
 %% Simple setup WITHOUT known number of iterations
 
 obj = ProgressBar([], 'Title', 'Test');
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(0.1);
     
     obj.update();
 end
