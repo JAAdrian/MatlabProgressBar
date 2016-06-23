@@ -37,8 +37,8 @@ properties ( Access = private )
     FractionBlock;
     
     HasTotalIterations = false;
-    HasUpdateRate = false;
-    wasStartMethodCalled = false;
+    HasBeenUpdated = false;
+    HasFiniteUpdateRate = true;
     
     TicObject;
     TimerObject;
@@ -49,13 +49,14 @@ properties ( Constant, Access = private )
     MaxColumnsOnScreen = 90;
     
     NumBlocks = 8; % HTML 'left blocks' go in eigths
-    DefaultUpdateRate = inf; % every iteration gets printed
+    DefaultUpdateRate = 10; % 10 updates per second
     
     TimerTagName = 'ProgressBar';
 end
 
 properties ( Dependent, Access = private )
     IsNested;
+    IsTimerRunning;
 end
 
 
@@ -82,8 +83,9 @@ methods
             self.computeBlockFractions();
         end
         
-        if self.HasUpdateRate,
+        if self.HasFiniteUpdateRate,
             self.startTimer();
+            self.printProgressBar();
         end
         
         if self.IsNested,
@@ -104,18 +106,10 @@ methods
         end
         
         % delete timer
+        if self.IsTimerRunning,
+            self.stopTimer();
+        end
         delete(self.TimerObject);
-    end
-    
-    
-    
-    
-    function [] = start(self)
-        self.wasStartMethodCalled = true;
-        
-        self.printProgressBar();
-        
-        self.wasStartMethodCalled = false;
     end
     
     
@@ -144,6 +138,11 @@ methods
             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
             );
         
+        
+        if ~self.IsTimerRunning,
+            self.startTimer();
+        end
+        
         self.incrementIterationCounter(n);
         
         if ~wasSuccessful,
@@ -151,9 +150,11 @@ methods
                 self.IterationCounter);
             self.printMessage(infoMsg, shouldPrintNextProgBar);
         end
-        if ~self.HasUpdateRate,
+        
+        if ~self.HasFiniteUpdateRate,
             self.printProgressBar();
         end
+        
         if self.IterationCounter == self.Total,
             self.stopTimer();
         end
@@ -188,6 +189,10 @@ methods
     
     
     function [] = close(self)
+        if self.IsTimerRunning,
+            self.stopTimer();
+        end
+        
         delete(self);
     end
     
@@ -200,6 +205,12 @@ methods
         timerList = self.findTimers();
         
         yesNo = length(timerList) > 1;
+    end
+    
+    function [yesNo] = get.IsTimerRunning(self)
+        running = self.TimerObject.Running;
+        
+        yesNo = strcmp(running, 'on');
     end
 end
 
@@ -245,8 +256,8 @@ methods (Access = private)
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
         end
-        if ~isinf(self.UpdateRate),
-            self.HasUpdateRate = true;
+        if isinf(self.UpdateRate),
+            self.HasFiniteUpdateRate = false;
         end
     end
     
@@ -281,10 +292,6 @@ methods (Access = private)
     
     
     function [] = printProgressBar(self)
-        if ~self.IterationCounter && ~self.wasStartMethodCalled,
-            return;
-        end
-        
         fprintf(1, backspace(self.NumWrittenCharacters));
         
         formatString = self.returnFormatString();
@@ -377,7 +384,7 @@ methods (Access = private)
             % estimated time of arrival (ETA)
             [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
             
-            if ~self.wasStartMethodCalled,
+            if self.IterationCounter,
                 argList = {
                     self.Title, ...
                     round(self.IterationCounter / self.Total * 100), ...
@@ -481,12 +488,11 @@ methods (Access = private)
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        self.TimerObject.TimerFcn = @(~, ~) self.printProgressBar();
-        self.TimerObject.StopFcn  = @(~, ~) self.printProgressBar();
+        self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
+        self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
-        self.TimerObject.Period     = updatePeriod;
-        self.TimerObject.StartDelay = updatePeriod;
+        self.TimerObject.Period = updatePeriod;
         
         start(self.TimerObject);
     end
@@ -500,9 +506,23 @@ methods (Access = private)
     
     
     
+    function [] = timerCallback(self)
+        if self.HasBeenUpdated,
+            self.printProgressBar();
+        else
+            self.stopTimer();
+        end
+        
+        self.HasBeenUpdated = false;
+    end
+    
+    
+    
     
     function [] = incrementIterationCounter(self, n)
         self.IterationCounter = self.IterationCounter + n;
+        
+        self.HasBeenUpdated = true;
     end
     
     

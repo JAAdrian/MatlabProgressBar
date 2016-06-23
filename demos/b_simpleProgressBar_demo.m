@@ -10,7 +10,7 @@ clc;
 
 addpath('..');
 
-numIterations = 1e2;
+numIterations = 50;
 
 %% Simple setup WITH known number of iterations
 
@@ -19,11 +19,12 @@ obj = ProgressBar(numIterations, ...
     );
 
 for iIteration = 1:numIterations,
-    pause(1e-1);
+    pause(0.1);
     
     obj.update();
 end
 obj.close();
+
 
 %% Now with different step size
 
@@ -32,12 +33,26 @@ obj = ProgressBar(numIterations, ...
     );
 
 for iIteration = 1:2:numIterations,
-    pause(1e-1);
+    pause(0.1);
     
     obj.update(2);
 end
 obj.close();
 
+%% Simulate an iteration which takes longer so the timed printing stops
+
+pauses = [0.1*ones(numIterations/2-1,1); 2; 0.1*ones(numIterations/2,1)];
+
+obj = ProgressBar(numIterations, ...
+    'Title', 'Waiting' ...
+    );
+
+for iIteration = 1:numIterations,
+    pause(pauses(iIteration));
+    
+    obj.update();
+end
+obj.close();
 
 
 
