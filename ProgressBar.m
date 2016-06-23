@@ -351,13 +351,13 @@ methods (Access = private)
         % iterations per second
         iterationsPerSecond = self.IterationCounter / thisTimeSec;
         
+        scaledIteration = self.IterationCounter;
+        scaledTotal     = self.Total;
         if strcmp(self.Unit, 'Bytes'),
             % let's show KB
-            scaledIteration     = round(self.IterationCounter / 1000);
-            scaledTotal         = round(self.Total / 1000);
+            scaledIteration     = round(scaledIteration / 1000);
+            scaledTotal         = round(scaledTotal / 1000);
             iterationsPerSecond = iterationsPerSecond / 1000;
-        else
-            scaledIteration = self.IterationCounter;
         end
         
         if self.HasTotalIterations,
