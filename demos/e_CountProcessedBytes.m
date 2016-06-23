@@ -11,20 +11,45 @@ clc;
 
 addpath('..');
 
-numIterations = 1e2;
+dummyFile = {rand(1e3, 1), rand(5e2, 1), rand(1e5, 1), rand(1e5, 1)};
+filePause = [1, 0.5, 3, 3] * 2;
 
-%% Simple setup WITH known number of iterations
+numTotalBytes = sum(cellfun(@(x) size(x, 1), dummyFile));
 
-obj = ProgressBar(numIterations, ...
-    'Title', 'Test Progress' ...
+
+%% Work with size of processed bytes WITHOUT knowledge of total bytes
+
+obj = ProgressBar([], ...
+    'Unit', 'Bytes', ...
+    'Title', 'Test Bytes 1' ...
     );
 
-for iIteration = 1:numIterations,
-    pause(1e-1);
+for iFile = 1:length(dummyFile),
+    buffer = dummyFile{iFile};
     
-    obj.update();
+    pause(filePause(iFile));
+    obj.update(length(buffer));
 end
 obj.close();
+
+
+%% Work with size of processed bytes WITH knowledge of total bytes
+
+obj = ProgressBar(numTotalBytes, ...
+    'Unit', 'Bytes', ...
+    'Title', 'Test Bytes 2' ...
+    );
+
+for iFile = 1:length(dummyFile),
+    buffer = dummyFile{iFile};
+    
+        
+    pause(filePause(iFile));
+    obj.update(length(buffer));
+end
+obj.close();
+
+
 
 
 
