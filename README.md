@@ -18,7 +18,12 @@ Usage
 -------------------------
 
 
+To Do
+-------------------------
 
+- [ ] improve demos
+- [ ] improve documentation
+- [ ] make tests?
 
 
 
@@ -42,3 +47,4 @@ Feature Request
     - [ ] running mean/median
 - [ ] after x seconds without update (e.g. the processing step takes a lot of time) we show an idle icon
 - [ ] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
+- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
