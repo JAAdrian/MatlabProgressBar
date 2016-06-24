@@ -20,10 +20,10 @@ classdef ProgressBar < handle
 
 
 properties ( SetAccess = private, GetAccess = public )
-    Title;
     Total;
-    Unit;
-    UpdateRate;
+    Title      = '';
+    Unit       = 'Iterations';
+    UpdateRate = 10;
 end
 
 properties ( Access = private )
@@ -40,24 +40,21 @@ properties ( Access = private )
     HasBeenUpdated = false;
     HasFiniteUpdateRate = true;
     
+    IsNested = false;
     IsTimerRunning = false;
     
     TicObject;
     TimerObject;
+    
+    TotalBarWidth = 90;
 end
 
 properties ( Constant, Access = private )
     MinBarLength = 10;
-    MaxColumnsOnScreen = 90;
     
     NumBlocks = 8; % HTML 'left blocks' go in eigths
-    DefaultUpdateRate = 10; % 10 updates per second
     
     TimerTagName = 'ProgressBar';
-end
-
-properties ( Dependent, Access = private )
-    IsNested;
 end
 
 
@@ -201,17 +198,6 @@ methods
         
         delete(self);
     end
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%% Setter / Getter %%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    function [yesNo] = get.IsNested(self)
-        timerList = self.findTimers();
-        
-        yesNo = length(timerList) > 1;
-    end
 end
 
 
@@ -227,17 +213,33 @@ methods (Access = private)
         p.addRequired('Total', @checkInputOfTotal);
         
         % unit of progress measure
-        p.addParameter('Unit', 'Iterations', ...
+        p.addParameter('Unit', self.Unit, ...
             @(in) any(validatestring(in, {'Iterations', 'Bytes'})) ...
             );
         
         % bar title
-        p.addParameter('Title', '', ...
+        p.addParameter('Title', self.Title, ...
             @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
             );
         
         % update rate
-        p.addParameter('UpdateRate', self.DefaultUpdateRate, ...
+        p.addParameter('UpdateRate', self.UpdateRate, ...
+            @(in) validateattributes(in, ...
+                {'numeric'}, ...
+                {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
+                ) ...
+            );
+        
+        % nested bars
+        p.addParameter('Nested', self.IsNested, ...
+            @(in) validateattributes(in, ...
+                {'logical', 'numeric'}, ...
+                {'scalar', 'binary', 'nonempty', 'nonnan'} ...
+                ) ...
+            );
+        
+        % progress bar width
+        p.addParameter('Width', self.TotalBarWidth, ...
             @(in) validateattributes(in, ...
                 {'numeric'}, ...
                 {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
@@ -252,6 +254,8 @@ methods (Access = private)
         self.Unit  = p.Results.Unit;
         self.Title = p.Results.Title;
         self.UpdateRate = p.Results.UpdateRate;
+        self.TotalBarWidth = p.Results.Width;
+        self.IsNested = p.Results.Nested;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -282,7 +286,7 @@ methods (Access = private)
             self.Total, ...
             100, 100, 100, 100, 100, 100, 1e3);
         
-        lenBar = self.MaxColumnsOnScreen - length(preBar) - length(postBar);
+        lenBar = self.TotalBarWidth - length(preBar) - length(postBar);
         lenBar = max(lenBar, self.MinBarLength);
         
         self.Bar = blanks(lenBar);
