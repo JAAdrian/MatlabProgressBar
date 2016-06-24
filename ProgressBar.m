@@ -40,7 +40,6 @@ properties ( Access = private )
     HasBeenUpdated = false;
     HasFiniteUpdateRate = true;
     
-    IsNested = false;
     IsTimerRunning = false;
     
     TicObject;
@@ -57,6 +56,11 @@ properties ( Constant, Access = private )
     TimerTagName = 'ProgressBar';
 end
 
+properties ( Access = private, Dependent)
+    IsNested;
+end
+
+
 
 
 methods
@@ -71,6 +75,7 @@ methods
             'Tag', self.TimerTagName, ...
             'ObjectVisibility', 'off' ...
             );
+        self.setTimerStorage(self.TimerObject);
 
         % register the new tic object
         self.TicObject = tic;
@@ -88,11 +93,11 @@ methods
         end
         
         if self.IsNested,
+            fprintf(1, '\n');
+            
             if ~self.NumWrittenCharacters,
                 self.printProgressBar();
             end
-            
-            fprintf(1, '\n');
         end
     end
     
@@ -101,14 +106,23 @@ methods
         if self.IsTimerRunning,
             self.stopTimer();
         end
-        delete(self.TimerObject);
-        
         
         if self.IsNested,
             % when this prog bar was nested, remove it from the command
-            % line. +1 due to the line break
+            % line and get back to the end of the parent bar. 
+            % +1 due to the line break
             fprintf(1, backspace(self.NumWrittenCharacters + 1));
         end
+        
+        % unregister timer and be sure to remove all items (possibly
+        % invalid) from storage when this is a parent bar
+        self.setTimerStorage(-1);
+        delete(self.TimerObject);
+        
+        if ~self.IsNested,
+            self.setTimerStorage('delete');
+        end
+        
         
         if self.IterationCounter && ~self.IsNested,
             % when a non-nested progress bar has been plotted, hit return
@@ -199,6 +213,14 @@ methods
     function [] = close(self)
         delete(self);
     end
+    
+    
+    
+    
+    function [yesNo] = get.IsNested(self)
+        list = self.getTimerStorage();
+        yesNo = length(list) > 1;
+    end
 end
 
 
@@ -231,14 +253,6 @@ methods (Access = private)
                 ) ...
             );
         
-        % nested bars
-        p.addParameter('Nested', self.IsNested, ...
-            @(in) validateattributes(in, ...
-                {'logical', 'numeric'}, ...
-                {'scalar', 'binary', 'nonempty', 'nonnan'} ...
-                ) ...
-            );
-        
         % progress bar width
         p.addParameter('Width', self.TotalBarWidth, ...
             @(in) validateattributes(in, ...
@@ -256,7 +270,6 @@ methods (Access = private)
         self.Title = p.Results.Title;
         self.UpdateRate = p.Results.UpdateRate;
         self.TotalBarWidth = p.Results.Width;
-        self.IsNested = p.Results.Nested;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -541,8 +554,36 @@ methods (Access = private)
     
     
     
-    function [timerList] = findTimers(self)
-        timerList = timerfindall('Tag', self.TimerTagName);
+    function [] = setTimerStorage(~, newTimer)
+        ProgressBar.timerStorage(newTimer);
+    end
+    
+    function [list] = getTimerStorage(~)
+        list = ProgressBar.timerStorage();
+    end
+end
+
+
+methods ( Access = private, Static )
+    function [list] = timerStorage(newTimer)
+        persistent timerList;
+        
+        if nargin && ~isempty(newTimer)
+            switch class(newTimer),
+                case 'timer',
+                    timerList = [timerList; newTimer];
+                case 'double',
+                    if newTimer < 0,
+                        timerList = timerList(1:end-1);
+                    end
+                case 'char'
+                    if strcmpi(newTimer, 'delete'),
+                        timerList = [];
+                    end
+            end
+        end
+        
+        list = timerList;
     end
 end
 

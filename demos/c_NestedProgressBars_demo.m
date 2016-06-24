@@ -15,10 +15,9 @@ numInnerIterations = 20;
 
 
 
-%% Nested Bars without update rate
+%% Nested Bars without inner update rate
 
 obj1 = ProgressBar(numOuterIterations, ...
-    'Nested', true, ...
     'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
@@ -42,13 +41,12 @@ obj1.close();
 
 
 
-%% Nested Bars WITH update rate
+%% Nested Bars WITH inner update rate
 
 numInnerIterations = 50e3;
 
 % Don't have an update rate here!!!!
 obj1 = ProgressBar(numOuterIterations, ...
-    'Nested', true, ...
     'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
