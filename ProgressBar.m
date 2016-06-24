@@ -141,11 +141,12 @@ methods
             );
         
         
+        self.incrementIterationCounter(n);
+        
         if ~self.IsTimerRunning && self.HasFiniteUpdateRate,
             self.startTimer();
         end
         
-        self.incrementIterationCounter(n);
         
         if ~wasSuccessful,
             infoMsg = sprintf('Iteration %i was not successful!', ...
@@ -499,6 +500,7 @@ methods (Access = private)
     
     function [] = startTimer(self)
         start(self.TimerObject);
+        self.IsTimerRunning = true;
     end
     
     
@@ -515,10 +517,8 @@ methods (Access = private)
     function [] = timerCallback(self)
         if self.HasBeenUpdated,
             self.printProgressBar();
-            self.IsTimerRunning = true;
         else
             self.stopTimer();
-            self.IsTimerRunning = false;
         end
         
         self.HasBeenUpdated = false;
