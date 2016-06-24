@@ -85,7 +85,8 @@ methods
         end
         
         if self.HasFiniteUpdateRate,
-            self.startTimer();
+            self.setupTimer();
+            
             self.printProgressBar();
         end
         
@@ -482,7 +483,7 @@ methods (Access = private)
     
     
     
-    function [] = startTimer(self)
+    function [] = setupTimer(self)
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
@@ -491,7 +492,12 @@ methods (Access = private)
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         self.TimerObject.Period = updatePeriod;
-        
+    end
+    
+    
+    
+    
+    function [] = startTimer(self)
         start(self.TimerObject);
     end
     
