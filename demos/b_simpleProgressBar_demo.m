@@ -12,6 +12,7 @@ addpath('..');
 
 numIterations = 50;
 
+
 %% Simple setup WITH known number of iterations
 
 obj = ProgressBar(numIterations, ...
