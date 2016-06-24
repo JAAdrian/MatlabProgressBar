@@ -88,6 +88,7 @@ methods
         end
         
         if self.IsNested,
+            self.printProgressBar();
             fprintf(1, '\n');
         end
     end
