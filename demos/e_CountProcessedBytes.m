@@ -12,7 +12,7 @@ clc;
 addpath('..');
 
 dummyFile = {rand(1e3, 1), rand(5e2, 1), rand(1e5, 1), rand(1e5, 1)};
-filePause = [1, 0.5, 3, 3] * 2;
+filePause = [1, 0.5, 3, 3] * 1.5;
 
 numTotalBytes = sum(cellfun(@(x) size(x, 1), dummyFile));
 

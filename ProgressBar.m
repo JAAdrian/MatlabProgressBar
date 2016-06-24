@@ -40,6 +40,8 @@ properties ( Access = private )
     HasBeenUpdated = false;
     HasFiniteUpdateRate = true;
     
+    IsTimerRunning = false;
+    
     TicObject;
     TimerObject;
 end
@@ -56,7 +58,6 @@ end
 
 properties ( Dependent, Access = private )
     IsNested;
-    IsTimerRunning;
 end
 
 
@@ -84,7 +85,8 @@ methods
         end
         
         if self.HasFiniteUpdateRate,
-            self.startTimer();
+            self.setupTimer();
+            
             self.printProgressBar();
         end
         
@@ -139,11 +141,12 @@ methods
             );
         
         
-        if ~self.IsTimerRunning,
+        self.incrementIterationCounter(n);
+        
+        if ~self.IsTimerRunning && self.HasFiniteUpdateRate,
             self.startTimer();
         end
         
-        self.incrementIterationCounter(n);
         
         if ~wasSuccessful,
             infoMsg = sprintf('Iteration %i was not successful!', ...
@@ -155,7 +158,10 @@ methods
             self.printProgressBar();
         end
         
-        if self.IterationCounter == self.Total,
+        if         ~isempty(self.Total) ...
+                && self.IterationCounter == self.Total ...
+                && self.HasFiniteUpdateRate,
+            
             self.stopTimer();
         end
     end
@@ -206,12 +212,6 @@ methods
         
         yesNo = length(timerList) > 1;
     end
-    
-    function [yesNo] = get.IsTimerRunning(self)
-        running = self.TimerObject.Running;
-        
-        yesNo = strcmp(running, 'on');
-    end
 end
 
 
@@ -227,8 +227,8 @@ methods (Access = private)
         p.addRequired('Total', @checkInputOfTotal);
         
         % unit of progress measure
-        p.addParameter('Unit', 'Integers', ...
-            @(in) any(validatestring(in, {'Integers', 'Bytes'})) ...
+        p.addParameter('Unit', 'Iterations', ...
+            @(in) any(validatestring(in, {'Iterations', 'Bytes'})) ...
             );
         
         % bar title
@@ -240,7 +240,7 @@ methods (Access = private)
         p.addParameter('UpdateRate', self.DefaultUpdateRate, ...
             @(in) validateattributes(in, ...
                 {'numeric'}, ...
-                {'scalar', 'positive', 'real', 'nonempty', 'nonnan', 'finite'} ...
+                {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
                 ) ...
             );
        
@@ -484,7 +484,7 @@ methods (Access = private)
     
     
     
-    function [] = startTimer(self)
+    function [] = setupTimer(self)
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
@@ -493,8 +493,14 @@ methods (Access = private)
         
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         self.TimerObject.Period = updatePeriod;
-        
+    end
+    
+    
+    
+    
+    function [] = startTimer(self)
         start(self.TimerObject);
+        self.IsTimerRunning = true;
     end
     
     
@@ -502,7 +508,9 @@ methods (Access = private)
     
     function [] = stopTimer(self)
         stop(self.TimerObject);
+        self.IsTimerRunning = false;
     end
+    
     
     
     
@@ -524,6 +532,7 @@ methods (Access = private)
         
         self.HasBeenUpdated = true;
     end
+    
     
     
     

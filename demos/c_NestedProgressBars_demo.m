@@ -20,13 +20,12 @@ obj1 = ProgressBar(numOuterIterations, ...
     'Title', 'Loop 1' ...
     );
 
-obj1.start();
 for iOuterIteration = 1:numOuterIterations,
     obj2 = ProgressBar(numInnerIterations, ...
         'Title', 'Loop 2' ...
         );
     
-    for jInnerIteration = 1:numInnerIterations,        
+    for jInnerIteration = 1:numInnerIterations,
         obj2.update();
         
         pause(0.1);
@@ -40,17 +39,16 @@ obj1.close();
 
 %% Nested Bars WITH update rate
 
-numInnerIterations = 200e3;
+numInnerIterations = 50e3;
 
 % Don't have an update rate here!!!!
 obj1 = ProgressBar(numOuterIterations, ...
     'Title', 'Loop 1' ...
     );
 
-obj1.start();
 for iOuterIteration = 1:numOuterIterations,
     obj2 = ProgressBar(numInnerIterations, ...
-        'UpdateRate', 10, ...
+        'UpdateRate', 5, ...
         'Title', 'Loop 2' ...
         );
     
