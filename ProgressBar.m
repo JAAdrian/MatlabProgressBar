@@ -40,6 +40,8 @@ properties ( Access = private )
     HasBeenUpdated = false;
     HasFiniteUpdateRate = true;
     
+    IsTimerRunning = false;
+    
     TicObject;
     TimerObject;
 end
@@ -56,7 +58,6 @@ end
 
 properties ( Dependent, Access = private )
     IsNested;
-    IsTimerRunning;
 end
 
 
@@ -205,12 +206,6 @@ methods
         timerList = self.findTimers();
         
         yesNo = length(timerList) > 1;
-    end
-    
-    function [yesNo] = get.IsTimerRunning(self)
-        running = self.TimerObject.Running;
-        
-        yesNo = strcmp(running, 'on');
     end
 end
 
@@ -502,15 +497,19 @@ methods (Access = private)
     
     function [] = stopTimer(self)
         stop(self.TimerObject);
+        self.IsTimerRunning = false;
     end
+    
     
     
     
     function [] = timerCallback(self)
         if self.HasBeenUpdated,
             self.printProgressBar();
+            self.IsTimerRunning = true;
         else
             self.stopTimer();
+            self.IsTimerRunning = false;
         end
         
         self.HasBeenUpdated = false;
