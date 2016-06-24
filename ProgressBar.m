@@ -140,7 +140,7 @@ methods
             );
         
         
-        if ~self.IsTimerRunning,
+        if ~self.IsTimerRunning && self.HasFiniteUpdateRate,
             self.startTimer();
         end
         
@@ -156,7 +156,10 @@ methods
             self.printProgressBar();
         end
         
-        if self.IterationCounter == self.Total,
+        if         ~isempty(self.Total) ...
+                && self.IterationCounter == self.Total ...
+                && self.HasFiniteUpdateRate,
+            
             self.stopTimer();
         end
     end
