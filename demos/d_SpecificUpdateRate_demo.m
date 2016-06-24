@@ -12,9 +12,9 @@ addpath('..');
 
 numIterations = 1e6;
 
-%% Desired update rate is 10Hz
+%% Desired update rate should be 5 Hz
 
-updateRateHz = 1;
+updateRateHz = 5;
 
 % pass the number of iterations and the update cycle in Hz
 obj = ProgressBar(numIterations, ...
