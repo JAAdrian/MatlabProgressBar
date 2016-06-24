@@ -88,12 +88,22 @@ methods
         end
         
         if self.IsNested,
-            self.printProgressBar();
+            if ~self.NumWrittenCharacters,
+                self.printProgressBar();
+            end
+            
             fprintf(1, '\n');
         end
     end
     
     function delete(self)
+        % delete timer
+        if self.IsTimerRunning,
+            self.stopTimer();
+        end
+        delete(self.TimerObject);
+        
+        
         if self.IsNested,
             % when this prog bar was nested, remove it from the command
             % line. +1 due to the line break
@@ -101,15 +111,9 @@ methods
         end
         
         if self.IterationCounter && ~self.IsNested,
-            % when a progress bar has been plotted, hit return
+            % when a non-nested progress bar has been plotted, hit return
             fprintf(1, '\n');
         end
-        
-        % delete timer
-        if self.IsTimerRunning,
-            self.stopTimer();
-        end
-        delete(self.TimerObject);
     end
     
     
@@ -193,10 +197,6 @@ methods
     
     
     function [] = close(self)
-        if self.IsTimerRunning,
-            self.stopTimer();
-        end
-        
         delete(self);
     end
 end

@@ -11,7 +11,7 @@ clc;
 addpath('..');
 
 numOuterIterations = 3;
-numInnerIterations = 50;
+numInnerIterations = 20;
 
 
 
@@ -25,7 +25,6 @@ obj1 = ProgressBar(numOuterIterations, ...
 
 for iOuterIteration = 1:numOuterIterations,
     obj2 = ProgressBar(numInnerIterations, ...
-        'Nested', true, ...
         'UpdateRate', inf, ...
         'Title', 'Loop 2' ...
         );
@@ -40,6 +39,7 @@ for iOuterIteration = 1:numOuterIterations,
     obj1.update();
 end
 obj1.close();
+
 
 
 %% Nested Bars WITH update rate
