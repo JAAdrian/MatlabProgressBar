@@ -1,53 +1,49 @@
-classdef progress < handle
-%PROGRESS <purpose in one line!>
-% -------------------------------------------------------------------------
-% <Detailed description of the function>
-%
-% progress Properties:
-%	propA - <description>
-%	propB - <description>
-%
-% progress Methods:
-%	doThis - <description>
-%	doThat - <description>
+% <purpose of this file>
 %
 % Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
-% Date   :  23-Jun-2016 19:24:50
+% Date   :  24-Jun-2016 15:43:41
 %
 
-% Version:  v0.1   initial version, 23-Jun-2016 19:24 (JA)
-%
+clear;
+close all;
+clc;
 
+addpath('..');
 
-properties (Access = private)
-    TheThing;
-    ProgressBar;
-end
+numIterations = 50;
 
-methods
-    function self = progress(in, varargin)
-        if ~nargin,
-            return;
-        end
-        
-        self.TheThing = in;
-        self.ProgressBar = ProgressBar(length(in), varargin{:});
-    end
+%% Define larger bar width
+
+barWidth = 100;
+
+obj = ProgressBar(numIterations, ...
+    'Width', barWidth, ...
+    'Title', 'Test Width' ...
+    );
+
+for iIteration = 1:2:numIterations,
+    pause(0.1);
     
-    function delete(self)
-        delete(self.ProgressBar);
-    end
-    
-    function [varargout] = subsref(self, S)
-        self.ProgressBar.update();
-        varargout = {subsref(self.TheThing, S)};
-    end
-    
-    function [m, n] = size(self)
-        [m, n] = size(self.TheThing);
-    end
+    obj.update(2);
 end
+obj.close();
+
+%% Define smaller bar width
+
+barWidth = 72;
+
+obj = ProgressBar(numIterations, ...
+    'Width', barWidth, ...
+    'Title', 'Test Width' ...
+    );
+
+for iIteration = 1:2:numIterations,
+    pause(0.1);
+    
+    obj.update(2);
 end
+obj.close();
+
 
 
 
@@ -86,4 +82,4 @@ end
 % NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-% End of file: progress.m
+% End of file: h_DifferentBarWidthes.m

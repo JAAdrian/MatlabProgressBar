@@ -11,17 +11,21 @@ clc;
 addpath('..');
 
 numOuterIterations = 3;
-numInnerIterations = 50;
+numInnerIterations = 20;
 
 
-%% Nested Bars without update rate
+
+%% Nested Bars without inner update rate
 
 obj1 = ProgressBar(numOuterIterations, ...
+    'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
 
+obj1.start();
 for iOuterIteration = 1:numOuterIterations,
     obj2 = ProgressBar(numInnerIterations, ...
+        'UpdateRate', inf, ...
         'Title', 'Loop 2' ...
         );
     
@@ -37,15 +41,18 @@ end
 obj1.close();
 
 
-%% Nested Bars WITH update rate
+
+%% Nested Bars WITH inner update rate
 
 numInnerIterations = 50e3;
 
 % Don't have an update rate here!!!!
 obj1 = ProgressBar(numOuterIterations, ...
+    'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
 
+obj1.start();
 for iOuterIteration = 1:numOuterIterations,
     obj2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', 5, ...

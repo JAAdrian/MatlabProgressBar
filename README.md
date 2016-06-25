@@ -45,5 +45,4 @@ Feature Request
 - [x] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
 - [x] when updating process is faster than the updates, stop the counter to save processing time
 - [x] linear ETA estimate over all last iterations
-- [ ] after x seconds without update (e.g. the processing step takes a lot of time) we show an idle icon
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
