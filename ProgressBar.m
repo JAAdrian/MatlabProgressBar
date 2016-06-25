@@ -40,6 +40,9 @@ properties ( Access = private )
     HasBeenUpdated = false;
     HasFiniteUpdateRate = true;
     
+    ShouldUseUnicode = true;
+    BlockCharacterFunction = @getUnicodeBlock;
+    
     IsTimerRunning = false;
     
     TicObject;
@@ -68,6 +71,10 @@ methods
         if nargin,
             % parse input arguments
             self.parseInputs(total, varargin{:});
+        end
+        
+        if ~self.ShouldUseUnicode,
+            self.BlockCharacterFunction = @getAsciiBlock;
         end
         
         % add a new timer object with the standard tag name
@@ -250,6 +257,14 @@ methods (Access = private)
                 {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
                 ) ...
             );
+        
+        % don't use Unicode symbols
+        p.addParameter('Unicode', self.ShouldUseUnicode, ...
+            @(in) validateattributes(in, ...
+                {'logical', 'numeric'}, ...
+                {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+                ) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -260,6 +275,7 @@ methods (Access = private)
         self.Title = p.Results.Title;
         self.UpdateRate = p.Results.UpdateRate;
         self.TotalBarWidth = p.Results.Width;
+        self.ShouldUseUnicode = p.Results.Unicode;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -463,12 +479,12 @@ methods (Access = private)
         if thisBlock > self.LastBlock || thisMainBlock > self.LastMainBlock,
             % fix for non-full last blocks when steps are large
             self.Bar(1:max(thisMainBlock-1, 0)) = ...
-                repmat(getBlock(inf), 1, thisMainBlock - 1);
+                repmat(self.BlockCharacterFunction(inf), 1, thisMainBlock - 1);
             
             if self.IterationCounter == self.Total,
-                self.Bar = repmat(getBlock(inf), 1, lenBar);
+                self.Bar = repmat(self.BlockCharacterFunction(inf), 1, lenBar);
             else
-                self.Bar(thisMainBlock) = getBlock(thisBlock);
+                self.Bar(thisMainBlock) = self.BlockCharacterFunction(thisBlock);
             end
             
             self.LastBlock = thisBlock;
@@ -553,7 +569,7 @@ end
 
 
 
-function [thisBlock] = getBlock(idx)
+function [thisBlock] = getUnicodeBlock(idx)
 % idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
 % excluding the 'space' but this function also returns the space as first
 % block
@@ -568,6 +584,16 @@ blocks = [
     char(9609);
     char(9608);
     ];
+
+thisBlock = blocks(min(idx, length(blocks)));
+end
+
+function [thisBlock] = getAsciiBlock(idx)
+% idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
+% excluding the 'space' but this function also returns the space as first
+% block
+
+blocks = repmat('#', 1, 8);
 
 thisBlock = blocks(min(idx, length(blocks)));
 end
