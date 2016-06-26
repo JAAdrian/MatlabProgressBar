@@ -8,6 +8,20 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 ![Place GIF here!]()
 
+Supported features include (and are planned):
+- [x] TQDM Unicode blocks
+- [x] optional constructor switch for optional ASCII number signs (hashes)
+- [x] optional bar title
+- [x] optional visual update interval in Hz [defaults to 10 Hz]
+- [x] when no total number of iterations is passed the bar shows the elapsed time, the number of (elapsed) iterations and iterations/s
+- [x] nested bars (at the moment only nesting of order 1)
+- [x] `printMessage()` method for debug printing (or the like)
+- [x] print an info when a run was not successful
+- [x] support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size). At the moment, the only alternative supported unit is `Bytes`
+- [x] when the internal updating process is faster than the actual updates via `update()`, the internal counter and printing of the process bar stops until the next update to save processing time
+- [x] linear ETA estimate over all last iterations
+- [ ] incorporate a symbol at end of bar to indicate finished status (maybe a checkmark or a colored bullet?)
+- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
 **Note**:  
@@ -31,6 +45,9 @@ Usage
 Detailed information and examples about all features of `ProgressBar` are stated in the demos in the `demos` directory.
 
 Nevertheless, the basic work flow is to instantiate a `ProgressBar` object and use the `update()` method to update the progress state. All settings are done using *name-value* pairs in the constructor. Thus, `ProgressBar` only has public read-only properties. It is advisable to call the object's `close()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
+
+**Usage**  
+`obj = ProgressBar(totalIterations, varargin)`
 
 Simple Example:
 ```matlab
@@ -59,21 +76,7 @@ On Deck
 - [x] make a tester
 
 
-
-
-Feature Request
+License
 ----------------------
 
-- [x] TQDM Unicode blocks
-- [x] switch for optional ASCII number signs (hashes)
-- [x] bar title
-- [x] visual update interval in Hz
-- [x] when no `numIterations` is passed we state the ET and number of iterations and it/s
-- [x] nested bars
-- [x] printMessage() method for debug printing (or similar)
-- [x] print an info when a run was not successful
-- [x] we can support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size)
-- [x] when updating process is faster than the updates, stop the counter to save processing time
-- [x] linear ETA estimate over all last iterations
-- [ ] incorporate a symbol at end of bar to indicate finished status (maybe a checkmark or a colored bullet?)
-- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
+The code is licensed under BSD 3-Clause as stated in the `LICENSE` file
