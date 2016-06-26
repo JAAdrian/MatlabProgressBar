@@ -1,21 +1,60 @@
 classdef ProgressBar < handle
-%PROGRESSBAR <purpose in one line!>
+%PROGRESSBAR A class to provide a convenient and useful progress bar
 % -------------------------------------------------------------------------
-% <Detailed description of the function>
+% This class mimics the design and some features of the TQDM
+% (https://github.com/tqdm/tqdm) progress bar in python. All optional
+% functionalities are set via name-value pairs in the constructor after the
+% argument of the total numbers of iterations used in the progress (which
+% can also be empty if unknown or even neglected if no name-value pairs are
+% passed). The central class' method is 'update()' to increment the
+% progress state of the object.
 %
-% ProgressBar Properties:
-%	propA - <description>
-%	propB - <description>
+% Usage:  obj = ProgressBar()
+%         obj = ProgressBar(total)
+%         obj = ProgressBar(total, varargin)
+%
+% where 'total' is the total number of iterations.
+%
+%
+% ProgressBar Properties (read-only):
+%   Total - the total number of iterations [default: []]
+%   Title - the progress bar's title shown in front [default: '']
+%   Unit - the unit of the update process. Can either be 'Iterations' or
+%          'Bytes' [default: 'Iterations']
+%   UpdateRate - the progress bar's update rate in Hz. Defines the printing
+%                update interval [default: 10 Hz]
+%
 %
 % ProgressBar Methods:
-%	doThis - <description>
-%	doThat - <description>
+%   ProgressBar - class constructor
+%   close - clean up and finish the progress bar's internal state
+%   printMessage - print some infos during the iterations. Messages get
+%                  printed above the bar and the latter shifts one row down
+%   start - normally not to be used! Tiny helper function when setting up
+%           nested loops to print a parent bar before the first update
+%           occured. When the inner loop takes long, a nasty white space is
+%           shown in place of the parent bar until the first update takes
+%           place. This function can be used to remedy this.
+%   update - the central update method to increment the internal progress
+%            state
 %
 % Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
 % Date   :  17-Jun-2016 16:08:45
 %
 
-% Version:  v0.1   initial version, 17-Jun-2016 16:08 (JA)
+% History:  v1.0  working ProgressBar with and without knowledge of total
+%                 number of iterations, 21-Jun-2016 (JA)
+%           v2.0  support for update rate, 21-Jun-2016 (JA)
+%           v2.1  colored progress bar, 22-Jun-2016 (JA)
+%           v2.3  nested bars, 22-Jun-2016 (JA)
+%           v2.4  printMessage() and info when iteration was not
+%                 successful, 23-Jun-2016 (JA)
+%           v2.5  Support 'Bytes' as unit, 23-Jun-2016 (JA)
+%           v2.5.1 bug fixing, 23-Jun-2016 (JA)
+%           v2.7  introduce progress loop via wrapper class,
+%                 23- Jun-2016 (JA)
+%           v2.7.1 bug fixing, 25-Jun-2016 (JA)
+%           v2.8  support ASCII symbols, 25-Jun-2016 (JA)
 %
 
 
