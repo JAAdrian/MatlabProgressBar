@@ -4,10 +4,6 @@
 % Date   :  25-Jun-2016 14:26:43
 %
 
-clear;
-close all;
-clc
-
 
 addpath('..');
 
