@@ -53,7 +53,8 @@ A simple but quite common example looks like this:
 ```matlab
 numIterations = 10e3;
 
-% instantiate an object with an optional title and an update rate of 5 Hz, i.e. 5 bar updates per seconds, to save printing load.
+% instantiate an object with an optional title and an update rate of 5 Hz,
+% i.e. 5 bar updates per seconds, to save printing load.
 progBar = ProgressBar(numIterations, ...
     'Title', 'Iterating...', ...
     'UpdateRate', '5' ...
