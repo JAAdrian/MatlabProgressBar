@@ -49,7 +49,7 @@ Nevertheless, the basic work flow is to instantiate a `ProgressBar` object and u
 **Usage**  
 `obj = ProgressBar(totalIterations, varargin)`
 
-Simple Example:
+A simple but quite common example looks like this:
 ```matlab
 numIterations = 10e3;
 
@@ -61,6 +61,8 @@ progBar = ProgressBar(numIterations, ...
     
 % begin the actual loop and update the object's progress state
 for iIteration = 1:numIterations,
+    % do some processing
+
     progBar.update();
 end
 % call the 'close()' method to clean up
