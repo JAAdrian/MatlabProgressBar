@@ -74,7 +74,7 @@ On Deck
 -------------------------
 
 - [ ] improve demos
-- [ ] improve documentation
+- [x] improve documentation
 - [x] make a tester
 
 
