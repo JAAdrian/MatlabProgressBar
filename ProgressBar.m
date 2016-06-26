@@ -112,6 +112,14 @@ methods
             self.parseInputs(total, varargin{:});
         end
         
+        % check if prog. bar runs in deployed mode and if yes switch to
+        % ASCII symbols and a smaller bar width
+        if isdeployed,
+            self.ShouldUseUnicode = true;
+            self.TotalBarWidth = 72;
+        end
+        
+        % setup the function to retrieve ASCII symbols if desired
         if ~self.ShouldUseUnicode,
             self.BlockCharacterFunction = @getAsciiBlock;
         end
