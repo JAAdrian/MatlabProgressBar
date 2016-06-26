@@ -4,17 +4,24 @@
 % Date   :  25-Jun-2016 11:25:15
 %
 
-clear;
-close all;
-clc;
 
 addpath('..');
 
 numIterations = 1e5;
 
 
+%% No title and specialties
+
 for iIteration = progress(1:numIterations),
-    % do nothing and only print
+    % do nothing and print only
+end
+
+%% title and specific update rate
+for iIteration = progress(1:numIterations, ...
+        'Title', 'Iterator', ...
+        'UpdateRate', 5),
+   
+    % do nothing and print only
 end
 
 

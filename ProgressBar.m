@@ -1,28 +1,76 @@
 classdef ProgressBar < handle
-%PROGRESSBAR <purpose in one line!>
+%PROGRESSBAR A class to provide a convenient and useful progress bar
 % -------------------------------------------------------------------------
-% <Detailed description of the function>
+% This class mimics the design and some features of the TQDM
+% (https://github.com/tqdm/tqdm) progress bar in python. All optional
+% functionalities are set via name-value pairs in the constructor after the
+% argument of the total numbers of iterations used in the progress (which
+% can also be empty if unknown or even neglected if no name-value pairs are
+% passed). The central class' method is 'update()' to increment the
+% progress state of the object.
 %
-% ProgressBar Properties:
-%	propA - <description>
-%	propB - <description>
+% Usage:  obj = ProgressBar()
+%         obj = ProgressBar(total)
+%         obj = ProgressBar(total, varargin)
+%
+% where 'total' is the total number of iterations.
+%
+%
+% ProgressBar Properties (read-only):
+%   Total - the total number of iterations [default: []]
+%   Title - the progress bar's title shown in front [default: '']
+%   Unit - the unit of the update process. Can either be 'Iterations' or
+%          'Bytes' [default: 'Iterations']
+%   UpdateRate - the progress bar's update rate in Hz. Defines the printing
+%                update interval [default: 10 Hz]
+%
 %
 % ProgressBar Methods:
-%	doThis - <description>
-%	doThat - <description>
+%   ProgressBar - class constructor
+%   close - clean up and finish the progress bar's internal state
+%   printMessage - print some infos during the iterations. Messages get
+%                  printed above the bar and the latter shifts one row down
+%   start - normally not to be used! Tiny helper function when setting up
+%           nested loops to print a parent bar before the first update
+%           occured. When the inner loop takes long, a nasty white space is
+%           shown in place of the parent bar until the first update takes
+%           place. This function can be used to remedy this.
+%   update - the central update method to increment the internal progress
+%            state
 %
 % Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
 % Date   :  17-Jun-2016 16:08:45
 %
 
-% Version:  v0.1   initial version, 17-Jun-2016 16:08 (JA)
+% History:  v1.0  working ProgressBar with and without knowledge of total
+%                 number of iterations, 21-Jun-2016 (JA)
+%           v2.0  support for update rate, 21-Jun-2016 (JA)
+%           v2.1  colored progress bar, 22-Jun-2016 (JA)
+%           v2.3  nested bars, 22-Jun-2016 (JA)
+%           v2.4  printMessage() and info when iteration was not
+%                 successful, 23-Jun-2016 (JA)
+%           v2.5  Support 'Bytes' as unit, 23-Jun-2016 (JA)
+%           v2.5.1 bug fixing, 23-Jun-2016 (JA)
+%           v2.7  introduce progress loop via wrapper class,
+%                 23- Jun-2016 (JA)
+%           v2.7.1 bug fixing, 25-Jun-2016 (JA)
+%           v2.8  support ASCII symbols, 25-Jun-2016 (JA)
+%           v2.8.1 consider isdeployed
 %
 
 
 properties ( SetAccess = private, GetAccess = public )
+    % Total number of iterations to compute progress and ETA
     Total;
-    Title      = '';
-    Unit       = 'Iterations';
+    
+    % Titel of the progress bar if desired. Shown in front of the bar
+    Title = '';
+    
+    % The unit of each update. Can be either 'Iterations' or 'Bytes'.
+    % Default is 'Iterations'.
+    Unit = 'Iterations';
+    
+    % The visual printing rate in Hz. Default is 10 Hz
     UpdateRate = 10;
 end
 
@@ -31,8 +79,6 @@ properties ( Access = private )
     IterationCounter = 0;
     
     NumWrittenCharacters = 0;
-    LastBlock = 0;
-    LastMainBlock = 1;
     FractionMainBlock;
     FractionBlock;
     
@@ -52,10 +98,15 @@ properties ( Access = private )
 end
 
 properties ( Constant, Access = private )
+    % A Progressbar of less than 10 characters is rather useless, so
+    % constrain it
     MinBarLength = 10;
     
-    NumBlocks = 8; % HTML 'left blocks' go in eigths
+    % The number of sub blocks in one main block of width of a character.
+    % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
+    NumSubBlocks = 8; 
     
+    % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
 end
 
@@ -67,49 +118,64 @@ end
 
 
 methods
+    % Class Constructor
     function [self] = ProgressBar(total, varargin)
         if nargin,
             % parse input arguments
             self.parseInputs(total, varargin{:});
         end
         
+        % check if prog. bar runs in deployed mode and if yes switch to
+        % ASCII symbols and a smaller bar width
+        if isdeployed,
+            self.ShouldUseUnicode = true;
+            self.TotalBarWidth = 72;
+        end
+        
+        % setup the function to retrieve ASCII symbols if desired
         if ~self.ShouldUseUnicode,
             self.BlockCharacterFunction = @getAsciiBlock;
         end
         
-        % add a new timer object with the standard tag name
+        % add a new timer object with the standard tag name and hide it
         self.TimerObject = timer(...
             'Tag', self.TimerTagName, ...
             'ObjectVisibility', 'off' ...
             );
 
-        % register the new tic object
+        % get a new tic object
         self.TicObject = tic;
         
+        % if 'Total' is known setup the bar correspondingly and compute
+        % some constant values
         if self.HasTotalIterations,
             % initialize the progress bar and pre-compute some measures
             self.setupBar();
             self.computeBlockFractions();
         end
         
+        % if the bar should not be printed in every iteration setup the
+        % timer to the desired update rate
         if self.HasFiniteUpdateRate,
             self.setupTimer();
         end
         
+        % if this is a nested bar hit return
         if self.IsThisBarNested,
             fprintf(1, '\n');
         end
     end
     
+    % Class Destructor
     function delete(self)
-        % delete timer
+        % stop the timer
         if self.IsTimerRunning,
             self.stopTimer();
         end
         
         if self.IsThisBarNested,
             % when this prog bar was nested, remove it from the command
-            % line and get back to the end of the parent bar. 
+            % line and get back to the end of the parent bar.
             % +1 due to the line break
             fprintf(1, backspace(self.NumWrittenCharacters + 1));
         elseif self.IterationCounter && ~self.IsThisBarNested,
@@ -117,31 +183,71 @@ methods
             fprintf(1, '\n');
         end
         
-        % if the bar was not nested clear the static timer list, else
-        % unregister latest timer
+        % delete the timer object
         delete(self.TimerObject);
     end
     
     
     
     function [] = start(self)
+        %START class method to print a progress bar
+        % -----------------------------------------------------------------
+        % This method simply prints a progress bar. It is provided to have
+        % means to prevent empty lines at the position of the parent's bar
+        % when the first parent's update follows very late. Thus, if you
+        % set up a nested bar, simply place this method in front of the
+        % next loop to print a first progress bar.
+        %
+        % Usage: obj.start()
+        % 
+        
         self.printProgressBar();
     end
     
     
     
     
-    function [] = update(self, n, wasSuccessful, shouldPrintNextProgBar)
+    function [] = update(self, stepSize, wasSuccessful, shouldPrintNextProgBar)
+    %UPDATE class method to increment the object's progress state
+    %----------------------------------------------------------------------
+    % This method is the central update function in the loop to indicate
+    % the increment of the progress. 
+    % 
+    % Usage: obj.update()
+    %        obj.update(stepSize)
+    %        obj.update(stepSize, wasSuccessful)
+    %        obj.update(stepSize, wasSuccessful, shouldPrintNextProgBar)
+    % 
+    % Input: ---------
+    %       stepSize - the size of the progress step when the method is
+    %                  called. This can be used to pass the number of
+    %                  processed bytes when using 'Bytes' as units.
+    %                  [default: stepSize = 1]
+    %       wasSuccessful - Boolean to provide information about the
+    %                       success of an individual iteration. If you pass
+    %                       a 'false' a message will be printed stating the
+    %                       current iteration was not successful. 
+    %                       [default: wasSuccessful = true]
+    %       shouldPrintNextProgBar - Boolean to define wether to
+    %                                immidiately print another prog. bar
+    %                                after print the success message. Can
+    %                                be usefule when every iteration takes
+    %                                a long time and a white space appears
+    %                                where the progress bar used to be.
+    %                                [default: shouldPrintNextProgBar = false]
+    % 
+        
+        % input parsing and validating
         if nargin < 4 || isempty(shouldPrintNextProgBar),
             shouldPrintNextProgBar = false;
         end
         if nargin < 3 || isempty(wasSuccessful),
             wasSuccessful = true;
         end
-        if nargin < 2 || isempty(n),
-            n = 1;
+        if nargin < 2 || isempty(stepSize),
+            stepSize = 1;
         end
-        validateattributes(n, ...
+        validateattributes(stepSize, ...
             {'numeric'}, ...
             {'scalar', 'positive', 'real', 'nonnan', 'finite', 'nonempty'} ...
             );
@@ -155,23 +261,32 @@ methods
             );
         
         
-        self.incrementIterationCounter(n);
+        % increment the iteration counter
+        self.incrementIterationCounter(stepSize);
         
+        % if the timer was stopped before, because no update was given,
+        % start it now again.
         if ~self.IsTimerRunning && self.HasFiniteUpdateRate,
             self.startTimer();
         end
         
-        
+        % if the iteration was not successful print a message saying so.
         if ~wasSuccessful,
             infoMsg = sprintf('Iteration %i was not successful!', ...
                 self.IterationCounter);
             self.printMessage(infoMsg, shouldPrintNextProgBar);
         end
         
+        % when the bar should be updated in every iteration, do this with
+        % each time calling update()
         if ~self.HasFiniteUpdateRate,
             self.printProgressBar();
         end
         
+        % stop the timer after the last iteration if an update rate is
+        % used. The first condition is needed to prevent the if statement
+        % to fail if self.Total is empty. This happens when no total number
+        % of iterations was passed / is known.
         if         ~isempty(self.Total) ...
                 && self.IterationCounter == self.Total ...
                 && self.HasFiniteUpdateRate,
@@ -183,7 +298,30 @@ methods
     
     
     
-    function [] = printMessage(self, msg, shouldPrintNextProgBar)
+    function [] = printMessage(self, message, shouldPrintNextProgBar)
+    %PRINTMESSAGE class method to print a message while prog bar running
+    %----------------------------------------------------------------------
+    % This method lets the user print a message during the processing. A
+    % normal fprintf() or disp() would break the bar so this method can be
+    % used to print information about iterations or debug infos.
+    % 
+    % Usage: obj.printMessage(self, message)
+    %        obj.printMessage(self, message, shouldPrintNextProgBar)
+    % 
+    % Input: ---------
+    %       message - the message that should be printed to screen
+    %       shouldPrintNextProgBar - Boolean to define wether to
+    %                                immidiately print another prog. bar
+    %                                after print the success message. Can
+    %                                be usefule when every iteration takes
+    %                                a long time and a white space appears
+    %                                where the progress bar used to be.
+    %                                [default: shouldPrintNextProgBar = false]
+    % 
+        
+        % input parsing and validation
+        narginchk(2, 3);
+        
         if nargin < 3 || isempty(shouldPrintNextProgBar),
             shouldPrintNextProgBar = false;
         end
@@ -192,14 +330,18 @@ methods
             {'scalar', 'binary', 'nonempty', 'nonnan'} ...
             );
         
+        % remove the current prog bar
         fprintf(1, backspace(self.NumWrittenCharacters));
         
+        % print the message and break the line
         fprintf(1, '\t');
-        fprintf(1, msg);
+        fprintf(1, message);
         fprintf(1, '\n');
         
+        % reset the number of written characters
         self.NumWrittenCharacters = 0;
         
+        % if the next prog bar should be printed immideately do this
         if shouldPrintNextProgBar,
             self.printProgressBar();
         end
@@ -209,6 +351,17 @@ methods
     
     
     function [] = close(self)
+    %CLOSE class method to finish and clean up a current prog bar
+    %----------------------------------------------------------------------
+    % This method finishes and cleans the internal state of the progress
+    % bar object. It is advisable to call this method after the loop where
+    % the progress bar is incorporated to prevent possible unrobust
+    % behaviour of future progress bar in the session.
+    % 
+    % Usage: obj.close()
+    % 
+        
+        % just call the destructor for convenience
         delete(self);
     end
     
@@ -216,6 +369,8 @@ methods
     
     
     function [yesNo] = get.IsThisBarNested(self)
+        % If there are more than one timer object with our tag, the current
+        % bar must be nested
         yesNo = length(self.getTimerList()) > 1;
     end
 end
@@ -226,6 +381,9 @@ end
 
 methods (Access = private)
     function [] = parseInputs(self, total, varargin)
+        % General input parsing of the constructor using the 'inputParse'
+        % class to provide name-value pairs.
+        
         p = inputParser;
         p.FunctionName = mfilename;
         
@@ -289,14 +447,19 @@ methods (Access = private)
     
     
     function [] = computeBlockFractions(self)
+    % Compute the progress percentage of a single main and a single sub
+    % block
         self.FractionMainBlock = 1 / length(self.Bar);
-        self.FractionBlock = self.FractionMainBlock / self.NumBlocks;
+        self.FractionBlock = self.FractionMainBlock / self.NumSubBlocks;
     end
     
     
     
     
     function [] = setupBar(self)
+    % Set up the growing bar part of the printed line by computing the
+    % width of it
+        
         [~, preBarFormat, postBarFormat] = self.returnFormatString();
         
         % insert worst case inputs to get (almost) maximum length of bar
@@ -316,11 +479,16 @@ methods (Access = private)
     
     
     function [] = printProgressBar(self)
+    % This method removes the old and prints the current bar to the screen
+    % and saves the number of written characters for the next iteration
+        
+        % remove old previous bar
         fprintf(1, backspace(self.NumWrittenCharacters));
         
         formatString = self.returnFormatString();
         argumentList = self.returnArgumentList();
         
+        % print new bar
         self.NumWrittenCharacters = fprintf(1, ...
             formatString, ...
             argumentList{:} ...
@@ -332,8 +500,10 @@ methods (Access = private)
     
     
     function [format, preString, postString] = returnFormatString(self)
-        % this is adapted from tqdm
+    % This method returns the format string for the fprintf() function in
+    % printProgressBar()
 
+        % use the correct units
         if strcmp(self.Unit, 'Bytes');
             unitStrings = {'K', 'KB'};
         else
@@ -342,6 +512,8 @@ methods (Access = private)
         
         
         
+        % consider a growing bar if the total number of iterations is known
+        % and consider a title if on is given.
         if self.HasTotalIterations,
             if ~isempty(self.Title),
                 preString  = '%s:  %03.0f%%  ';
@@ -364,7 +536,7 @@ methods (Access = private)
             if ~isempty(self.Title),
                 format = ['%s:  %i', unitStrings{1}, ...
                     ' [%02.0f:%02.0f:%02.0f, %.2f ', unitStrings{2}, '/s]'];
-            else                
+            else
                 format = ['%i', unitStrings{1}, ' [%02.0f:%02.0f:%02.0f, %.2f ', ...
                     unitStrings{2}, '/s]'];
             end
@@ -375,13 +547,17 @@ methods (Access = private)
     
     
     function [argList] = returnArgumentList(self)
+    % This method returns the argument list as a cell array for the
+    % fprintf() function in printProgressBar()
+        
         % elapsed time (ET)
         thisTimeSec = toc(self.TicObject);
         etHoursMinsSecs = convertTime(thisTimeSec);
 
-        % iterations per second
+        % mean iterations per second counted from the start
         iterationsPerSecond = self.IterationCounter / thisTimeSec;
         
+        % consider the correct units
         scaledIteration = self.IterationCounter;
         scaledTotal     = self.Total;
         if strcmp(self.Unit, 'Bytes'),
@@ -459,6 +635,7 @@ methods (Access = private)
                 };
         end
 
+        % remove the title from list if not given
         if isempty(self.Title),
             argList = argList(2:end);
         end
@@ -468,27 +645,31 @@ methods (Access = private)
     
     
     function [barString] = getCurrentBar(self)
+    % This method constructs the growing bar part of the printed line by
+    % indexing the correct part of the blank bar and getting either a
+    % Unicode or ASCII symbol.
+        
+        % set up the bar and the current progress as a ratio
         lenBar = length(self.Bar);
         currProgress = self.IterationCounter / self.Total;
         
+        % index of the current main block
         thisMainBlock = min(ceil(currProgress / self.FractionMainBlock), lenBar);
         
+        % index of the current sub block
         continuousBlockIndex = ceil(currProgress / self.FractionBlock);
-        thisBlock = mod(continuousBlockIndex, self.NumBlocks) + 1;
+        thisBlock = mod(continuousBlockIndex, self.NumSubBlocks) + 1;
         
-        if thisBlock > self.LastBlock || thisMainBlock > self.LastMainBlock,
-            % fix for non-full last blocks when steps are large
-            self.Bar(1:max(thisMainBlock-1, 0)) = ...
-                repmat(self.BlockCharacterFunction(inf), 1, thisMainBlock - 1);
-            
-            if self.IterationCounter == self.Total,
-                self.Bar = repmat(self.BlockCharacterFunction(inf), 1, lenBar);
-            else
-                self.Bar(thisMainBlock) = self.BlockCharacterFunction(thisBlock);
-            end
-            
-            self.LastBlock = thisBlock;
-            self.LastMainBlock = thisMainBlock;
+        % fix for non-full last blocks when steps are large: make them full
+        self.Bar(1:max(thisMainBlock-1, 0)) = ...
+            repmat(self.BlockCharacterFunction(inf), 1, thisMainBlock - 1);
+        
+        % return a full bar in the last iteration or update the current
+        % main block
+        if self.IterationCounter == self.Total,
+            self.Bar = repmat(self.BlockCharacterFunction(inf), 1, lenBar);
+        else
+            self.Bar(thisMainBlock) = self.BlockCharacterFunction(thisBlock);
         end
         
         barString = self.Bar;
@@ -498,10 +679,15 @@ methods (Access = private)
     
     
     function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
+    % This method estimates linearly the remaining time
+        
+        % the current progress as ratio
         progress = self.IterationCounter / self.Total;
         
+        % the remainin seconds
         remainingSeconds = elapsedTime * ((1 / progress) - 1);
         
+        % convert seconds to hours:mins:seconds
         etaHoursMinsSecs = convertTime(remainingSeconds);
     end
     
@@ -509,6 +695,8 @@ methods (Access = private)
     
     
     function [] = setupTimer(self)
+    % This method initializes the timer object if an upate rate is used
+        
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
@@ -521,24 +709,11 @@ methods (Access = private)
     
     
     
-    
-    function [] = startTimer(self)
-        start(self.TimerObject);
-        self.IsTimerRunning = true;
-    end
-    
-    
-    
-    
-    function [] = stopTimer(self)
-        stop(self.TimerObject);
-        self.IsTimerRunning = false;
-    end
-    
-    
-    
-    
     function [] = timerCallback(self)
+    % This method is the timer callback. If an update came in between the
+    % last printing and now print a new prog bar, else stop the timer and
+    % wait.
+        
         if self.HasBeenUpdated,
             self.printProgressBar();
         else
@@ -551,8 +726,31 @@ methods (Access = private)
     
     
     
-    function [] = incrementIterationCounter(self, n)
-        self.IterationCounter = self.IterationCounter + n;
+    function [] = startTimer(self)
+    % This method starts the timer object and updates the status bool
+    
+        start(self.TimerObject);
+        self.IsTimerRunning = true;
+    end
+    
+    
+    
+    
+    function [] = stopTimer(self)
+    % This method stops the timer object and updates the status bool
+        
+        stop(self.TimerObject);
+        self.IsTimerRunning = false;
+    end
+    
+    
+    
+    
+    function [] = incrementIterationCounter(self, stepSize)
+    % This method increments the iteration counter and updates the status
+    % bool
+        
+        self.IterationCounter = self.IterationCounter + stepSize;
         
         self.HasBeenUpdated = true;
     end
@@ -561,6 +759,9 @@ methods (Access = private)
     
     
     function [list] = getTimerList(self)
+    % This function returns the list of all hidden timers which are tagged
+    % with our default tag
+        
         list = timerfindall('Tag', self.TimerTagName);
     end
 end
@@ -570,9 +771,9 @@ end
 
 
 function [thisBlock] = getUnicodeBlock(idx)
-% idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
-% excluding the 'space' but this function also returns the space as first
-% block
+% This function returns the HTML 'left blocks' to construct the growing
+% bar. 'idx' ranges from 1 to 8, since the HTML 'left blocks' range from 1
+% to 8 excluding the 'space'. If isinf(idx) return a full block.
 
 blocks = [
     char(9615);
@@ -589,9 +790,9 @@ thisBlock = blocks(min(idx, length(blocks)));
 end
 
 function [thisBlock] = getAsciiBlock(idx)
-% idx ranges from 1 to 9, since the HTML 'left blocks' range from 1 to 8
-% excluding the 'space' but this function also returns the space as first
-% block
+% This function returns the ASCII number signs (hashes) to construct the
+% growing bar. 'idx' ranges from 1 to 8, since the HTML 'left blocks' range
+% from 1 to 8 excluding the 'space'. If isinf(idx) return a full block.
 
 blocks = repmat('#', 1, 8);
 
@@ -600,19 +801,26 @@ end
 
 
 function [str] = backspace(numChars)
+% This function returns the desired numbers of backspaces to delete
+% characters from the current line
+
 str = repmat(sprintf('\b'), 1, numChars);
 end
 
 
 function [hoursMinsSecs] = convertTime(secondsIn)
-% fast implementation using mod() from
-% http://stackoverflow.com/a/21233409
+% This fast implementation to convert seconds to hours:mins:seconds using
+% mod() stems from http://stackoverflow.com/a/21233409
 
 hoursMinsSecs = floor(mod(secondsIn, [0, 3600, 60]) ./ [3600, 60, 1]);
 end
 
 
 function [yesNo] = checkInputOfTotal(total)
+% This function is the input checker of the main constructor argument
+% 'total'. It is ok if it's empty but when not it must obey
+% validateattributes.
+
 isTotalEmpty = isempty(total);
 
 if isTotalEmpty,
