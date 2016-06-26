@@ -658,7 +658,7 @@ methods (Access = private)
         
         % index of the current sub block
         continuousBlockIndex = ceil(currProgress / self.FractionSubBlock);
-        thisBlock = mod(continuousBlockIndex, self.NumSubBlocks) + 1;
+        thisBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
         
         % fix for non-full last blocks when steps are large: make them full
         self.Bar(1:max(thisMainBlock-1, 0)) = ...
