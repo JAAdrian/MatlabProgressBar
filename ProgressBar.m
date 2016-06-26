@@ -80,7 +80,7 @@ properties ( Access = private )
     
     NumWrittenCharacters = 0;
     FractionMainBlock;
-    FractionBlock;
+    FractionSubBlock;
     
     HasTotalIterations = false;
     HasBeenUpdated = false;
@@ -450,7 +450,7 @@ methods (Access = private)
     % Compute the progress percentage of a single main and a single sub
     % block
         self.FractionMainBlock = 1 / length(self.Bar);
-        self.FractionBlock = self.FractionMainBlock / self.NumSubBlocks;
+        self.FractionSubBlock = self.FractionMainBlock / self.NumSubBlocks;
     end
     
     
@@ -657,8 +657,8 @@ methods (Access = private)
         thisMainBlock = min(ceil(currProgress / self.FractionMainBlock), lenBar);
         
         % index of the current sub block
-        continuousBlockIndex = ceil(currProgress / self.FractionBlock);
-        thisBlock = mod(continuousBlockIndex, self.NumSubBlocks) + 1;
+        continuousBlockIndex = ceil(currProgress / self.FractionSubBlock);
+        thisBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
         
         % fix for non-full last blocks when steps are large: make them full
         self.Bar(1:max(thisMainBlock-1, 0)) = ...

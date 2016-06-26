@@ -53,7 +53,8 @@ A simple but quite common example looks like this:
 ```matlab
 numIterations = 10e3;
 
-% instantiate an object with an optional title and an update rate of 5 Hz, i.e. 5 bar updates per seconds, to save printing load.
+% instantiate an object with an optional title and an update rate of 5 Hz,
+% i.e. 5 bar updates per seconds, to save printing load.
 progBar = ProgressBar(numIterations, ...
     'Title', 'Iterating...', ...
     'UpdateRate', '5' ...
@@ -76,6 +77,18 @@ On Deck
 - [ ] improve demos
 - [x] improve documentation
 - [x] make a tester
+
+
+Known Issues
+-------------------------------
+
+##### Remaining Timer objects
+
+Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. To circumvent this, just call the following to delete all remaining timer objects in memory.
+
+```matlab
+delete(timerfindall('Tag', 'ProgressBar'));
+```
 
 
 License
