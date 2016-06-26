@@ -79,6 +79,18 @@ On Deck
 - [x] make a tester
 
 
+Known Issues
+-------------------------------
+
+##### Remaining Timer objects
+
+Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. To circumvent this, just call the following to delete all remaining timer objects in memory.
+
+```matlab
+delete(timerfindall('Tag', 'ProgressBar'));
+```
+
+
 License
 ----------------------
 
