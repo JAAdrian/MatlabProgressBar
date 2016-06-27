@@ -70,6 +70,18 @@ end
 progBar.close();
 ```
 
+A neat way to completely get rid of the conventional `update()` method is to use the `progress()` wrapper class. It implements the `subsref()` method and thus acts similar to an iterator in Python. A progress bar will be printed without the further need to call `update()`. Be aware that functionalities like `printMessage()`, printing success information or a different step size than 1 are not supported with `progress()`.
+
+See the example below:
+```matlab
+numIterations = 10e3;
+
+% create the loop using the progress() class
+for iIteration = progress(1:numIterations),
+    % do some processing
+end
+```
+
 
 On Deck
 -------------------------
