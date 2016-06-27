@@ -6,7 +6,7 @@ Therefore, this MATLAB class aims to provide a smart progress bar in the command
 
 A design target was to mimic the best features of the progress bar [tqdm](https://github.com/tqdm/tqdm) for Python. Thus, this project features a Unicode-based bar and some numeric information about the current progress and the mean iterations per second
 
-![Place GIF here!]()
+![](example.gif)
 
 Supported features include (and are planned):
 - [x] TQDM Unicode blocks
@@ -94,9 +94,17 @@ On Deck
 Known Issues
 -------------------------------
 
-##### Remaining Timer objects
+#### The Bar Gets Longer with Each Iteration
 
-Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. To circumvent this, just call the following to delete all remaining timer objects in memory.
+There seems to be a problem with the default font `Monospaced` at least on Windows. If this behavior is problematic change the font for the command window to a different monospaced font, preferably with proper Unicode support.
+
+#### Strange Symbols in the Progress Bar
+
+The display of the updating progress bar is highly dependent on the **font** you use in the command window. Be sure to use a proper font that can handle Unicode characters. Otherwise be sure to always use the `'Unicode', false` switch in the constructor.
+
+#### Remaining Timer objects
+
+Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. If you encounter strange behavior like wrong line breaks or disappearing progress bars after the bar has finished, just call the following to delete all remaining timer objects in memory.
 
 ```matlab
 delete(timerfindall('Tag', 'ProgressBar'));
