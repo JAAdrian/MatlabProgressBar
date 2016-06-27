@@ -25,7 +25,7 @@ Supported features include (and are planned):
 
 
 **Note**:  
-Be sure to have a look at the [Known Issues](known-issues) section for current known bugs and possible work-arounds.
+Be sure to have a look at the [Known Issues](#known-issues) section for current known bugs and possible work-arounds.
 
 Dependencies
 -------------------------
