@@ -56,6 +56,8 @@ classdef ProgressBar < handle
 %           v2.7.1 bug fixing, 25-Jun-2016 (JA)
 %           v2.8  support ASCII symbols, 25-Jun-2016 (JA)
 %           v2.8.1 consider isdeployed
+%           v2.8.2 fix a bug concerning bar updating, 27-Jun-2016 (JA)
+%           v2.8.3 update documentation and demos, 27-Jun-2016 (JA)
 %
 
 
