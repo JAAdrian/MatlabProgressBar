@@ -6,7 +6,7 @@ Therefore, this MATLAB class aims to provide a smart progress bar in the command
 
 A design target was to mimic the best features of the progress bar [tqdm](https://github.com/tqdm/tqdm) for Python. Thus, this project features a Unicode-based bar and some numeric information about the current progress and the mean iterations per second
 
-![Place GIF here!]()
+![](example.gif)
 
 Supported features include (and are planned):
 - [x] TQDM Unicode blocks
