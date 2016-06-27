@@ -59,6 +59,7 @@ classdef ProgressBar < handle
 %           v2.8.2 fix a bug concerning bar updating, 27-Jun-2016 (JA)
 %           v2.8.3 update documentation and demos, 27-Jun-2016 (JA)
 %           v2.8.4 update known issues
+%           v2.8.5 bug fixes
 %
 
 
