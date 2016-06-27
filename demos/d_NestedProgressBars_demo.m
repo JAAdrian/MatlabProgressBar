@@ -1,7 +1,7 @@
-% <purpose of this file>
+% Demo of nested bars. At this point only one nested bar is supported
 %
-% Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
-% Date   :  21-Jun-2016 17:14:36
+% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Date  :  21-Jun-2016 17:14:36
 %
 
 
@@ -14,11 +14,15 @@ numInnerIterations = 20;
 
 %% Nested Bars without inner update rate
 
+% be sure to set the update rate to inf to disable a timed printing of the
+% bar!
 obj1 = ProgressBar(numOuterIterations, ...
     'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
 
+% helper method to print a first progress bar before the inner loop starts.
+% This prevents a blank line until the first obj1.update() is called.
 obj1.start();
 for iOuterIteration = 1:numOuterIterations,
     obj2 = ProgressBar(numInnerIterations, ...
@@ -39,11 +43,13 @@ obj1.close();
 
 
 
+
 %% Nested Bars WITH inner update rate
 
 numInnerIterations = 50e3;
 
-% Don't have an update rate here!!!!
+% be sure to set the update rate to inf to disable a timed printing of the
+% bar!
 obj1 = ProgressBar(numOuterIterations, ...
     'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
@@ -51,6 +57,7 @@ obj1 = ProgressBar(numOuterIterations, ...
 
 obj1.start();
 for iOuterIteration = 1:numOuterIterations,
+    % this progress can have an update rate!
     obj2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', 5, ...
         'Title', 'Loop 2' ...
@@ -69,4 +76,4 @@ obj1.close();
 
 
 
-% End of file: c_NestedProgressBars_demo.m
+% End of file: d_NestedProgressBars_demo.m

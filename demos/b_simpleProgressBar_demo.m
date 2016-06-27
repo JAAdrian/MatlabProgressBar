@@ -1,7 +1,7 @@
-% <purpose of this file>
+% Demo of some standard applications with known total number of iterations
 %
-% Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
-% Date   :  21-Jun-2016 17:12:41
+% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Date  :  21-Jun-2016 17:12:41
 %
 
 
@@ -11,6 +11,20 @@ numIterations = 50;
 
 
 %% Simple setup WITH known number of iterations
+
+obj = ProgressBar(numIterations);
+
+for iIteration = 1:numIterations,
+    pause(0.1);
+    
+    obj.update();
+end
+obj.close();
+
+
+
+
+%% Simple setup WITH known number of iterations and title
 
 obj = ProgressBar(numIterations, ...
     'Title', 'Progress' ...
@@ -24,18 +38,25 @@ end
 obj.close();
 
 
-%% Now with different step size
+
+
+%% Now with a different step size
 
 obj = ProgressBar(numIterations, ...
     'Title', 'Step Size 2' ...
     );
 
-for iIteration = 1:2:numIterations,
+stepSize = 2;
+
+for iIteration = 1:stepSize:numIterations,
     pause(0.1);
     
-    obj.update(2);
+    obj.update(stepSize);
 end
 obj.close();
+
+
+
 
 %% Simulate an iteration which takes longer so the timed printing stops
 
