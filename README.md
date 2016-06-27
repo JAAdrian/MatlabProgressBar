@@ -4,11 +4,11 @@ ProgressBar
 A drawback in MATLAB's own `waitbar()` function is the lack of some functionalities and the loss of speed due to the rather laggy GUI updating process.
 Therefore, this MATLAB class aims to provide a smart progress bar in the command window and is optimized for progress information in simple iterations or large frameworks.
 
-A design target was to mimic the best features of the progress bar [tqdm](https://github.com/tqdm/tqdm) for Python. Thus, this project features a Unicode-based bar and some numeric information about the current progress and the mean iterations per second
+A design target was to mimic the best features of the progress bar [tqdm](https://github.com/tqdm/tqdm) for Python. Thus, this project features a Unicode-based bar and some numeric information about the current progress and the mean iterations per second.
 
 ![](example.gif)
 
-Supported features include (and are planned):
+Supported features include (or are planned):
 - [x] TQDM Unicode blocks
 - [x] optional constructor switch for optional ASCII number signs (hashes)
 - [x] optional bar title
@@ -20,7 +20,6 @@ Supported features include (and are planned):
 - [x] support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size). At the moment, the only alternative supported unit is `Bytes`
 - [x] when the internal updating process is faster than the actual updates via `update()`, the internal counter and printing of the process bar stops until the next update to save processing time
 - [x] linear ETA estimate over all last iterations
-- [ ] incorporate a symbol at end of bar to indicate finished status (maybe a checkmark or a colored bullet?)
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
@@ -81,14 +80,6 @@ for iIteration = progress(1:numIterations),
     % do some processing
 end
 ```
-
-
-On Deck
--------------------------
-
-- [ ] improve demos
-- [x] improve documentation
-- [x] make a tester
 
 
 Known Issues
