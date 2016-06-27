@@ -1,7 +1,8 @@
-% <purpose of this file>
+% Demo of the printMessage() method. In 3 iterations an info message is
+% printed
 %
-% Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
-% Date   :  21-Jun-2016 17:48:22
+% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Date  :  21-Jun-2016 17:48:22
 %
 
 
@@ -9,7 +10,7 @@ addpath('..');
 
 numIterations = 1e2;
 
-%% Simple setup WITH known number of iterations
+%% Simple setup and print a message in desired iterations
 
 obj = ProgressBar(numIterations, ...
     'Title', 'Progress' ...

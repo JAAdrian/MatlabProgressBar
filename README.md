@@ -14,7 +14,7 @@ Supported features include (and are planned):
 - [x] optional bar title
 - [x] optional visual update interval in Hz [defaults to 10 Hz]
 - [x] when no total number of iterations is passed the bar shows the elapsed time, the number of (elapsed) iterations and iterations/s
-- [x] nested bars (at the moment only nesting of order 1)
+- [x] nested bars (at the moment only one nested bar is supported [one parent, one child])
 - [x] `printMessage()` method for debug printing (or the like)
 - [x] print an info when a run was not successful
 - [x] support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size). At the moment, the only alternative supported unit is `Bytes`
@@ -25,7 +25,7 @@ Supported features include (and are planned):
 
 
 **Note**:  
-Be sure to have a look at the [Known Issues](known-issues) section for current known bugs and possible work-arounds.
+Be sure to have a look at the [Known Issues](#known-issues) section for current known bugs and possible work-arounds.
 
 Dependencies
 -------------------------
@@ -68,6 +68,18 @@ for iIteration = 1:numIterations,
 end
 % call the 'close()' method to clean up
 progBar.close();
+```
+
+A neat way to completely get rid of the conventional `update()` method is to use the `progress()` wrapper class. It implements the `subsref()` method and thus acts similar to an iterator in Python. A progress bar will be printed without the further need to call `update()`. Be aware that functionalities like `printMessage()`, printing success information or a different step size than 1 are not supported with `progress()`.
+
+See the example below:
+```matlab
+numIterations = 10e3;
+
+% create the loop using the progress() class
+for iIteration = progress(1:numIterations),
+    % do some processing
+end
 ```
 
 
