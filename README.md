@@ -14,7 +14,7 @@ Supported features include (and are planned):
 - [x] optional bar title
 - [x] optional visual update interval in Hz [defaults to 10 Hz]
 - [x] when no total number of iterations is passed the bar shows the elapsed time, the number of (elapsed) iterations and iterations/s
-- [x] nested bars (at the moment only nesting of order 1)
+- [x] nested bars (at the moment only one nested bar is supported [one parent, one child])
 - [x] `printMessage()` method for debug printing (or the like)
 - [x] print an info when a run was not successful
 - [x] support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size). At the moment, the only alternative supported unit is `Bytes`
