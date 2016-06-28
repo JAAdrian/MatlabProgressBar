@@ -169,13 +169,14 @@ methods
             self.setupTimer();
         end
         
-        if self.IsParallel,
-            self.startTimer();
-        end
-        
         % if this is a nested bar hit return
         if self.IsThisBarNested,
             fprintf(1, '\n');
+        end
+        
+        % if the bar is used in a parallel setup start the timer right now
+        if self.IsParallel,
+            self.startTimer();
         end
     end
     
@@ -199,7 +200,8 @@ methods
         % delete the timer object
         delete(self.TimerObject);
         
-        % if used in parallel processing delete all aux. files
+        % if used in parallel processing delete all aux. files and clear
+        % the persistent variables inside of updateParallel()
         if self.IsParallel,
             files = findWorkerFiles();
             
