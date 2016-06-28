@@ -198,12 +198,15 @@ methods
         % delete the timer object
         delete(self.TimerObject);
         
+        % if used in parallel processing delete all aux. files
         if self.IsParallel,
             files = findWorkerFiles();
             
             if ~isempty(files),
                 delete(files{:});
             end
+            
+            clear updateParallel;
         end
     end
     
@@ -759,27 +762,33 @@ methods (Access = private)
     
     
     function [] = timerCallbackParallel(self)
+        % find the aux. worker files
         [files, numFiles] = findWorkerFiles();
         
+        % if none have been written yet just return
         if ~numFiles,
             return;
         end
-            
+        
+        % read the status in every file
         results = zeros(numFiles, 1);
-        for iWorker = 1:numFiles,
-            fid = fopen(files{iWorker}, 'rb');
+        for iFile = 1:numFiles,
+            fid = fopen(files{iFile}, 'rb');
             
             if fid > 0,
-                results(iWorker) = fread(fid, 1, 'uint64');
+                results(iFile) = fread(fid, 1, 'uint64');
                 fclose(fid);
             end
         end
         
+        % the sum of all files should be the current iteration
         self.IterationCounter = sum(results);
         
+        % print the progress bar
         self.printProgressBar();
         
-        if self.IterationCounter == self.Total,
+        % if total is known and we are at the end stop the timer
+        if ~isempty(self.Total) && self.IterationCounter == self.Total,
             self.stopTimer();
         end
 end
