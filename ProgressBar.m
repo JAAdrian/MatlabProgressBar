@@ -42,27 +42,29 @@ classdef ProgressBar < handle
 % Date   :  17-Jun-2016 16:08:45
 %
 
-% History:  v1.0  working ProgressBar with and without knowledge of total
-%                 number of iterations, 21-Jun-2016 (JA)
-%           v2.0  support for update rate, 21-Jun-2016 (JA)
-%           v2.1  colored progress bar, 22-Jun-2016 (JA)
-%           v2.2  support custom step size, 22-Jun-2016 (JA)
-%           v2.3  nested bars, 22-Jun-2016 (JA)
-%           v2.4  printMessage() and info when iteration was not
-%                 successful, 23-Jun-2016 (JA)
-%           v2.5  support 'Bytes' as unit, 23-Jun-2016 (JA)
-%           v2.5.1 bug fixing, 23-Jun-2016 (JA)
-%           v2.6  timer stops when no updates arrive, 23-Jun-2016 (JA)
-%           v2.7  introduce progress loop via wrapper class,
-%                 23- Jun-2016 (JA)
-%           v2.7.1 bug fixing, 25-Jun-2016 (JA)
-%           v2.8  support ASCII symbols, 25-Jun-2016 (JA)
-%           v2.8.1 consider isdeployed
-%           v2.8.2 fix a bug concerning bar updating, 27-Jun-2016 (JA)
-%           v2.8.3 update documentation and demos, 27-Jun-2016 (JA)
-%           v2.8.4 update known issues
-%           v2.8.5 bug fixes
-%           v2.9   support of parallel parfor loops, 28-Jun-2016 (JA)
+% History:  v1.0    working ProgressBar with and without knowledge of total
+%                   number of iterations, 21-Jun-2016 (JA)
+%           v2.0    support for update rate, 21-Jun-2016 (JA)
+%           v2.1    colored progress bar, 22-Jun-2016 (JA)
+%           v2.2    support custom step size, 22-Jun-2016 (JA)
+%           v2.3    nested bars, 22-Jun-2016 (JA)
+%           v2.4    printMessage() and info when iteration was not
+%                   successful, 23-Jun-2016 (JA)
+%           v2.5    support 'Bytes' as unit, 23-Jun-2016 (JA)
+%           v2.5.1  bug fixing, 23-Jun-2016 (JA)
+%           v2.6    timer stops when no updates arrive, 23-Jun-2016 (JA)
+%           v2.7    introduce progress loop via wrapper class,
+%                   23- Jun-2016 (JA)
+%           v2.7.1  bug fixing, 25-Jun-2016 (JA)
+%           v2.8    support ASCII symbols, 25-Jun-2016 (JA)
+%           v2.8.1  consider isdeployed
+%           v2.8.2  fix a bug concerning bar updating, 27-Jun-2016 (JA)
+%           v2.8.3  update documentation and demos, 27-Jun-2016 (JA)
+%           v2.8.4  update known issues
+%           v2.8.5  bug fixes
+%           v2.9    support of parallel parfor loops, 28-Jun-2016 (JA)
+%           v2.9.1  bug fixing (deploy mode) and optimization,
+%                   28-Jun-2016 (JA)
 %
 
 
