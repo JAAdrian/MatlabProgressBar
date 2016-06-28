@@ -7,20 +7,23 @@
 
 addpath('..');
 
-numIterations = 20e3;
+numIterations = 250;
 
 if isempty(gcp('nocreate')),
     parpool();
 end
 
 obj = ProgressBar(numIterations, ...
-    'UpdateRate', 1, ...
+    'UpdateRate', 5, ...
     'Parallel', true, ...
     'Title', 'Parallel' ...
     );
 
+
 parfor iIteration = 1:numIterations,
-    obj.updatePar();
+    pause(0.1);
+    
+    obj.updateParallel();
 end
 obj.close();
 

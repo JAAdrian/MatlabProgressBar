@@ -96,6 +96,8 @@ properties ( Access = private )
     IsTimerRunning = false;
     
     IsParallel = false;
+    FileID = -1;
+    WorkerComFile;
     
     TicObject;
     TimerObject;
@@ -170,6 +172,20 @@ methods
         end
         
         if self.IsParallel,
+            % initialize the binary file with status = 0
+            self.WorkerComFile = ...
+                fullfile(self.WorkerFileDir, self.WorkerFileName);
+            
+            self.FileID = fopen(self.WorkerComFile, 'wb');
+            if self.FileID < 0,
+                error(['The file for worker communication could not ', ...
+                    'be created. Do you have write permissions?']);
+            end
+            fwrite(self.FileID, 0, 'uint64');
+            fclose(self.FileID);
+            self.FileID = [];
+            
+            
             self.startTimer();
         end
         
@@ -186,6 +202,13 @@ methods
             self.stopTimer();
         end
         
+        if self.IsParallel,
+            self.IterationCounter = self.Total;
+            self.printProgressBar();
+            
+            delete(self.WorkerComFile);            
+        end
+        
         if self.IsThisBarNested,
             % when this prog bar was nested, remove it from the command
             % line and get back to the end of the parent bar.
@@ -198,21 +221,6 @@ methods
         
         % delete the timer object
         delete(self.TimerObject);
-        
-        if self.IsParallel,
-            self.updatePar(-1);
-            
-            pattern = fullfile(self.WorkerFileDir, [self.WorkerFileName, '*']);
-            files = dir(pattern);
-            fileNames = {files.name};
-            fileNames = cellfun(...
-                @(x) fullfile(self.WorkerFileDir, x), ...
-                fileNames, ...
-                'uni', false ...
-                );
-            
-            delete(fileNames{:});            
-        end
     end
     
     
@@ -326,43 +334,30 @@ methods
     
     
     
-    function [] = updatePar(self, stepSize)
-        persistent workerStatusFileName;
-        persistent iterationCounterWorker;
-        
+    function [] = updateParallel(self, stepSize)
         % input parsing and validating
         if nargin < 2 || isempty(stepSize),
             stepSize = 1;
         end
-        if stepSize == -1,
-            workerStatusFileName = [];
-            iterationCounterWorker = [];
-            return;
-        end
         
         validateattributes(stepSize, ...
             {'numeric'}, ...
-            {'scalar', 'positive', 'real', 'nonnan', 'finite', 'nonempty'} ...
+            {'scalar', 'positive', 'integer', 'real', 'nonnan', ...
+            'finite', 'nonempty'} ...
             );
         
-        
-        if isempty(workerStatusFileName),
-            uuid = char(java.util.UUID.randomUUID);
-            
-            workerStatusFileName = fullfile(...
-                self.WorkerFileDir, ...
-                [self.WorkerFileName, '_', uuid] ...
-                );
+        if isempty(self.FileID),
+            self.FileID = fopen(self.WorkerComFile, 'r+b');
+            if self.FileID > 0,
+                status = fread(self.FileID, 1, 'uint64');
+                
+                fseek(self.FileID, 0, 'bof');
+                fwrite(self.FileID, status + stepSize, 'uint64');
+                
+                fclose(self.FileID);
+                self.FileID = [];
+            end
         end
-        if isempty(iterationCounterWorker),
-            iterationCounterWorker = 0;
-        end
-        
-        iterationCounterWorker = iterationCounterWorker + stepSize;
-        
-        fid = fopen(workerStatusFileName, 'wt');
-        fprintf(fid, '%d', iterationCounterWorker);
-        fclose(fid);
     end
     
     
@@ -783,8 +778,8 @@ methods (Access = private)
             self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
             self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
         else
-            self.TimerObject.TimerFcn = @(~, ~) self.timerCallbackPar();
-            self.TimerObject.StopFcn  = @(~, ~) self.timerCallbackPar();
+            self.TimerObject.TimerFcn = @(~, ~) self.timerCallbackParallel();
+            self.TimerObject.StopFcn  = @(~, ~) self.timerCallbackParallel();
         end
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         self.TimerObject.Period = updatePeriod;
@@ -808,29 +803,19 @@ methods (Access = private)
     
     
     
-    function [] = timerCallbackPar(self)
-        % find files and count the content
-        pattern = fullfile(self.WorkerFileDir, [self.WorkerFileName, '*']);
-        workerFiles = dir(pattern);
-        
-        numWorkers = length(workerFiles);
-        
-        if numWorkers,
-            results = zeros(numWorkers, 1);
-            for iFile = 1:numWorkers,
-                fid =  fopen(...
-                    fullfile(self.WorkerFileDir, workerFiles(iFile).name), ...
-                    'rt' ...
-                    );
-                
-                if fid > 0,
-                    results(iFile) = cell2mat(textscan(fid, '%d'));
-                end
-                
-                fclose(fid);
-            end
+    function [] = timerCallbackParallel(self)
+        if isempty(self.FileID),
+            self.FileID = fopen(self.WorkerComFile, 'rb');
             
-            self.IterationCounter = sum(results);
+            if self.FileID > 0,
+                result = fread(self.FileID, 1, 'uint64=>double');
+                fclose(self.FileID);
+                self.FileID = [];
+                
+                if ~isempty(result),
+                    self.IterationCounter = result;
+                end
+            end
         end
         
         self.printProgressBar();
