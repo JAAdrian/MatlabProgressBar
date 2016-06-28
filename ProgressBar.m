@@ -137,7 +137,7 @@ methods
         % check if prog. bar runs in deployed mode and if yes switch to
         % ASCII symbols and a smaller bar width
         if isdeployed,
-            self.ShouldUseUnicode = true;
+            self.ShouldUseUnicode = false;
             self.TotalBarWidth = 72;
         end
         
