@@ -8,15 +8,13 @@
 clear;
 close all;
 
-fileList = dir('demos');
-
-% discard '.' and '..'
-fileList = fileList(3:end);
+fileList = dir(fullfile('demos', '*.m'));
+fileNames = {fileList.name};
 
 
 %% run the demo files to check that they don't throw error
 for iDemoFile = 1:length(fileList),
-    run(fullfile('demos', fileList(iDemoFile).name));
+    run(fullfile('demos', fileNames{iDemoFile}));
 end
 
 %% be sure that no timer objects are left

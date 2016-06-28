@@ -1,14 +1,16 @@
-ProgressBar
+MatlabProgressBar
 =======================
 
 A drawback in MATLAB's own `waitbar()` function is the lack of some functionalities and the loss of speed due to the rather laggy GUI updating process.
-Therefore, this MATLAB class aims to provide a smart progress bar in the command window and is optimized for progress information in simple iterations or large frameworks.
+Therefore, this MATLAB class aims to provide a smart progress bar in the command window and is optimized for progress information in simple iterations or large frameworks with full support of parallel *parfor* loops provided by the MATLAB Parallel Computing Toolbox.
 
 A design target was to mimic the best features of the progress bar [tqdm](https://github.com/tqdm/tqdm) for Python. Thus, this project features a Unicode-based bar and some numeric information about the current progress and the mean iterations per second.
 
-![](example.gif)
+Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
-Supported features include (or are planned):
+![Example GIF](example.gif)
+
+**Supported features include (or are planned)**:
 - [x] TQDM Unicode blocks
 - [x] optional constructor switch for optional ASCII number signs (hashes)
 - [x] optional bar title
@@ -20,6 +22,7 @@ Supported features include (or are planned):
 - [x] support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size). At the moment, the only alternative supported unit is `Bytes`
 - [x] when the internal updating process is faster than the actual updates via `update()`, the internal counter and printing of the process bar stops until the next update to save processing time
 - [x] linear ETA estimate over all last iterations
+- [x] support parfor loops provided by the Parallel Computing Toolbox
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
@@ -29,7 +32,9 @@ Be sure to have a look at the [Known Issues](#known-issues) section for current 
 Dependencies
 -------------------------
 
-No dependencies to toolboxes. The code has been tested with MATLAB R2016a.
+No dependencies to toolboxes.
+
+The code has been tested with MATLAB R2016a on Windows 7 and Xubuntu 16.04 LTS.
 
 
 Installation
@@ -41,7 +46,7 @@ Put the files `ProgressBar.m` and `progress.m` into your MATLAB path or the dire
 Usage
 -------------------------
 
-Detailed information and examples about all features of `ProgressBar` are stated in the demos in the `demos` directory.
+Detailed information and examples about all features of `ProgressBar` are stated in the demo scripts in the `./demos/` directory.
 
 Nevertheless, the basic work flow is to instantiate a `ProgressBar` object and use the `update()` method to update the progress state. All settings are done using *name-value* pairs in the constructor. Thus, `ProgressBar` only has public read-only properties. It is advisable to call the object's `close()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
 
@@ -55,8 +60,7 @@ numIterations = 10e3;
 % instantiate an object with an optional title and an update rate of 5 Hz,
 % i.e. 5 bar updates per seconds, to save printing load.
 progBar = ProgressBar(numIterations, ...
-    'Title', 'Iterating...', ...
-    'UpdateRate', '5' ...
+    'Title', 'Iterating...' ...
     );
     
 % begin the actual loop and update the object's progress state
@@ -84,6 +88,10 @@ end
 
 Known Issues
 -------------------------------
+
+#### Flickering Bar or Flooding of the Command Window
+
+MATLAB's speed to print to the command window is actually pretty low. If the update rate of the progress bar is high the mentioned effects can occur. Try to reduce the update rate from the default 10 Hz to something lower (say 5 Hz) with the `'UpdateRate', 5` name-value pair.
 
 #### The Bar Gets Longer with Each Iteration
 

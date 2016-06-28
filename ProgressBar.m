@@ -46,11 +46,13 @@ classdef ProgressBar < handle
 %                 number of iterations, 21-Jun-2016 (JA)
 %           v2.0  support for update rate, 21-Jun-2016 (JA)
 %           v2.1  colored progress bar, 22-Jun-2016 (JA)
+%           v2.2  support custom step size, 22-Jun-2016 (JA)
 %           v2.3  nested bars, 22-Jun-2016 (JA)
 %           v2.4  printMessage() and info when iteration was not
 %                 successful, 23-Jun-2016 (JA)
-%           v2.5  Support 'Bytes' as unit, 23-Jun-2016 (JA)
+%           v2.5  support 'Bytes' as unit, 23-Jun-2016 (JA)
 %           v2.5.1 bug fixing, 23-Jun-2016 (JA)
+%           v2.6  timer stops when no updates arrive, 23-Jun-2016 (JA)
 %           v2.7  introduce progress loop via wrapper class,
 %                 23- Jun-2016 (JA)
 %           v2.7.1 bug fixing, 25-Jun-2016 (JA)
@@ -60,6 +62,7 @@ classdef ProgressBar < handle
 %           v2.8.3 update documentation and demos, 27-Jun-2016 (JA)
 %           v2.8.4 update known issues
 %           v2.8.5 bug fixes
+%           v2.9   support of parallel parfor loops, 28-Jun-2016 (JA)
 %
 
 
@@ -95,6 +98,8 @@ properties ( Access = private )
     
     IsTimerRunning = false;
     
+    IsParallel = false;
+    
     TicObject;
     TimerObject;
     
@@ -108,7 +113,7 @@ properties ( Constant, Access = private )
     
     % The number of sub blocks in one main block of width of a character.
     % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
-    NumSubBlocks = 8; 
+    NumSubBlocks = 8;
     
     % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
@@ -168,6 +173,11 @@ methods
         if self.IsThisBarNested,
             fprintf(1, '\n');
         end
+        
+        % if the bar is used in a parallel setup start the timer right now
+        if self.IsParallel,
+            self.startTimer();
+        end
     end
     
     % Class Destructor
@@ -189,6 +199,18 @@ methods
         
         % delete the timer object
         delete(self.TimerObject);
+        
+        % if used in parallel processing delete all aux. files and clear
+        % the persistent variables inside of updateParallel()
+        if self.IsParallel,
+            files = findWorkerFiles();
+            
+            if ~isempty(files),
+                delete(files{:});
+            end
+            
+            clear updateParallel;
+        end
     end
     
     
@@ -203,7 +225,7 @@ methods
         % next loop to print a first progress bar.
         %
         % Usage: obj.start()
-        % 
+        %
         
         self.printProgressBar();
     end
@@ -215,13 +237,13 @@ methods
     %UPDATE class method to increment the object's progress state
     %----------------------------------------------------------------------
     % This method is the central update function in the loop to indicate
-    % the increment of the progress. 
-    % 
+    % the increment of the progress.
+    %
     % Usage: obj.update()
     %        obj.update(stepSize)
     %        obj.update(stepSize, wasSuccessful)
     %        obj.update(stepSize, wasSuccessful, shouldPrintNextProgBar)
-    % 
+    %
     % Input: ---------
     %       stepSize - the size of the progress step when the method is
     %                  called. This can be used to pass the number of
@@ -230,7 +252,7 @@ methods
     %       wasSuccessful - Boolean to provide information about the
     %                       success of an individual iteration. If you pass
     %                       a 'false' a message will be printed stating the
-    %                       current iteration was not successful. 
+    %                       current iteration was not successful.
     %                       [default: wasSuccessful = true]
     %       shouldPrintNextProgBar - Boolean to define wether to
     %                                immidiately print another prog. bar
@@ -239,7 +261,7 @@ methods
     %                                a long time and a white space appears
     %                                where the progress bar used to be.
     %                                [default: shouldPrintNextProgBar = false]
-    % 
+    %
         
         % input parsing and validating
         if nargin < 4 || isempty(shouldPrintNextProgBar),
@@ -308,10 +330,10 @@ methods
     % This method lets the user print a message during the processing. A
     % normal fprintf() or disp() would break the bar so this method can be
     % used to print information about iterations or debug infos.
-    % 
+    %
     % Usage: obj.printMessage(self, message)
     %        obj.printMessage(self, message, shouldPrintNextProgBar)
-    % 
+    %
     % Input: ---------
     %       message - the message that should be printed to screen
     %       shouldPrintNextProgBar - Boolean to define wether to
@@ -321,7 +343,7 @@ methods
     %                                a long time and a white space appears
     %                                where the progress bar used to be.
     %                                [default: shouldPrintNextProgBar = false]
-    % 
+    %
         
         % input parsing and validation
         narginchk(2, 3);
@@ -361,9 +383,9 @@ methods
     % bar object. It is advisable to call this method after the loop where
     % the progress bar is incorporated to prevent possible unrobust
     % behaviour of future progress bar in the session.
-    % 
+    %
     % Usage: obj.close()
-    % 
+    %
         
         % just call the destructor for convenience
         delete(self);
@@ -427,6 +449,14 @@ methods (Access = private)
                 {'scalar', 'binary', 'nonnan', 'nonempty'} ...
                 ) ...
             );
+        
+        % use with parallel toolbox
+        p.addParameter('Parallel', self.IsParallel, ...
+            @(in) validateattributes(in, ...
+                {'logical', 'numeric'}, ...
+                {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+                ) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -438,6 +468,7 @@ methods (Access = private)
         self.UpdateRate = p.Results.UpdateRate;
         self.TotalBarWidth = p.Results.Width;
         self.ShouldUseUnicode = p.Results.Unicode;
+        self.IsParallel = p.Results.Parallel;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -704,9 +735,13 @@ methods (Access = private)
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
-        self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
-        
+        if ~self.IsParallel,
+            self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
+            self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
+        else
+            self.TimerObject.TimerFcn = @(~, ~) self.timerCallbackParallel();
+            self.TimerObject.StopFcn  = @(~, ~) self.timerCallbackParallel();
+        end
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         self.TimerObject.Period = updatePeriod;
     end
@@ -717,15 +752,49 @@ methods (Access = private)
     % This method is the timer callback. If an update came in between the
     % last printing and now print a new prog bar, else stop the timer and
     % wait.
+    if self.HasBeenUpdated,
+        self.printProgressBar();
+    else
+        self.stopTimer();
+    end
+    
+    self.HasBeenUpdated = false;
+    end
+    
+    
+    
+    
+    function [] = timerCallbackParallel(self)
+        % find the aux. worker files
+        [files, numFiles] = findWorkerFiles();
         
-        if self.HasBeenUpdated,
-            self.printProgressBar();
-        else
-            self.stopTimer();
+        % if none have been written yet just return
+        if ~numFiles,
+            return;
         end
         
-        self.HasBeenUpdated = false;
-    end
+        % read the status in every file
+        results = zeros(numFiles, 1);
+        for iFile = 1:numFiles,
+            fid = fopen(files{iFile}, 'rb');
+            
+            if fid > 0,
+                results(iFile) = fread(fid, 1, 'uint64');
+                fclose(fid);
+            end
+        end
+        
+        % the sum of all files should be the current iteration
+        self.IterationCounter = sum(results);
+        
+        % print the progress bar
+        self.printProgressBar();
+        
+        % if total is known and we are at the end stop the timer
+        if ~isempty(self.Total) && self.IterationCounter == self.Total,
+            self.stopTimer();
+        end
+end
     
     
     
@@ -836,6 +905,17 @@ else
         {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
         );
 end
+end
+
+function [files, numFiles] = findWorkerFiles()
+[dirName, pattern] = updateParallel();
+
+files = dir(fullfile(dirName, pattern));
+files = {files.name};
+
+files = cellfun(@(filename) fullfile(dirName, filename), files, ...
+    'uni', false);
+numFiles = length(files);
 end
 
 
