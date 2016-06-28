@@ -98,8 +98,6 @@ properties ( Access = private )
     IsTimerRunning = false;
     
     IsParallel = false;
-    FileID = -1;
-    WorkerComFile;
     
     TicObject;
     TimerObject;
@@ -118,9 +116,6 @@ properties ( Constant, Access = private )
     
     % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
-    
-    WorkerFileDir  = tempdir;
-    WorkerFileName = 'progbarworker';
 end
 
 properties ( Access = private, Dependent)
@@ -174,20 +169,6 @@ methods
         end
         
         if self.IsParallel,
-            % initialize the binary file with status = 0
-            self.WorkerComFile = ...
-                fullfile(self.WorkerFileDir, self.WorkerFileName);
-            
-            self.FileID = fopen(self.WorkerComFile, 'wb');
-            if self.FileID < 0,
-                error(['The file for worker communication could not ', ...
-                    'be created. Do you have write permissions?']);
-            end
-            fwrite(self.FileID, 0, 'uint64');
-            fclose(self.FileID);
-            self.FileID = [];
-            
-            
             self.startTimer();
         end
         
@@ -204,13 +185,6 @@ methods
             self.stopTimer();
         end
         
-        if self.IsParallel,
-            self.IterationCounter = self.Total;
-            self.printProgressBar();
-            
-            delete(self.WorkerComFile);            
-        end
-        
         if self.IsThisBarNested,
             % when this prog bar was nested, remove it from the command
             % line and get back to the end of the parent bar.
@@ -223,6 +197,14 @@ methods
         
         % delete the timer object
         delete(self.TimerObject);
+        
+        if self.IsParallel,
+            files = findWorkerFiles();
+            
+            if ~isempty(files),
+                delete(files{:});
+            end
+        end
     end
     
     
@@ -330,35 +312,6 @@ methods
                 && self.HasFiniteUpdateRate,
             
             self.stopTimer();
-        end
-    end
-    
-    
-    
-    
-    function [] = updateParallel(self, stepSize)
-        % input parsing and validating
-        if nargin < 2 || isempty(stepSize),
-            stepSize = 1;
-        end
-        
-        validateattributes(stepSize, ...
-            {'numeric'}, ...
-            {'scalar', 'positive', 'integer', 'real', 'nonnan', ...
-            'finite', 'nonempty'} ...
-            );
-        
-        if isempty(self.FileID),
-            self.FileID = fopen(self.WorkerComFile, 'r+b');
-            if self.FileID > 0,
-                status = fread(self.FileID, 1, 'uint64');
-                
-                fseek(self.FileID, 0, 'bof');
-                fwrite(self.FileID, status + stepSize, 'uint64');
-                
-                fclose(self.FileID);
-                self.FileID = [];
-            end
         end
     end
     
@@ -806,26 +759,30 @@ methods (Access = private)
     
     
     function [] = timerCallbackParallel(self)
-        if isempty(self.FileID),
-            self.FileID = fopen(self.WorkerComFile, 'rb');
+        [files, numFiles] = findWorkerFiles();
+        
+        if ~numFiles,
+            return;
+        end
             
-            if self.FileID > 0,
-                result = fread(self.FileID, 1, 'uint64=>double');
-                fclose(self.FileID);
-                self.FileID = [];
-                
-                if ~isempty(result),
-                    self.IterationCounter = result;
-                end
+        results = zeros(numFiles, 1);
+        for iWorker = 1:numFiles,
+            fid = fopen(files{iWorker}, 'rb');
+            
+            if fid > 0,
+                results(iWorker) = fread(fid, 1, 'uint64');
+                fclose(fid);
             end
         end
+        
+        self.IterationCounter = sum(results);
         
         self.printProgressBar();
         
         if self.IterationCounter == self.Total,
             self.stopTimer();
         end
-    end
+end
     
     
     
@@ -936,6 +893,17 @@ else
         {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
         );
 end
+end
+
+function [files, numFiles] = findWorkerFiles()
+[dirName, pattern] = updateParallel();
+
+files = dir(fullfile(dirName, pattern));
+files = {files.name};
+
+files = cellfun(@(filename) fullfile(dirName, filename), files, ...
+    'uni', false);
+numFiles = length(files);
 end
 
 
