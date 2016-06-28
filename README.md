@@ -20,6 +20,7 @@ Supported features include (or are planned):
 - [x] support another meaningful 'total of something' measure where the number of items is less meaningful (for example non-uniform processing time) such as total file size (processing multiple files with different file size). At the moment, the only alternative supported unit is `Bytes`
 - [x] when the internal updating process is faster than the actual updates via `update()`, the internal counter and printing of the process bar stops until the next update to save processing time
 - [x] linear ETA estimate over all last iterations
+- [x] support parfor loops provided by the Parallel Computing Toolbox (at the moment not perfectly accurate)
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
