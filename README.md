@@ -12,7 +12,8 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 
 **Supported features include (or are planned)**:
 - [x] TQDM Unicode blocks
-- [x] optional constructor switch for optional ASCII number signs (hashes)
+- [x] optional constructor switch for ASCII number signs (hashes)
+    - those will be used if `ProgressBar()` is used in deploy mode (MATLAB Compiler)
 - [x] optional bar title
 - [x] optional visual update interval in Hz [defaults to 10 Hz]
 - [x] when no total number of iterations is passed the bar shows the elapsed time, the number of (elapsed) iterations and iterations/s
@@ -89,19 +90,19 @@ end
 Known Issues
 -------------------------------
 
-#### Flickering Bar or Flooding of the Command Window
+#### Flickering bar or flooding of the command window
 
 MATLAB's speed to print to the command window is actually pretty low. If the update rate of the progress bar is high the mentioned effects can occur. Try to reduce the update rate from the default 10 Hz to something lower (say 5 Hz) with the `'UpdateRate', 5` name-value pair.
 
-#### The Bar Gets Longer with Each Iteration
+#### The bar gets longer with each iteration
 
 There seems to be a problem with the default font `Monospaced` at least on Windows. If this behavior is problematic change the font for the command window to a different monospaced font, preferably with proper Unicode support.
 
-#### Strange Symbols in the Progress Bar
+#### Strange symbols in the progress bar
 
 The display of the updating progress bar is highly dependent on the **font** you use in the command window. Be sure to use a proper font that can handle Unicode characters. Otherwise be sure to always use the `'Unicode', false` switch in the constructor.
 
-#### Remaining Timer objects
+#### Remaining timer objects
 
 Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. If you encounter strange behavior like wrong line breaks or disappearing progress bars after the bar has finished, just call the following to delete all remaining timer objects in memory.
 

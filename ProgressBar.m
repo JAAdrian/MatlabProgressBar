@@ -42,27 +42,29 @@ classdef ProgressBar < handle
 % Date   :  17-Jun-2016 16:08:45
 %
 
-% History:  v1.0  working ProgressBar with and without knowledge of total
-%                 number of iterations, 21-Jun-2016 (JA)
-%           v2.0  support for update rate, 21-Jun-2016 (JA)
-%           v2.1  colored progress bar, 22-Jun-2016 (JA)
-%           v2.2  support custom step size, 22-Jun-2016 (JA)
-%           v2.3  nested bars, 22-Jun-2016 (JA)
-%           v2.4  printMessage() and info when iteration was not
-%                 successful, 23-Jun-2016 (JA)
-%           v2.5  support 'Bytes' as unit, 23-Jun-2016 (JA)
-%           v2.5.1 bug fixing, 23-Jun-2016 (JA)
-%           v2.6  timer stops when no updates arrive, 23-Jun-2016 (JA)
-%           v2.7  introduce progress loop via wrapper class,
-%                 23- Jun-2016 (JA)
-%           v2.7.1 bug fixing, 25-Jun-2016 (JA)
-%           v2.8  support ASCII symbols, 25-Jun-2016 (JA)
-%           v2.8.1 consider isdeployed
-%           v2.8.2 fix a bug concerning bar updating, 27-Jun-2016 (JA)
-%           v2.8.3 update documentation and demos, 27-Jun-2016 (JA)
-%           v2.8.4 update known issues
-%           v2.8.5 bug fixes
-%           v2.9   support of parallel parfor loops, 28-Jun-2016 (JA)
+% History:  v1.0    working ProgressBar with and without knowledge of total
+%                   number of iterations, 21-Jun-2016 (JA)
+%           v2.0    support for update rate, 21-Jun-2016 (JA)
+%           v2.1    colored progress bar, 22-Jun-2016 (JA)
+%           v2.2    support custom step size, 22-Jun-2016 (JA)
+%           v2.3    nested bars, 22-Jun-2016 (JA)
+%           v2.4    printMessage() and info when iteration was not
+%                   successful, 23-Jun-2016 (JA)
+%           v2.5    support 'Bytes' as unit, 23-Jun-2016 (JA)
+%           v2.5.1  bug fixing, 23-Jun-2016 (JA)
+%           v2.6    timer stops when no updates arrive, 23-Jun-2016 (JA)
+%           v2.7    introduce progress loop via wrapper class,
+%                   23- Jun-2016 (JA)
+%           v2.7.1  bug fixing, 25-Jun-2016 (JA)
+%           v2.8    support ASCII symbols, 25-Jun-2016 (JA)
+%           v2.8.1  consider isdeployed
+%           v2.8.2  fix a bug concerning bar updating, 27-Jun-2016 (JA)
+%           v2.8.3  update documentation and demos, 27-Jun-2016 (JA)
+%           v2.8.4  update known issues
+%           v2.8.5  bug fixes
+%           v2.9    support of parallel parfor loops, 28-Jun-2016 (JA)
+%           v2.9.1  bug fixing (deploy mode) and optimization,
+%                   28-Jun-2016 (JA)
 %
 
 
@@ -94,7 +96,7 @@ properties ( Access = private )
     HasFiniteUpdateRate = true;
     
     ShouldUseUnicode = true;
-    BlockCharacterFunction = @getUnicodeBlock;
+    BlockCharacters = getUnicodeSubBlocks();
     
     IsTimerRunning = false;
     
@@ -137,13 +139,13 @@ methods
         % check if prog. bar runs in deployed mode and if yes switch to
         % ASCII symbols and a smaller bar width
         if isdeployed,
-            self.ShouldUseUnicode = true;
+            self.ShouldUseUnicode = false;
             self.TotalBarWidth = 72;
         end
         
-        % setup the function to retrieve ASCII symbols if desired
+        % setup ASCII symbols if desired
         if ~self.ShouldUseUnicode,
-            self.BlockCharacterFunction = @getAsciiBlock;
+            self.BlockCharacters = getAsciiSubBlocks();
         end
         
         % add a new timer object with the standard tag name and hide it
@@ -693,18 +695,18 @@ methods (Access = private)
         
         % index of the current sub block
         continuousBlockIndex = ceil(currProgress / self.FractionSubBlock);
-        thisBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
+        thisSubBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
         
         % fix for non-full last blocks when steps are large: make them full
         self.Bar(1:max(thisMainBlock-1, 0)) = ...
-            repmat(self.BlockCharacterFunction(inf), 1, thisMainBlock - 1);
+            repmat(self.BlockCharacters(end), 1, thisMainBlock - 1);
         
         % return a full bar in the last iteration or update the current
         % main block
         if self.IterationCounter == self.Total,
-            self.Bar = repmat(self.BlockCharacterFunction(inf), 1, lenBar);
+            self.Bar = repmat(self.BlockCharacters(end), 1, lenBar);
         else
-            self.Bar(thisMainBlock) = self.BlockCharacterFunction(thisBlock);
+            self.Bar(thisMainBlock) = self.BlockCharacters(thisSubBlock);
         end
         
         barString = self.Bar;
@@ -843,10 +845,9 @@ end
 
 
 
-function [thisBlock] = getUnicodeBlock(idx)
+function [blocks] = getUnicodeSubBlocks()
 % This function returns the HTML 'left blocks' to construct the growing
-% bar. 'idx' ranges from 1 to 8, since the HTML 'left blocks' range from 1
-% to 8 excluding the 'space'. If isinf(idx) return a full block.
+% bar. The HTML 'left blocks' range from 1 to 8 excluding the 'space'.
 
 blocks = [
     char(9615);
@@ -858,18 +859,14 @@ blocks = [
     char(9609);
     char(9608);
     ];
-
-thisBlock = blocks(min(idx, length(blocks)));
 end
 
-function [thisBlock] = getAsciiBlock(idx)
+function [blocks] = getAsciiSubBlocks()
 % This function returns the ASCII number signs (hashes) to construct the
-% growing bar. 'idx' ranges from 1 to 8, since the HTML 'left blocks' range
-% from 1 to 8 excluding the 'space'. If isinf(idx) return a full block.
+% growing bar. The HTML 'left blocks' range from 1 to 8 excluding the
+% 'space'.
 
 blocks = repmat('#', 1, 8);
-
-thisBlock = blocks(min(idx, length(blocks)));
 end
 
 
