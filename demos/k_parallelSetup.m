@@ -1,4 +1,5 @@
-% <purpose of this file>
+% Demo of the parallel functionality using a parfor loop. This script may
+% throw errors if you don't own the Parallel Processing Toolbox.
 %
 % Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
 % Date  :  27-Jun-2016 22:04:18
@@ -13,24 +14,42 @@ if isempty(gcp('nocreate')),
     parpool();
 end
 
-obj = ProgressBar(numIterations, ...
-    'UpdateRate', 5, ...
+
+
+%% Without knowledge of total number of iterations
+
+% Instantiate the object with the 'Parallel' switch set to true
+obj = ProgressBar([], ...
     'Parallel', true, ...
-    'Title', 'Parallel' ...
+    'Title', 'Parallel 1' ...
     );
 
 
 parfor iIteration = 1:numIterations,
     pause(0.1);
     
-    obj.updateParallel();
+    updateParallel();
 end
 obj.close();
 
 
 
 
+%% With knowledge of total number of iterations
 
+% Instantiate the object with the 'Parallel' switch set to true
+obj = ProgressBar(numIterations, ...
+    'Parallel', true, ...
+    'Title', 'Parallel 2' ...
+    );
+
+
+parfor iIteration = 1:numIterations,
+    pause(0.1);
+    
+    updateParallel();
+end
+obj.close();
 
 
 % End of file: k_parallelSetup.m
