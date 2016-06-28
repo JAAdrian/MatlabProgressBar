@@ -1,4 +1,4 @@
-ProgressBar
+MatlabProgressBar
 =======================
 
 A drawback in MATLAB's own `waitbar()` function is the lack of some functionalities and the loss of speed due to the rather laggy GUI updating process.
