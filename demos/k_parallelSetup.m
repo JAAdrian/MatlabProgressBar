@@ -7,7 +7,7 @@
 
 addpath('..');
 
-numIterations = 250;
+numIterations = 500;
 
 if isempty(gcp('nocreate')),
     parpool();
