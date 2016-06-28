@@ -46,11 +46,13 @@ classdef ProgressBar < handle
 %                 number of iterations, 21-Jun-2016 (JA)
 %           v2.0  support for update rate, 21-Jun-2016 (JA)
 %           v2.1  colored progress bar, 22-Jun-2016 (JA)
+%           v2.2  support custom step size, 22-Jun-2016 (JA)
 %           v2.3  nested bars, 22-Jun-2016 (JA)
 %           v2.4  printMessage() and info when iteration was not
 %                 successful, 23-Jun-2016 (JA)
-%           v2.5  Support 'Bytes' as unit, 23-Jun-2016 (JA)
+%           v2.5  support 'Bytes' as unit, 23-Jun-2016 (JA)
 %           v2.5.1 bug fixing, 23-Jun-2016 (JA)
+%           v2.6  timer stops when no updates arrive, 23-Jun-2016 (JA)
 %           v2.7  introduce progress loop via wrapper class,
 %                 23- Jun-2016 (JA)
 %           v2.7.1 bug fixing, 25-Jun-2016 (JA)
@@ -108,7 +110,7 @@ properties ( Constant, Access = private )
     
     % The number of sub blocks in one main block of width of a character.
     % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
-    NumSubBlocks = 8; 
+    NumSubBlocks = 8;
     
     % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
@@ -203,7 +205,7 @@ methods
         % next loop to print a first progress bar.
         %
         % Usage: obj.start()
-        % 
+        %
         
         self.printProgressBar();
     end
@@ -215,13 +217,13 @@ methods
     %UPDATE class method to increment the object's progress state
     %----------------------------------------------------------------------
     % This method is the central update function in the loop to indicate
-    % the increment of the progress. 
-    % 
+    % the increment of the progress.
+    %
     % Usage: obj.update()
     %        obj.update(stepSize)
     %        obj.update(stepSize, wasSuccessful)
     %        obj.update(stepSize, wasSuccessful, shouldPrintNextProgBar)
-    % 
+    %
     % Input: ---------
     %       stepSize - the size of the progress step when the method is
     %                  called. This can be used to pass the number of
@@ -230,7 +232,7 @@ methods
     %       wasSuccessful - Boolean to provide information about the
     %                       success of an individual iteration. If you pass
     %                       a 'false' a message will be printed stating the
-    %                       current iteration was not successful. 
+    %                       current iteration was not successful.
     %                       [default: wasSuccessful = true]
     %       shouldPrintNextProgBar - Boolean to define wether to
     %                                immidiately print another prog. bar
@@ -239,7 +241,7 @@ methods
     %                                a long time and a white space appears
     %                                where the progress bar used to be.
     %                                [default: shouldPrintNextProgBar = false]
-    % 
+    %
         
         % input parsing and validating
         if nargin < 4 || isempty(shouldPrintNextProgBar),
@@ -308,10 +310,10 @@ methods
     % This method lets the user print a message during the processing. A
     % normal fprintf() or disp() would break the bar so this method can be
     % used to print information about iterations or debug infos.
-    % 
+    %
     % Usage: obj.printMessage(self, message)
     %        obj.printMessage(self, message, shouldPrintNextProgBar)
-    % 
+    %
     % Input: ---------
     %       message - the message that should be printed to screen
     %       shouldPrintNextProgBar - Boolean to define wether to
@@ -321,7 +323,7 @@ methods
     %                                a long time and a white space appears
     %                                where the progress bar used to be.
     %                                [default: shouldPrintNextProgBar = false]
-    % 
+    %
         
         % input parsing and validation
         narginchk(2, 3);
@@ -361,9 +363,9 @@ methods
     % bar object. It is advisable to call this method after the loop where
     % the progress bar is incorporated to prevent possible unrobust
     % behaviour of future progress bar in the session.
-    % 
+    %
     % Usage: obj.close()
-    % 
+    %
         
         % just call the destructor for convenience
         delete(self);
