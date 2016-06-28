@@ -94,7 +94,7 @@ properties ( Access = private )
     HasFiniteUpdateRate = true;
     
     ShouldUseUnicode = true;
-    BlockCharacterFunction = @getUnicodeBlock;
+    BlockCharacters = getUnicodeSubBlocks();
     
     IsTimerRunning = false;
     
@@ -141,9 +141,9 @@ methods
             self.TotalBarWidth = 72;
         end
         
-        % setup the function to retrieve ASCII symbols if desired
+        % setup ASCII symbols if desired
         if ~self.ShouldUseUnicode,
-            self.BlockCharacterFunction = @getAsciiBlock;
+            self.BlockCharacters = getAsciiSubBlocks();
         end
         
         % add a new timer object with the standard tag name and hide it
@@ -693,18 +693,18 @@ methods (Access = private)
         
         % index of the current sub block
         continuousBlockIndex = ceil(currProgress / self.FractionSubBlock);
-        thisBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
+        thisSubBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
         
         % fix for non-full last blocks when steps are large: make them full
         self.Bar(1:max(thisMainBlock-1, 0)) = ...
-            repmat(self.BlockCharacterFunction(inf), 1, thisMainBlock - 1);
+            repmat(self.BlockCharacters(end), 1, thisMainBlock - 1);
         
         % return a full bar in the last iteration or update the current
         % main block
         if self.IterationCounter == self.Total,
-            self.Bar = repmat(self.BlockCharacterFunction(inf), 1, lenBar);
+            self.Bar = repmat(self.BlockCharacters(end), 1, lenBar);
         else
-            self.Bar(thisMainBlock) = self.BlockCharacterFunction(thisBlock);
+            self.Bar(thisMainBlock) = self.BlockCharacters(thisSubBlock);
         end
         
         barString = self.Bar;
@@ -843,10 +843,9 @@ end
 
 
 
-function [thisBlock] = getUnicodeBlock(idx)
+function [blocks] = getUnicodeSubBlocks()
 % This function returns the HTML 'left blocks' to construct the growing
-% bar. 'idx' ranges from 1 to 8, since the HTML 'left blocks' range from 1
-% to 8 excluding the 'space'. If isinf(idx) return a full block.
+% bar. The HTML 'left blocks' range from 1 to 8 excluding the 'space'.
 
 blocks = [
     char(9615);
@@ -858,18 +857,14 @@ blocks = [
     char(9609);
     char(9608);
     ];
-
-thisBlock = blocks(min(idx, length(blocks)));
 end
 
-function [thisBlock] = getAsciiBlock(idx)
+function [blocks] = getAsciiSubBlocks()
 % This function returns the ASCII number signs (hashes) to construct the
-% growing bar. 'idx' ranges from 1 to 8, since the HTML 'left blocks' range
-% from 1 to 8 excluding the 'space'. If isinf(idx) return a full block.
+% growing bar. The HTML 'left blocks' range from 1 to 8 excluding the
+% 'space'.
 
 blocks = repmat('#', 1, 8);
-
-thisBlock = blocks(min(idx, length(blocks)));
 end
 
 
