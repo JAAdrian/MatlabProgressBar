@@ -97,6 +97,10 @@ properties ( Access = private )
     
     IsTimerRunning = false;
     
+    IsParallel = false;
+    FileID = -1;
+    WorkerComFile;
+    
     TicObject;
     TimerObject;
     
@@ -114,6 +118,9 @@ properties ( Constant, Access = private )
     
     % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
+    
+    WorkerFileDir  = tempdir;
+    WorkerFileName = 'progbarworker';
 end
 
 properties ( Access = private, Dependent)
@@ -166,6 +173,24 @@ methods
             self.setupTimer();
         end
         
+        if self.IsParallel,
+            % initialize the binary file with status = 0
+            self.WorkerComFile = ...
+                fullfile(self.WorkerFileDir, self.WorkerFileName);
+            
+            self.FileID = fopen(self.WorkerComFile, 'wb');
+            if self.FileID < 0,
+                error(['The file for worker communication could not ', ...
+                    'be created. Do you have write permissions?']);
+            end
+            fwrite(self.FileID, 0, 'uint64');
+            fclose(self.FileID);
+            self.FileID = [];
+            
+            
+            self.startTimer();
+        end
+        
         % if this is a nested bar hit return
         if self.IsThisBarNested,
             fprintf(1, '\n');
@@ -177,6 +202,13 @@ methods
         % stop the timer
         if self.IsTimerRunning,
             self.stopTimer();
+        end
+        
+        if self.IsParallel,
+            self.IterationCounter = self.Total;
+            self.printProgressBar();
+            
+            delete(self.WorkerComFile);            
         end
         
         if self.IsThisBarNested,
@@ -298,6 +330,35 @@ methods
                 && self.HasFiniteUpdateRate,
             
             self.stopTimer();
+        end
+    end
+    
+    
+    
+    
+    function [] = updateParallel(self, stepSize)
+        % input parsing and validating
+        if nargin < 2 || isempty(stepSize),
+            stepSize = 1;
+        end
+        
+        validateattributes(stepSize, ...
+            {'numeric'}, ...
+            {'scalar', 'positive', 'integer', 'real', 'nonnan', ...
+            'finite', 'nonempty'} ...
+            );
+        
+        if isempty(self.FileID),
+            self.FileID = fopen(self.WorkerComFile, 'r+b');
+            if self.FileID > 0,
+                status = fread(self.FileID, 1, 'uint64');
+                
+                fseek(self.FileID, 0, 'bof');
+                fwrite(self.FileID, status + stepSize, 'uint64');
+                
+                fclose(self.FileID);
+                self.FileID = [];
+            end
         end
     end
     
@@ -429,6 +490,14 @@ methods (Access = private)
                 {'scalar', 'binary', 'nonnan', 'nonempty'} ...
                 ) ...
             );
+        
+        % use with parallel toolbox
+        p.addParameter('Parallel', self.IsParallel, ...
+            @(in) validateattributes(in, ...
+                {'logical', 'numeric'}, ...
+                {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+                ) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -440,6 +509,7 @@ methods (Access = private)
         self.UpdateRate = p.Results.UpdateRate;
         self.TotalBarWidth = p.Results.Width;
         self.ShouldUseUnicode = p.Results.Unicode;
+        self.IsParallel = p.Results.Parallel;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -706,9 +776,13 @@ methods (Access = private)
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
-        self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
-        
+        if ~self.IsParallel,
+            self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
+            self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
+        else
+            self.TimerObject.TimerFcn = @(~, ~) self.timerCallbackParallel();
+            self.TimerObject.StopFcn  = @(~, ~) self.timerCallbackParallel();
+        end
         updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
         self.TimerObject.Period = updatePeriod;
     end
@@ -719,14 +793,38 @@ methods (Access = private)
     % This method is the timer callback. If an update came in between the
     % last printing and now print a new prog bar, else stop the timer and
     % wait.
-        
-        if self.HasBeenUpdated,
-            self.printProgressBar();
-        else
-            self.stopTimer();
+    if self.HasBeenUpdated,
+        self.printProgressBar();
+    else
+        self.stopTimer();
+    end
+    
+    self.HasBeenUpdated = false;
+    end
+    
+    
+    
+    
+    function [] = timerCallbackParallel(self)
+        if isempty(self.FileID),
+            self.FileID = fopen(self.WorkerComFile, 'rb');
+            
+            if self.FileID > 0,
+                result = fread(self.FileID, 1, 'uint64=>double');
+                fclose(self.FileID);
+                self.FileID = [];
+                
+                if ~isempty(result),
+                    self.IterationCounter = result;
+                end
+            end
         end
         
-        self.HasBeenUpdated = false;
+        self.printProgressBar();
+        
+        if self.IterationCounter == self.Total,
+            self.stopTimer();
+        end
     end
     
     
