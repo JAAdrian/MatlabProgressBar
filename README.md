@@ -12,7 +12,8 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 
 **Supported features include (or are planned)**:
 - [x] TQDM Unicode blocks
-- [x] optional constructor switch for optional ASCII number signs (hashes)
+- [x] optional constructor switch for ASCII number signs (hashes)
+    - those will be used if `ProgressBar()` is used in deploy mode (MATLAB Compiler)
 - [x] optional bar title
 - [x] optional visual update interval in Hz [defaults to 10 Hz]
 - [x] when no total number of iterations is passed the bar shows the elapsed time, the number of (elapsed) iterations and iterations/s
