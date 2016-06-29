@@ -19,6 +19,12 @@ function [dirName, pattern] = updateParallel(stepSize, workerDirName)
 %                      processed bytes when using 'Bytes' as units. If
 %                      bytes are used be sure to pass only integer values.
 %                      [default: stepSize = 1]
+%           workerDirName - directory where the auxiliary files will be
+%                           written to. Typically, the files are irrelevant
+%                           to the user so the default is the local temp
+%                           directory. If this is unconvenient, the
+%                           directory can be specified.
+%                           [default: workerDirName = tempdir]
 %
 %  Output:   ---------
 %        dirName - the directory name where the worker file was written to.
