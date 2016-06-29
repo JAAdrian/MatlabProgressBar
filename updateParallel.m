@@ -1,4 +1,4 @@
-function [dirName, pattern] = updateParallel(stepSize)
+function [dirName, pattern] = updateParallel(stepSize, workerDirName)
 %UPDATEPARALLEL Update function when ProgressBar is used in parallel setup
 % -------------------------------------------------------------------------
 % This function replaces the update() method of the ProgressBar() class
@@ -24,11 +24,14 @@ function [dirName, pattern] = updateParallel(stepSize)
 %        dirName - the directory name where the worker file was written to.
 %                  This is an auxiliary function output which is used by
 %                  the ProgressBar() class. Typically not be of interest
-%                  for the user.
+%                  for the user. The variable is only returned if no input
+%                  arguments were passed!
 %        filePattern - the common beginning of every file name before the
 %                      unique part begins. This is an auxiliary function
 %                      output which is used by the ProgressBar() class.
-%                      Typically not be of interest for the user.
+%                      Typically not be of interest for the user. The
+%                      variable is only returned if no input arguments were
+%                      passed!
 %        
 %
 %
@@ -39,18 +42,26 @@ function [dirName, pattern] = updateParallel(stepSize)
 % History:  v0.1  initial version, 28-Jun-2016 (JA)
 %
 
+
 % some constants
 persistent workerFileName;
-workerDirName  = tempdir;
 filePattern = 'progbarworker_';
 
-
 % input parsing and validating
-if (nargin < 2 || isempty(stepSize)) && ~nargout,
+narginchk(0, 2);
+
+if nargin < 2 || isempty(workerDirName),
+    workerDirName = tempdir;
+end
+if nargin <1 || isempty(stepSize),
     stepSize = 1;
 end
-if (nargin < 2 || isempty(stepSize)) && nargout,
-    dirName = workerDirName;
+if ~nargin && nargout,
+    if isempty(workerFileName),
+        dirName = workerDirName;
+    else
+        dirName = fileparts(workerFileName);
+    end
     pattern = [filePattern, '*'];
     
     return;
@@ -61,6 +72,8 @@ validateattributes(stepSize, ...
     {'scalar', 'positive', 'integer', 'real', 'nonnan', ...
     'finite', 'nonempty'} ...
     );
+
+
 
 % if the function is called the first time the persistent variable is
 % initialized and the worker file is created. The condition is skipped in
