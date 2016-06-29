@@ -771,9 +771,11 @@ methods (Access = private)
         % find the aux. worker files
         [files, numFiles] = findWorkerFiles();
         
-        % if none have been written yet just return
+        % if none have been written yet just print a progressbar and return
         if ~numFiles,
-            return;
+            self.printProgressBar();
+            
+            return;            
         end
         
         % read the status in every file
