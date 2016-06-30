@@ -28,6 +28,7 @@ obj = ProgressBar([], ...
 parfor iIteration = 1:numIterations,
     pause(0.1);
     
+    % USE THIS FUNCTION AND NOT THE UPDATE() METHOD OF THE OBJECT!!!
     updateParallel();
 end
 obj.close();
@@ -47,6 +48,7 @@ obj = ProgressBar(numIterations, ...
 parfor iIteration = 1:numIterations,
     pause(0.1);
     
+    % USE THIS FUNCTION AND NOT THE UPDATE() METHOD OF THE OBJECT!!!
     updateParallel();
 end
 obj.close();
