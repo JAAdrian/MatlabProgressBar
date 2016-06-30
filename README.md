@@ -110,6 +110,20 @@ Sometimes, if the user cancels a loop in which a progress bar was used, the dest
 delete(timerfindall('Tag', 'ProgressBar'));
 ```
 
+#### Issues concerning parallel processing
+
+The work-flow when using the progress bar in a parallel setup is to instantiate the object with the `Parallel` switch set to `true` and using the `updateParallel()` function to update the progress state instead of the `update()` method of the object. If this results in strange behavior check the following list. Generally, it is advisable to **first be sure that the executed code or functions in the parallel setup run without errors or warnings.** If not the execution may prevent the class destructor to properly clean up all files and timer objects.
+
+- are there remaining timer objects that haven't been deleted from canceled `for`/`parfor` loops or `parfeval()` calls when checking with `timerfindall('Tag', 'ProgressBar')`?
+    - use `delete(timerfindall('Tag', 'ProgressBar'))`
+- does the progress exceed 100%?
+    - try to call `clear all` or, specifically, `clear updateParallel` to clear the internal state (persistent variables) in the mentioned function. This should have been done by the class destructor but sometimes gets unrobust if there have been errors in the in parallel executed functions.
+    - Also try to look into your temp directory (returned by `tempdir()`) if remaining `progbarworker_*` files exist. Delete those if necessary
+    
+    
+**TL/DR**:  
+`clear all` and `delete(timerfindall('Tag', 'ProgressBar'))` are your friend! Be sure that no files following the pattern `progbarworker_*` remain in the directory returned by `tempdir()`.
+
 
 License
 ----------------------

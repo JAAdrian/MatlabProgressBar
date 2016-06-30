@@ -1,4 +1,4 @@
-function [dirName, pattern] = updateParallel(stepSize, workerDirName)
+function [dirName, pattern] = updateParallel(stepSize)
 %UPDATEPARALLEL Update function when ProgressBar is used in parallel setup
 % -------------------------------------------------------------------------
 % This function replaces the update() method of the ProgressBar() class
@@ -19,12 +19,6 @@ function [dirName, pattern] = updateParallel(stepSize, workerDirName)
 %                      processed bytes when using 'Bytes' as units. If
 %                      bytes are used be sure to pass only integer values.
 %                      [default: stepSize = 1]
-%           workerDirName - directory where the auxiliary files will be
-%                           written to. Typically, the files are irrelevant
-%                           to the user so the default is the local temp
-%                           directory. If this is unconvenient, the
-%                           directory can be specified.
-%                           [default: workerDirName = tempdir]
 %
 %  Output:   ---------
 %        dirName - the directory name where the worker file was written to.
@@ -51,23 +45,18 @@ function [dirName, pattern] = updateParallel(stepSize, workerDirName)
 
 % some constants
 persistent workerFileName;
-filePattern = 'progbarworker_';
+workerDirName = tempdir;
+filePattern   = 'progbarworker_';
 
 % input parsing and validating
-narginchk(0, 2);
+narginchk(0, 1);
 
-if nargin < 2 || isempty(workerDirName),
-    workerDirName = tempdir;
-end
+
 if nargin <1 || isempty(stepSize),
     stepSize = 1;
 end
 if ~nargin && nargout,
-    if isempty(workerFileName),
-        dirName = workerDirName;
-    else
-        dirName = fileparts(workerFileName);
-    end
+    dirName = workerDirName;
     pattern = [filePattern, '*'];
     
     return;
