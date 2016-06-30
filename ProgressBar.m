@@ -66,6 +66,8 @@ classdef ProgressBar < handle
 %           v2.9.1  bug fixing (deploy mode) and optimization,
 %                   28-Jun-2016 (JA)
 %           v2.9.2  fix bug in updateParallel(), 29-Jun-2016 (JA)
+%           v2.9.3  fix bug where updateParallel() doesn't return the
+%                   correct write-directory, 30-June-2016 (JA)
 %
 
 
