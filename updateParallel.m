@@ -1,17 +1,17 @@
-function [dirName, pattern] = updateParallel(stepSize)
+function [pattern] = updateParallel(stepSize, workerDirName)
 %UPDATEPARALLEL Update function when ProgressBar is used in parallel setup
 % -------------------------------------------------------------------------
 % This function replaces the update() method of the ProgressBar() class
 % when a progress in a parfor loop should be displayed. The function writes
-% to a temp file in the local temp dir. Each worker will call a copy of
-% this function and if a persistent file name variable is not yet set a
-% unique file name will be generated and a binary file will be initialized.
-% Each worker remembers it's own file name to write to and will update its
-% own current progress and write it to file. The ProgressBar() class will
-% handle the management of all worker files.
+% by default to a temp file in the local temp dir. Each worker will call a
+% copy of this function and if a persistent file name variable is not yet
+% set a unique file name will be generated and a binary file will be
+% initialized. Each worker remembers its own file name to write to and will
+% update its own current progress and write it to file. The ProgressBar()
+% class will handle the management of all worker files.
 % 
 %
-% Usage: [dirName, pattern] = updateParallel(stepSize)
+% Usage: [pattern] = updateParallel(stepSize, workerDirName)
 %
 %   Input:   ---------
 %           stepSize - the size of the progress step when the function is
@@ -19,13 +19,15 @@ function [dirName, pattern] = updateParallel(stepSize)
 %                      processed bytes when using 'Bytes' as units. If
 %                      bytes are used be sure to pass only integer values.
 %                      [default: stepSize = 1]
+%           workerDirName - directory where the worker aux. files will be
+%                           saved. This can be specified for debug purposes
+%                           or if multiple progress bars in a parallel
+%                           setup would get in each other's way since all
+%                           have the same file pattern and would distract
+%                           each progress bar's progress state.
+%                           [default: workerDirName = tempdir()]
 %
 %  Output:   ---------
-%        dirName - the directory name where the worker file was written to.
-%                  This is an auxiliary function output which is used by
-%                  the ProgressBar() class. Typically not be of interest
-%                  for the user. The variable is only returned if no input
-%                  arguments were passed!
 %        filePattern - the common beginning of every file name before the
 %                      unique part begins. This is an auxiliary function
 %                      output which is used by the ProgressBar() class.
@@ -40,23 +42,25 @@ function [dirName, pattern] = updateParallel(stepSize)
 %
 
 % History:  v0.1  initial version, 28-Jun-2016 (JA)
+%           v1.0  the worker directory can be specified and will not be
+%                 returned if called w/o input arguments, 03-Jul-2016 (JA)
 %
 
 
 % some constants
 persistent workerFileName;
-workerDirName = tempdir;
-filePattern   = 'progbarworker_';
+filePattern = 'progbarworker_';
 
-% input parsing and validating
-narginchk(0, 1);
+% input parsing and validation
+narginchk(0, 2);
 
-
+if nargin < 2 || isempty(workerDirName),
+    workerDirName = tempdir;
+end
 if nargin <1 || isempty(stepSize),
     stepSize = 1;
 end
 if ~nargin && nargout,
-    dirName = workerDirName;
     pattern = [filePattern, '*'];
     
     return;
@@ -67,6 +71,7 @@ validateattributes(stepSize, ...
     {'scalar', 'positive', 'integer', 'real', 'nonnan', ...
     'finite', 'nonempty'} ...
     );
+validateattributes(workerDirName, {'char'}, {'nonempty'});
 
 
 
