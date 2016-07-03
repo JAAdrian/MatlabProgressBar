@@ -68,6 +68,8 @@ classdef ProgressBar < handle
 %           v2.9.2  fix bug in updateParallel(), 29-Jun-2016 (JA)
 %           v2.9.3  fix bug where updateParallel() doesn't return the
 %                   correct write-directory, 30-June-2016 (JA)
+%           v2.9.4  the directory of the worker aux. files can now be
+%                   specified, 03-Jul-2016 (JA)
 %
 
 
@@ -104,6 +106,7 @@ properties ( Access = private )
     IsTimerRunning = false;
     
     IsParallel = false;
+    WorkerDirectory = tempdir;
     
     TicObject;
     TimerObject;
@@ -208,7 +211,7 @@ methods
         % if used in parallel processing delete all aux. files and clear
         % the persistent variables inside of updateParallel()
         if self.IsParallel,
-            files = findWorkerFiles();
+            files = findWorkerFiles(self.WorkerDirectory);
             
             if ~isempty(files),
                 delete(files{:});
@@ -462,6 +465,11 @@ methods (Access = private)
                 {'scalar', 'binary', 'nonnan', 'nonempty'} ...
                 ) ...
             );
+        
+        % if IsParallel save the aux. files in this directory
+        p.addParameter('WorkerDirectory', self.WorkerDirectory, ...
+            @(in) validateattributes(in, {'char'}, {'nonempty'}) ...
+            );
        
         % parse all arguments...
         p.parse(total, varargin{:});
@@ -474,6 +482,7 @@ methods (Access = private)
         self.TotalBarWidth = p.Results.Width;
         self.ShouldUseUnicode = p.Results.Unicode;
         self.IsParallel = p.Results.Parallel;
+        self.WorkerDirectory = p.Results.WorkerDirectory;
         
         if ~isempty(self.Total),
             self.HasTotalIterations = true;
@@ -771,7 +780,7 @@ methods (Access = private)
     
     function [] = timerCallbackParallel(self)
         % find the aux. worker files
-        [files, numFiles] = findWorkerFiles();
+        [files, numFiles] = findWorkerFiles(self.WorkerDirectory);
         
         % if none have been written yet just print a progressbar and return
         if ~numFiles,
@@ -909,13 +918,20 @@ else
 end
 end
 
-function [files, numFiles] = findWorkerFiles()
-[dirName, pattern] = updateParallel();
+function [files, numFiles] = findWorkerFiles(workerDir)
+% This function returns file names and the number of files that were
+% written by the updateParallel() function if the prog. bar is used in a
+% parallel setup.
+% 
+% Input: workerDir - directory where the aux. files of the worker are saved
+% 
 
-files = dir(fullfile(dirName, pattern));
+[pattern] = updateParallel();
+
+files = dir(fullfile(workerDir, pattern));
 files = {files.name};
 
-files = cellfun(@(filename) fullfile(dirName, filename), files, ...
+files = cellfun(@(filename) fullfile(workerDir, filename), files, ...
     'uni', false);
 numFiles = length(files);
 end
