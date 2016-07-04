@@ -41,7 +41,7 @@ The code has been tested with MATLAB R2016a on Windows 7 and Xubuntu 16.04 LTS.
 Installation
 -------------------------
 
-Put the files `ProgressBar.m` and `progress.m` into your MATLAB path or the directory of your MATLAB project.
+Put the files `ProgressBar.m`, `progress.m` and `updateParallel()` into your MATLAB path or the directory of your MATLAB project.
 
 
 Usage
