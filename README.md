@@ -25,6 +25,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
+- [ ] show sec/it if it/sec < 1
 
 
 **Note**:  
