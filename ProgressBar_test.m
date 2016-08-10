@@ -9,12 +9,13 @@ clear;
 close all;
 
 fileList = dir(fullfile('demos', '*.m'));
-fileNames = {fileList.name};
+fileNames = {fileList.name}.';
+fileNames = cellfun(@(x) fullfile('demos', x), fileNames, 'uni', false);
 
 
-%% run the demo files to check that they don't throw error
+%% run the demo files to ensure that they don't throw error
 for iDemoFile = 1:length(fileList),
-    run(fullfile('demos', fileNames{iDemoFile}));
+    run(fileNames{iDemoFile});
 end
 
 %% be sure that no timer objects are left
