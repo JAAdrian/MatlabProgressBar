@@ -24,6 +24,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] when the internal updating process is faster than the actual updates via `update()`, the internal counter and printing of the process bar stops until the next update to save processing time
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
+- [x] show s/it if it/sec < 1
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
@@ -41,7 +42,7 @@ The code has been tested with MATLAB R2016a on Windows 7 and Xubuntu 16.04 LTS.
 Installation
 -------------------------
 
-Put the files `ProgressBar.m` and `progress.m` into your MATLAB path or the directory of your MATLAB project.
+Put the files `ProgressBar.m`, `progress.m` and `updateParallel()` into your MATLAB path or the directory of your MATLAB project.
 
 
 Usage
