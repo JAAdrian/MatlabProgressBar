@@ -93,7 +93,7 @@ Known Issues
 
 #### Flickering bar or flooding of the command window
 
-MATLAB's speed to print to the command window is actually pretty low. If the update rate of the progress bar is high the mentioned effects can occur. Try to reduce the update rate from the default 10 Hz to something lower (say 5 Hz) with the `'UpdateRate', 5` name-value pair.
+MATLAB's speed to print to the command window is actually pretty low. If the update rate of the progress bar is high the mentioned effects can occur. Try to reduce the update rate from the default 5 Hz to something lower (say 3 Hz) with the `'UpdateRate', 3` name-value pair.
 
 #### The bar gets longer with each iteration
 
