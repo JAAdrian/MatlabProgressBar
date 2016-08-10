@@ -24,8 +24,8 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] when the internal updating process is faster than the actual updates via `update()`, the internal counter and printing of the process bar stops until the next update to save processing time
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
+- [x] show s/it if it/sec < 1
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
-- [ ] show sec/it if it/sec < 1
 
 
 **Note**:  

@@ -73,6 +73,21 @@ for iIteration = 1:numIterations,
 end
 obj.close();
 
+%% Simulate a progress with it/sec < 1
+
+numIterations = 10;
+obj = ProgressBar(numIterations, ...
+    'Title', 'Slow Progress' ...
+    );
+
+for iIteration = 1:numIterations,
+    pause(1.5);
+    
+    obj.update();
+end
+obj.close();
+
+
 
 
 
