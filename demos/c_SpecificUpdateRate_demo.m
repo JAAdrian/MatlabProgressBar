@@ -12,7 +12,7 @@ numIterations = 1e6;
 
 %% Desired update rate should be 5 Hz (the default is 10 Hz)
 
-updateRateHz = 5;
+updateRateHz = 10;
 
 % pass the number of iterations and the update cycle in Hz
 obj = ProgressBar(numIterations, ...

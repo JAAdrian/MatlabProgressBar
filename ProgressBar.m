@@ -72,6 +72,7 @@ classdef ProgressBar < handle
 %                   specified, 03-Jul-2016 (JA)
 %           v2.9.5  show s/it if it/s < 1 for easier overview,
 %                   10-Aug-2016 (JA)
+%           v2.9.6  default update rate is now 5 Hz, 10-Aug-2016 (JA)
 %
 
 
@@ -86,8 +87,8 @@ properties ( SetAccess = private, GetAccess = public )
     % Default is 'Iterations'.
     Unit = 'Iterations';
     
-    % The visual printing rate in Hz. Default is 10 Hz
-    UpdateRate = 10;
+    % The visual printing rate in Hz. Default is 5 Hz
+    UpdateRate = 5;
 end
 
 properties ( Access = private )
