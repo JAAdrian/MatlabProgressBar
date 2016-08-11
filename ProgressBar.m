@@ -223,6 +223,7 @@ methods
             
             clear updateParallel;
             
+            % rest some time to not flood the screen with the parent bar
             pause(0.1);
         end
     end
