@@ -222,6 +222,8 @@ methods
             end
             
             clear updateParallel;
+            
+            pause(0.1);
         end
     end
     
