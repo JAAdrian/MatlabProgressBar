@@ -54,13 +54,13 @@ filePattern = 'progbarworker_';
 % input parsing and validation
 narginchk(0, 2);
 
-if nargin < 2 || isempty(workerDirName),
+if nargin < 2 || isempty(workerDirName)
     workerDirName = tempdir;
 end
-if nargin <1 || isempty(stepSize),
+if nargin <1 || isempty(stepSize)
     stepSize = 1;
 end
-if ~nargin && nargout,
+if ~nargin && nargout
     pattern = [filePattern, '*'];
     
     return;
@@ -78,7 +78,7 @@ validateattributes(workerDirName, {'char'}, {'nonempty'});
 % if the function is called the first time the persistent variable is
 % initialized and the worker file is created. The condition is skipped in
 % the following calls.
-if isempty(workerFileName),
+if isempty(workerFileName)
     uuid = char(java.util.UUID.randomUUID);
     workerFileName = fullfile(workerDirName, [filePattern, uuid]);
     
@@ -90,7 +90,7 @@ end
 % this part is executed every time the function is called:
 % open the binary file and increment the existing progress with stepSize
 fid = fopen(workerFileName, 'r+b');
-if fid > 0,
+if fid > 0
     status = fread(fid, 1, 'uint64');
     
     fseek(fid, 0, 'bof');

@@ -54,7 +54,7 @@ end
 methods
     % Class Constructor
     function self = progress(in, varargin)
-        if ~nargin,
+        if ~nargin
             return;
         end
         
