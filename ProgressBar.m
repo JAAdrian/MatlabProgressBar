@@ -73,6 +73,8 @@ classdef ProgressBar < handle
 %           v2.9.5  show s/it if it/s < 1 for easier overview,
 %                   10-Aug-2016 (JA)
 %           v2.9.6  default update rate is now 5 Hz, 10-Aug-2016 (JA)
+%           v2.9.7  remove commas after if, for, etc., improve stability a
+%                   bit, 11-Oct-2016 (JA)
 %
 
 
