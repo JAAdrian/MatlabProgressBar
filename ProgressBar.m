@@ -141,20 +141,20 @@ end
 methods
     % Class Constructor
     function [self] = ProgressBar(total, varargin)
-        if nargin,
+        if nargin
             % parse input arguments
             self.parseInputs(total, varargin{:});
         end
         
         % check if prog. bar runs in deployed mode and if yes switch to
         % ASCII symbols and a smaller bar width
-        if isdeployed,
+        if isdeployed
             self.ShouldUseUnicode = false;
             self.TotalBarWidth = 72;
         end
         
         % setup ASCII symbols if desired
-        if ~self.ShouldUseUnicode,
+        if ~self.ShouldUseUnicode
             self.BlockCharacters = getAsciiSubBlocks();
         end
         
@@ -169,7 +169,7 @@ methods
         
         % if 'Total' is known setup the bar correspondingly and compute
         % some constant values
-        if self.HasTotalIterations,
+        if self.HasTotalIterations
             % initialize the progress bar and pre-compute some measures
             self.setupBar();
             self.computeBlockFractions();
@@ -177,17 +177,17 @@ methods
         
         % if the bar should not be printed in every iteration setup the
         % timer to the desired update rate
-        if self.HasFiniteUpdateRate,
+        if self.HasFiniteUpdateRate
             self.setupTimer();
         end
         
         % if this is a nested bar hit return
-        if self.IsThisBarNested,
+        if self.IsThisBarNested
             fprintf(1, '\n');
         end
         
         % if the bar is used in a parallel setup start the timer right now
-        if self.IsParallel,
+        if self.IsParallel
             self.startTimer();
         end
     end
@@ -195,16 +195,16 @@ methods
     % Class Destructor
     function delete(self)
         % stop the timer
-        if self.IsTimerRunning,
+        if self.IsTimerRunning
             self.stopTimer();
         end
         
-        if self.IsThisBarNested,
+        if self.IsThisBarNested
             % when this prog bar was nested, remove it from the command
             % line and get back to the end of the parent bar.
             % +1 due to the line break
             fprintf(1, backspace(self.NumWrittenCharacters + 1));
-        elseif self.IterationCounter && ~self.IsThisBarNested,
+        elseif self.IterationCounter && ~self.IsThisBarNested
             % when a non-nested progress bar has been plotted, hit return
             fprintf(1, '\n');
         end
@@ -214,10 +214,10 @@ methods
         
         % if used in parallel processing delete all aux. files and clear
         % the persistent variables inside of updateParallel()
-        if self.IsParallel,
+        if self.IsParallel
             files = findWorkerFiles(self.WorkerDirectory);
             
-            if ~isempty(files),
+            if ~isempty(files)
                 delete(files{:});
             end
             
@@ -279,13 +279,13 @@ methods
     %
         
         % input parsing and validating
-        if nargin < 4 || isempty(shouldPrintNextProgBar),
+        if nargin < 4 || isempty(shouldPrintNextProgBar)
             shouldPrintNextProgBar = false;
         end
-        if nargin < 3 || isempty(wasSuccessful),
+        if nargin < 3 || isempty(wasSuccessful)
             wasSuccessful = true;
         end
-        if nargin < 2 || isempty(stepSize),
+        if nargin < 2 || isempty(stepSize)
             stepSize = 1;
         end
         validateattributes(stepSize, ...
@@ -307,12 +307,12 @@ methods
         
         % if the timer was stopped before, because no update was given,
         % start it now again.
-        if ~self.IsTimerRunning && self.HasFiniteUpdateRate,
+        if ~self.IsTimerRunning && self.HasFiniteUpdateRate
             self.startTimer();
         end
         
         % if the iteration was not successful print a message saying so.
-        if ~wasSuccessful,
+        if ~wasSuccessful
             infoMsg = sprintf('Iteration %i was not successful!', ...
                 self.IterationCounter);
             self.printMessage(infoMsg, shouldPrintNextProgBar);
@@ -320,7 +320,7 @@ methods
         
         % when the bar should be updated in every iteration, do this with
         % each time calling update()
-        if ~self.HasFiniteUpdateRate,
+        if ~self.HasFiniteUpdateRate
             self.printProgressBar();
         end
         
@@ -330,7 +330,7 @@ methods
         % of iterations was passed / is known.
         if         ~isempty(self.Total) ...
                 && self.IterationCounter == self.Total ...
-                && self.HasFiniteUpdateRate,
+                && self.HasFiniteUpdateRate
             
             self.stopTimer();
         end
@@ -363,7 +363,7 @@ methods
         % input parsing and validation
         narginchk(2, 3);
         
-        if nargin < 3 || isempty(shouldPrintNextProgBar),
+        if nargin < 3 || isempty(shouldPrintNextProgBar)
             shouldPrintNextProgBar = false;
         end
         validateattributes(shouldPrintNextProgBar, ...
@@ -383,7 +383,7 @@ methods
         self.NumWrittenCharacters = 0;
         
         % if the next prog bar should be printed immideately do this
-        if shouldPrintNextProgBar,
+        if shouldPrintNextProgBar
             self.printProgressBar();
         end
     end
@@ -478,10 +478,10 @@ methods (Access = private)
         self.IsParallel = p.Results.Parallel;
         self.WorkerDirectory = p.Results.WorkerDirectory;
         
-        if ~isempty(self.Total),
+        if ~isempty(self.Total)
             self.HasTotalIterations = true;
         end
-        if isinf(self.UpdateRate),
+        if isinf(self.UpdateRate)
             self.HasFiniteUpdateRate = false;
         end
     end
@@ -547,7 +547,7 @@ methods (Access = private)
     % printProgressBar()
 
         % use the correct units
-        if strcmp(self.Unit, 'Bytes');
+        if strcmp(self.Unit, 'Bytes')
             if self.HasItPerSecBelow1
                 unitStrings = {'K', 's', 'KB'};
             else
@@ -565,8 +565,8 @@ methods (Access = private)
         
         % consider a growing bar if the total number of iterations is known
         % and consider a title if on is given.
-        if self.HasTotalIterations,
-            if ~isempty(self.Title),
+        if self.HasTotalIterations
+            if ~isempty(self.Title)
                 preString  = '%s:  %03.0f%%  ';
             else
                 preString  = '%03.0f%%  ';
@@ -584,7 +584,7 @@ methods (Access = private)
             preString  = '';
             postString = '';
             
-            if ~isempty(self.Title),
+            if ~isempty(self.Title)
                 format = ['%s:  %i', unitStrings{2}, ...
                     ' [%02.0f:%02.0f:%02.0f, %.2f ', unitStrings{2}, '/', ...
                     unitStrings{3}, ']'];
@@ -620,14 +620,14 @@ methods (Access = private)
         % consider the correct units
         scaledIteration = self.IterationCounter;
         scaledTotal     = self.Total;
-        if strcmp(self.Unit, 'Bytes'),
+        if strcmp(self.Unit, 'Bytes')
             % let's show KB
             scaledIteration     = round(scaledIteration / 1000);
             scaledTotal         = round(scaledTotal / 1000);
             iterationsPerSecond = iterationsPerSecond / 1000;
         end
         
-        if self.HasTotalIterations,
+        if self.HasTotalIterations
             % 1 : Title
             % 2 : progress percent
             % 3 : progBar string
@@ -685,7 +685,7 @@ methods (Access = private)
         end
 
         % remove the title from list if not given
-        if isempty(self.Title),
+        if isempty(self.Title)
             argList = argList(2:end);
         end
     end
@@ -715,7 +715,7 @@ methods (Access = private)
         
         % return a full bar in the last iteration or update the current
         % main block
-        if self.IterationCounter == self.Total,
+        if self.IterationCounter == self.Total
             self.Bar = repmat(self.BlockCharacters(end), 1, lenBar);
         else
             self.Bar(thisMainBlock) = self.BlockCharacters(thisSubBlock);
@@ -749,7 +749,7 @@ methods (Access = private)
         self.TimerObject.BusyMode = 'drop';
         self.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        if ~self.IsParallel,
+        if ~self.IsParallel
             self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
             self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
         else
@@ -766,7 +766,7 @@ methods (Access = private)
     % This method is the timer callback. If an update came in between the
     % last printing and now print a new prog bar, else stop the timer and
     % wait.
-    if self.HasBeenUpdated,
+    if self.HasBeenUpdated
         self.printProgressBar();
     else
         self.stopTimer();
@@ -783,7 +783,7 @@ methods (Access = private)
         [files, numFiles] = findWorkerFiles(self.WorkerDirectory);
         
         % if none have been written yet just print a progressbar and return
-        if ~numFiles,
+        if ~numFiles
             self.printProgressBar();
             
             return;
@@ -791,10 +791,10 @@ methods (Access = private)
         
         % read the status in every file
         results = zeros(numFiles, 1);
-        for iFile = 1:numFiles,
+        for iFile = 1:numFiles
             fid = fopen(files{iFile}, 'rb');
             
-            if fid > 0,
+            if fid > 0
                 results(iFile) = fread(fid, 1, 'uint64');
                 fclose(fid);
             end
@@ -807,7 +807,7 @@ methods (Access = private)
         self.printProgressBar();
         
         % if total is known and we are at the end stop the timer
-        if ~isempty(self.Total) && self.IterationCounter == self.Total,
+        if ~isempty(self.Total) && self.IterationCounter == self.Total
             self.stopTimer();
         end
 end
@@ -907,7 +907,7 @@ function [yesNo] = checkInputOfTotal(total)
 
 isTotalEmpty = isempty(total);
 
-if isTotalEmpty,
+if isTotalEmpty
     yesNo = isTotalEmpty;
     return;
 else
