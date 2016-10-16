@@ -11,6 +11,8 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 ![Example GIF](example.gif)
 
 **Supported features include (or are planned)**:
+- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
+- [ ] display the bar name as a ticker. That way, a fixed bar width could be used
 - [x] TQDM Unicode blocks
 - [x] optional constructor switch for ASCII number signs (hashes)
     - those will be used if `ProgressBar()` is used in deploy mode (MATLAB Compiler)
@@ -25,7 +27,6 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
 - [x] show s/it if it/sec < 1
-- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
 **Note**:  
