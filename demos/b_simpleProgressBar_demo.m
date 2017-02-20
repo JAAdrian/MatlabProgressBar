@@ -14,7 +14,7 @@ numIterations = 50;
 
 obj = ProgressBar(numIterations);
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(0.1);
     
     obj.update();
@@ -30,7 +30,7 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Progress' ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(0.1);
     
     obj.update();
@@ -48,7 +48,7 @@ obj = ProgressBar(numIterations, ...
 
 stepSize = 2;
 
-for iIteration = 1:stepSize:numIterations,
+for iIteration = 1:stepSize:numIterations
     pause(0.1);
     
     obj.update(stepSize);
@@ -66,7 +66,7 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Waiting' ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(pauses(iIteration));
     
     obj.update();
@@ -80,7 +80,7 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Slow Progress' ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(1.5);
     
     obj.update();

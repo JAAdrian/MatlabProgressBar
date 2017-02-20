@@ -14,7 +14,7 @@ fileNames = cellfun(@(x) fullfile('demos', x), fileNames, 'uni', false);
 
 
 %% run the demo files to ensure that they don't throw error
-for iDemoFile = 1:length(fileList),
+for iDemoFile = 1:length(fileList)
     run(fileNames{iDemoFile});
 end
 

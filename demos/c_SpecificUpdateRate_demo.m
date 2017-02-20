@@ -19,7 +19,7 @@ obj = ProgressBar(numIterations, ...
     'UpdateRate', updateRateHz ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     obj.update();
 end
 obj.close();
@@ -39,7 +39,7 @@ obj = ProgressBar(numIterations, ...
     'UpdateRate', updateRateHz ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     obj.update();
     
     pause(0.1);

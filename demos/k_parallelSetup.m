@@ -10,7 +10,7 @@ addpath('..');
 
 numIterations = 500;
 
-if isempty(gcp('nocreate')),
+if isempty(gcp('nocreate'))
     parpool();
 end
 
@@ -27,7 +27,7 @@ obj = ProgressBar([], ...
     );
 
 
-parfor iIteration = 1:numIterations,
+parfor iIteration = 1:numIterations
     pause(0.1);
     
     % USE THIS FUNCTION AND NOT THE UPDATE() METHOD OF THE OBJECT!!!
@@ -48,7 +48,7 @@ obj = ProgressBar(numIterations, ...
     );
 
 
-parfor iIteration = 1:numIterations,
+parfor iIteration = 1:numIterations
     pause(0.1);
     
     % USE THIS FUNCTION AND NOT THE UPDATE() METHOD OF THE OBJECT!!!

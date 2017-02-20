@@ -24,13 +24,13 @@ obj1 = ProgressBar(numOuterIterations, ...
 % helper method to print a first progress bar before the inner loop starts.
 % This prevents a blank line until the first obj1.update() is called.
 obj1.start();
-for iOuterIteration = 1:numOuterIterations,
+for iOuterIteration = 1:numOuterIterations
     obj2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', inf, ...
         'Title', 'Loop 2' ...
         );
     
-    for jInnerIteration = 1:numInnerIterations,
+    for jInnerIteration = 1:numInnerIterations
         obj2.update();
         
         pause(0.1);
@@ -56,14 +56,14 @@ obj1 = ProgressBar(numOuterIterations, ...
     );
 
 obj1.start();
-for iOuterIteration = 1:numOuterIterations,
+for iOuterIteration = 1:numOuterIterations
     % this progress can have an update rate!
     obj2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', 5, ...
         'Title', 'Loop 2' ...
         );
     
-    for jInnerIteration = 1:numInnerIterations,        
+    for jInnerIteration = 1:numInnerIterations    
         obj2.update();
     end
     obj2.close();

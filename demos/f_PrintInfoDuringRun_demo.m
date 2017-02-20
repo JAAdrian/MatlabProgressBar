@@ -16,10 +16,10 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Progress' ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     obj.update();
     
-    if iIteration == 30 || iIteration == 50 || iIteration == 70,
+    if iIteration == 30 || iIteration == 50 || iIteration == 70
         obj.printMessage(sprintf('Hello! @Iteration %i', iIteration));
     end
     

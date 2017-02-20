@@ -17,7 +17,7 @@ obj = ProgressBar(numIterations, ...
     'Title', 'ASCII' ...
     );
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(0.1);
     
     obj.update();

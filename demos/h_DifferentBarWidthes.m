@@ -18,7 +18,7 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Larger Width' ...
     );
 
-for iIteration = 1:2:numIterations,
+for iIteration = 1:2:numIterations
     pause(0.1);
     
     obj.update(2);
@@ -34,7 +34,7 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Smaller Width' ...
     );
 
-for iIteration = 1:2:numIterations,
+for iIteration = 1:2:numIterations
     pause(0.1);
     
     obj.update(2);

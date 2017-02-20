@@ -22,7 +22,7 @@ obj = ProgressBar([], ...
     'Title', 'Test Bytes 1' ...
     );
 
-for iFile = 1:length(dummyFile),
+for iFile = 1:length(dummyFile)
     buffer = dummyFile{iFile};
     
     pause(filePause(iFile));
@@ -40,7 +40,7 @@ obj = ProgressBar(numTotalBytes, ...
     'Title', 'Test Bytes 2' ...
     );
 
-for iFile = 1:length(dummyFile),
+for iFile = 1:length(dummyFile)
     buffer = dummyFile{iFile};
     
         
