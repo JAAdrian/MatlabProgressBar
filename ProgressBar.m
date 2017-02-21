@@ -239,7 +239,7 @@ methods
         % means to prevent empty lines at the position of the parent's bar
         % when the first parent's update follows very late. Thus, if you
         % set up a nested bar, simply place this method in front of the
-        % next loop to print a first progress bar.
+        % inner loop to print a first progress bar.
         %
         % Usage: obj.start()
         %
@@ -327,7 +327,7 @@ methods
         end
         
         % stop the timer after the last iteration if an update rate is
-        % used. The first condition is needed to prevent the if statement
+        % used. The first condition is needed to prevent the if-statement
         % to fail if self.Total is empty. This happens when no total number
         % of iterations was passed / is known.
         if         ~isempty(self.Total) ...
