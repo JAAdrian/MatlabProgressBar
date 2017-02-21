@@ -131,6 +131,13 @@ properties ( Constant, Access = private )
     
     % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
+    
+    % The speed of the title banner cycling
+    BannerRate = 2; % in Hz
+    % The number of characters the title string should shift each cycle
+    NumCharactersShift = 1;
+    % The maximum length of the title string without banner cycling
+    MaxTitleLength = 15;
 end
 
 properties ( Access = private, Dependent)
@@ -629,6 +636,9 @@ methods (Access = private)
             iterationsPerSecond = iterationsPerSecond / 1000;
         end
         
+        % cycle the bar's title
+        self.updateTitle();
+        
         if self.HasTotalIterations
             % 1 : Title
             % 2 : progress percent
@@ -854,6 +864,18 @@ end
     % with our default tag
         
         list = timerfindall('Tag', self.TimerTagName);
+    end
+    
+    
+    function [] = updateTitle(self)
+        strTitle = self.Title;
+        
+        if length(strTitle) > self.MaxTitleLength
+            
+            strTitle = circshift(strTitle, -self.NumCharactersShift);
+            
+            self.Title = strTitle;
+        end
     end
 end
 
