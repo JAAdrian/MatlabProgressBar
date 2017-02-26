@@ -38,7 +38,7 @@ classdef ProgressBar < handle
 %   update - the central update method to increment the internal progress
 %            state
 %
-% Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author :  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date   :  17-Jun-2016 16:08:45
 %
 

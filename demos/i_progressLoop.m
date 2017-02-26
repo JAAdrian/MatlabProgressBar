@@ -2,7 +2,7 @@
 % get rid of the update() method. All supported constructor options will
 % internally be passed to the ProgressBar() constructor.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  25-Jun-2016 11:25:15
 %
 

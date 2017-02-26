@@ -1,6 +1,6 @@
 % Demo of nested bars. At this point only one nested bar is supported
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:14:36
 %
 

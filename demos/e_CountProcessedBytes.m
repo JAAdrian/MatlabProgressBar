@@ -1,7 +1,7 @@
 % Demo of another counting unit. At this point, only 'Bytes' is supported
 % as alternative.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  22-Jun-2016 12:32:50
 %
 

@@ -1,6 +1,6 @@
 % Demo of a desired bar width
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  24-Jun-2016 15:43:41
 %
 
