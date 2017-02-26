@@ -1,7 +1,7 @@
 % Demo of the success bool of the update() method. This can be used to
 % print failure messages during the loop.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:48:54
 %
 

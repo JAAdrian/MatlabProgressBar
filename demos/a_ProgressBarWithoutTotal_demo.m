@@ -1,6 +1,6 @@
 % Demo for a simple progress bar without known total number of iterations
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:13:27
 %
 

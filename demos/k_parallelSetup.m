@@ -1,7 +1,7 @@
 % Demo of the parallel functionality using a parfor loop. This script may
 % throw errors if you don't own the Parallel Processing Toolbox.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  27-Jun-2016 22:04:18
 %
 

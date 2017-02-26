@@ -37,7 +37,7 @@ function [pattern] = updateParallel(stepSize, workerDirName)
 %        
 %
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  28-Jun-2016 16:52
 %
 
