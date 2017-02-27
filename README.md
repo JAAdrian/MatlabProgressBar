@@ -1,6 +1,8 @@
 MatlabProgressBar
 =======================
 
+This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
+
 A drawback in MATLAB's own `waitbar()` function is the lack of some functionalities and the loss of speed due to the rather laggy GUI updating process.
 Therefore, this MATLAB class aims to provide a smart progress bar in the command window and is optimized for progress information in simple iterations or large frameworks with full support of parallel *parfor* loops provided by the MATLAB Parallel Computing Toolbox.
 
