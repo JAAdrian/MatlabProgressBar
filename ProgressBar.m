@@ -573,7 +573,7 @@ methods (Access = private)
         
         
         % consider a growing bar if the total number of iterations is known
-        % and consider a title if on is given.
+        % and consider a title if one is given.
         if self.HasTotalIterations
             if ~isempty(self.Title)
                 preString  = '%s:  %03.0f%%  ';
@@ -745,7 +745,7 @@ methods (Access = private)
         % the current progress as ratio
         progress = self.IterationCounter / self.Total;
         
-        % the remainin seconds
+        % the remaining seconds
         remainingSeconds = elapsedTime * ((1 / progress) - 1);
         
         % convert seconds to hours:mins:seconds
