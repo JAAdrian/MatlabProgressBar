@@ -15,6 +15,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 - [ ] display the bar name as a ticker. That way, a fixed bar width could be used
+- [ ] inherit from MATLAB System Object to gain benefits from the setup method
 - [x] TQDM Unicode blocks
 - [x] optional constructor switch for ASCII number signs (hashes)
     - those will be used if `ProgressBar()` is used in deploy mode (MATLAB Compiler)
