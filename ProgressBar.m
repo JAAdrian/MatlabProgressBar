@@ -1,4 +1,4 @@
-classdef ProgressBar < handle
+classdef ProgressBar < matlab.System
 %PROGRESSBAR A class to provide a convenient and useful progress bar
 % -------------------------------------------------------------------------
 % This class mimics the design and some features of the TQDM
@@ -152,7 +152,11 @@ methods
     function [self] = ProgressBar(total, varargin)
         if nargin
             % parse input arguments
-            self.parseInputs(total, varargin{:});
+%             self.parseInputs(total, varargin{:});
+            checkInputOfTotal(total);
+            self.Total = total;
+            
+            self.setProperties(nargin-1, varargin{:});
         end
         
         % check if prog. bar runs in deployed mode and if yes switch to
@@ -166,15 +170,242 @@ methods
         if ~self.ShouldUseUnicode
             self.BlockCharacters = getAsciiSubBlocks();
         end
+    end
+    
+    % Class Destructor
+%     function delete(self)
+%         % stop the timer
+%         if self.IsTimerRunning
+%             self.stopTimer();
+%         end
+%         
+%         if self.IsThisBarNested
+%             % when this prog bar was nested, remove it from the command
+%             % line and get back to the end of the parent bar.
+%             % +1 due to the line break
+%             fprintf(1, backspace(self.NumWrittenCharacters + 1));
+%         elseif self.IterationCounter && ~self.IsThisBarNested
+%             % when a non-nested progress bar has been plotted, hit return
+%             fprintf(1, '\n');
+%         end
+%         
+%         % delete the timer object
+%         delete(self.TimerObject);
+%         
+%         % if used in parallel processing delete all aux. files and clear
+%         % the persistent variables inside of updateParallel()
+%         if self.IsParallel
+%             files = findWorkerFiles(self.WorkerDirectory);
+%             
+%             if ~isempty(files)
+%                 delete(files{:});
+%             end
+%             
+%             clear updateParallel;
+%             
+%             % rest some time to not flood the screen with the parent bar
+%             pause(0.1);
+%         end
+%     end
+    
+    
+    
+%     function [] = start(self)
+%         %START class method to print a progress bar
+%         % -----------------------------------------------------------------
+%         % This method simply prints a progress bar. It is provided to have
+%         % means to prevent empty lines at the position of the parent's bar
+%         % when the first parent's update follows very late. Thus, if you
+%         % set up a nested bar, simply place this method in front of the
+%         % inner loop to print a first progress bar.
+%         %
+%         % Usage: obj.start()
+%         %
+%         
+%         self.printProgressBar();
+%     end
+    
+    
+    
+    
+%     function [] = update(self, stepSize, wasSuccessful, shouldPrintNextProgBar)
+%     %UPDATE class method to increment the object's progress state
+%     %----------------------------------------------------------------------
+%     % This method is the central update function in the loop to indicate
+%     % the increment of the progress.
+%     %
+%     % Usage: obj.update()
+%     %        obj.update(stepSize)
+%     %        obj.update(stepSize, wasSuccessful)
+%     %        obj.update(stepSize, wasSuccessful, shouldPrintNextProgBar)
+%     %
+%     % Input: ---------
+%     %       stepSize - the size of the progress step when the method is
+%     %                  called. This can be used to pass the number of
+%     %                  processed bytes when using 'Bytes' as units.
+%     %                  [default: stepSize = 1]
+%     %       wasSuccessful - Boolean to provide information about the
+%     %                       success of an individual iteration. If you pass
+%     %                       a 'false' a message will be printed stating the
+%     %                       current iteration was not successful.
+%     %                       [default: wasSuccessful = true]
+%     %       shouldPrintNextProgBar - Boolean to define wether to
+%     %                                immidiately print another prog. bar
+%     %                                after print the success message. Can
+%     %                                be usefule when every iteration takes
+%     %                                a long time and a white space appears
+%     %                                where the progress bar used to be.
+%     %                                [default: shouldPrintNextProgBar = false]
+%     %
+%         
+%         % input parsing and validating
+%         if nargin < 4 || isempty(shouldPrintNextProgBar)
+%             shouldPrintNextProgBar = false;
+%         end
+%         if nargin < 3 || isempty(wasSuccessful)
+%             wasSuccessful = true;
+%         end
+%         if nargin < 2 || isempty(stepSize)
+%             stepSize = 1;
+%         end
+%         validateattributes(stepSize, ...
+%             {'numeric'}, ...
+%             {'scalar', 'positive', 'real', 'nonnan', 'finite', 'nonempty'} ...
+%             );
+%         validateattributes(wasSuccessful, ...
+%             {'logical', 'numeric'}, ...
+%             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+%             );
+%         validateattributes(shouldPrintNextProgBar, ...
+%             {'logical', 'numeric'}, ...
+%             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+%             );
+%         
+%         
+%         % increment the iteration counter
+%         self.incrementIterationCounter(stepSize);
+%         
+%         % if the timer was stopped before, because no update was given,
+%         % start it now again.
+%         if ~self.IsTimerRunning && self.HasFiniteUpdateRate
+%             self.startTimer();
+%         end
+%         
+%         % if the iteration was not successful print a message saying so.
+%         if ~wasSuccessful
+%             infoMsg = sprintf('Iteration %i was not successful!', ...
+%                 self.IterationCounter);
+%             self.printMessage(infoMsg, shouldPrintNextProgBar);
+%         end
+%         
+%         % when the bar should be updated in every iteration, do this with
+%         % each time calling update()
+%         if ~self.HasFiniteUpdateRate
+%             self.printProgressBar();
+%         end
+%         
+%         % stop the timer after the last iteration if an update rate is
+%         % used. The first condition is needed to prevent the if-statement
+%         % to fail if self.Total is empty. This happens when no total number
+%         % of iterations was passed / is known.
+%         if         ~isempty(self.Total) ...
+%                 && self.IterationCounter == self.Total ...
+%                 && self.HasFiniteUpdateRate
+%             
+%             self.stopTimer();
+%         end
+%     end
+    
+    
+    
+    
+    function [] = printMessage(self, message, shouldPrintNextProgBar)
+    %PRINTMESSAGE class method to print a message while prog bar running
+    %----------------------------------------------------------------------
+    % This method lets the user print a message during the processing. A
+    % normal fprintf() or disp() would break the bar so this method can be
+    % used to print information about iterations or debug infos.
+    %
+    % Usage: obj.printMessage(self, message)
+    %        obj.printMessage(self, message, shouldPrintNextProgBar)
+    %
+    % Input: ---------
+    %       message - the message that should be printed to screen
+    %       shouldPrintNextProgBar - Boolean to define wether to
+    %                                immidiately print another prog. bar
+    %                                after print the success message. Can
+    %                                be usefule when every iteration takes
+    %                                a long time and a white space appears
+    %                                where the progress bar used to be.
+    %                                [default: shouldPrintNextProgBar = false]
+    %
         
+        % input parsing and validation
+        narginchk(2, 3);
+        
+        if nargin < 3 || isempty(shouldPrintNextProgBar)
+            shouldPrintNextProgBar = false;
+        end
+        validateattributes(shouldPrintNextProgBar, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonempty', 'nonnan'} ...
+            );
+        
+        % remove the current prog bar
+        fprintf(1, backspace(self.NumWrittenCharacters));
+        
+        % print the message and break the line
+        fprintf(1, '\t');
+        fprintf(1, message);
+        fprintf(1, '\n');
+        
+        % reset the number of written characters
+        self.NumWrittenCharacters = 0;
+        
+        % if the next prog bar should be printed immideately do this
+        if shouldPrintNextProgBar
+            self.printProgressBar();
+        end
+    end
+    
+    
+    
+    
+%     function [] = close(self)
+%     %CLOSE class method to finish and clean up a current prog bar
+%     %----------------------------------------------------------------------
+%     % This method finishes and cleans the internal state of the progress
+%     % bar object. It is advisable to call this method after the loop where
+%     % the progress bar is incorporated to prevent possible unrobust
+%     % behaviour of future progress bar in the session.
+%     %
+%     % Usage: obj.close()
+%     %
+%         
+%         % just call the destructor for convenience
+%         release(self);
+%     end
+    
+    
+    
+    
+    function [yesNo] = get.IsThisBarNested(self)
+        % If there are more than one timer object with our tag, the current
+        % bar must be nested
+        yesNo = length(self.getTimerList()) > 1;
+    end
+end
+
+
+methods (Access = protected)
+    function [] = setupImpl(self)
         % add a new timer object with the standard tag name and hide it
         self.TimerObject = timer(...
             'Tag', self.TimerTagName, ...
             'ObjectVisibility', 'off' ...
             );
-
-        % get a new tic object
-        self.TicObject = tic;
+        
+        
         
         % if 'Total' is known setup the bar correspondingly and compute
         % some constant values
@@ -199,66 +430,17 @@ methods
         if self.IsParallel
             self.startTimer();
         end
+        
+%         self.printProgressBar();
     end
     
-    % Class Destructor
-    function delete(self)
-        % stop the timer
-        if self.IsTimerRunning
-            self.stopTimer();
-        end
-        
-        if self.IsThisBarNested
-            % when this prog bar was nested, remove it from the command
-            % line and get back to the end of the parent bar.
-            % +1 due to the line break
-            fprintf(1, backspace(self.NumWrittenCharacters + 1));
-        elseif self.IterationCounter && ~self.IsThisBarNested
-            % when a non-nested progress bar has been plotted, hit return
-            fprintf(1, '\n');
-        end
-        
-        % delete the timer object
-        delete(self.TimerObject);
-        
-        % if used in parallel processing delete all aux. files and clear
-        % the persistent variables inside of updateParallel()
-        if self.IsParallel
-            files = findWorkerFiles(self.WorkerDirectory);
-            
-            if ~isempty(files)
-                delete(files{:});
-            end
-            
-            clear updateParallel;
-            
-            % rest some time to not flood the screen with the parent bar
-            pause(0.1);
-        end
+    function [] = resetImpl(self)
+        % get a new tic object
+        self.TicObject = tic;
     end
     
-    
-    
-    function [] = start(self)
-        %START class method to print a progress bar
-        % -----------------------------------------------------------------
-        % This method simply prints a progress bar. It is provided to have
-        % means to prevent empty lines at the position of the parent's bar
-        % when the first parent's update follows very late. Thus, if you
-        % set up a nested bar, simply place this method in front of the
-        % inner loop to print a first progress bar.
-        %
-        % Usage: obj.start()
-        %
-        
-        self.printProgressBar();
-    end
-    
-    
-    
-    
-    function [] = update(self, stepSize, wasSuccessful, shouldPrintNextProgBar)
-    %UPDATE class method to increment the object's progress state
+    function [] = stepImpl(self, stepSize, wasSuccessful, shouldPrintNextProgBar)
+       %UPDATE class method to increment the object's progress state
     %----------------------------------------------------------------------
     % This method is the central update function in the loop to indicate
     % the increment of the progress.
@@ -342,158 +524,113 @@ methods
                 && self.HasFiniteUpdateRate
             
             self.stopTimer();
-        end
+        end 
     end
     
-    
-    
-    
-    function [] = printMessage(self, message, shouldPrintNextProgBar)
-    %PRINTMESSAGE class method to print a message while prog bar running
-    %----------------------------------------------------------------------
-    % This method lets the user print a message during the processing. A
-    % normal fprintf() or disp() would break the bar so this method can be
-    % used to print information about iterations or debug infos.
-    %
-    % Usage: obj.printMessage(self, message)
-    %        obj.printMessage(self, message, shouldPrintNextProgBar)
-    %
-    % Input: ---------
-    %       message - the message that should be printed to screen
-    %       shouldPrintNextProgBar - Boolean to define wether to
-    %                                immidiately print another prog. bar
-    %                                after print the success message. Can
-    %                                be usefule when every iteration takes
-    %                                a long time and a white space appears
-    %                                where the progress bar used to be.
-    %                                [default: shouldPrintNextProgBar = false]
-    %
-        
-        % input parsing and validation
-        narginchk(2, 3);
-        
-        if nargin < 3 || isempty(shouldPrintNextProgBar)
-            shouldPrintNextProgBar = false;
+    function [] = releaseImpl(self)
+        % stop the timer
+        if self.IsTimerRunning
+            self.stopTimer();
         end
-        validateattributes(shouldPrintNextProgBar, ...
-            {'logical', 'numeric'}, ...
-            {'scalar', 'binary', 'nonempty', 'nonnan'} ...
-            );
         
-        % remove the current prog bar
-        fprintf(1, backspace(self.NumWrittenCharacters));
-        
-        % print the message and break the line
-        fprintf(1, '\t');
-        fprintf(1, message);
-        fprintf(1, '\n');
-        
-        % reset the number of written characters
-        self.NumWrittenCharacters = 0;
-        
-        % if the next prog bar should be printed immideately do this
-        if shouldPrintNextProgBar
-            self.printProgressBar();
+        if self.IsThisBarNested
+            % when this prog bar was nested, remove it from the command
+            % line and get back to the end of the parent bar.
+            % +1 due to the line break
+            fprintf(1, backspace(self.NumWrittenCharacters + 1));
+        elseif self.IterationCounter && ~self.IsThisBarNested
+            % when a non-nested progress bar has been plotted, hit return
+            fprintf(1, '\n');
         end
-    end
-    
-    
-    
-    
-    function [] = close(self)
-    %CLOSE class method to finish and clean up a current prog bar
-    %----------------------------------------------------------------------
-    % This method finishes and cleans the internal state of the progress
-    % bar object. It is advisable to call this method after the loop where
-    % the progress bar is incorporated to prevent possible unrobust
-    % behaviour of future progress bar in the session.
-    %
-    % Usage: obj.close()
-    %
         
-        % just call the destructor for convenience
-        delete(self);
-    end
-    
-    
-    
-    
-    function [yesNo] = get.IsThisBarNested(self)
-        % If there are more than one timer object with our tag, the current
-        % bar must be nested
-        yesNo = length(self.getTimerList()) > 1;
+        % delete the timer object
+        delete(self.TimerObject);
+        
+        % if used in parallel processing delete all aux. files and clear
+        % the persistent variables inside of updateParallel()
+        if self.IsParallel
+            files = findWorkerFiles(self.WorkerDirectory);
+            
+            if ~isempty(files)
+                delete(files{:});
+            end
+            
+            clear updateParallel;
+            
+            % rest some time to not flood the screen with the parent bar
+            pause(0.1);
+        end
     end
 end
 
 
 
 
-
 methods (Access = private)
-    function [] = parseInputs(self, total, varargin)
-        % General input parsing of the constructor using the 'inputParse'
-        % class to provide name-value pairs.
-        
-        valFunStrings = @(in) validateattributes(in, {'char'}, {'nonempty'});
-        valFunNumeric = @(in) validateattributes(in, ...
-            {'numeric'}, ...
-            {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
-            );
-        valFunBoolean = @(in) validateattributes(in, ...
-                {'logical', 'numeric'}, ...
-                {'scalar', 'binary', 'nonnan', 'nonempty'} ...
-                );
-            
-        
-        p = inputParser;
-        p.FunctionName = mfilename;
-        
-        % total number of iterations
-        p.addRequired('Total', @checkInputOfTotal);
-        
-        % unit of progress measure
-        p.addParameter('Unit', self.Unit, ...
-            @(in) any(validatestring(in, {'Iterations', 'Bytes'})) ...
-            );
-        
-        % bar title
-        p.addParameter('Title', self.Title, valFunStrings);
-        
-        % update rate
-        p.addParameter('UpdateRate', self.UpdateRate, valFunNumeric);
-        
-        % progress bar width
-        p.addParameter('Width', self.TotalBarWidth, valFunNumeric);
-        
-        % don't use Unicode symbols
-        p.addParameter('Unicode', self.ShouldUseUnicode, valFunBoolean);
-        
-        % use with parallel toolbox
-        p.addParameter('Parallel', self.IsParallel, valFunBoolean);
-        
-        % if IsParallel save the aux. files in this directory
-        p.addParameter('WorkerDirectory', self.WorkerDirectory, valFunStrings);
-       
-        % parse all arguments...
-        p.parse(total, varargin{:});
-        
-        % ...and grab them
-        self.Total = p.Results.Total;
-        self.Unit  = p.Results.Unit;
-        self.Title = p.Results.Title;
-        self.UpdateRate = p.Results.UpdateRate;
-        self.TotalBarWidth = p.Results.Width;
-        self.ShouldUseUnicode = p.Results.Unicode;
-        self.IsParallel = p.Results.Parallel;
-        self.WorkerDirectory = p.Results.WorkerDirectory;
-        
-        if ~isempty(self.Total)
-            self.HasTotalIterations = true;
-        end
-        if isinf(self.UpdateRate)
-            self.HasFiniteUpdateRate = false;
-        end
-    end
+%     function [] = parseInputs(self, total, varargin)
+%         % General input parsing of the constructor using the 'inputParse'
+%         % class to provide name-value pairs.
+%         
+%         valFunStrings = @(in) validateattributes(in, {'char'}, {'nonempty'});
+%         valFunNumeric = @(in) validateattributes(in, ...
+%             {'numeric'}, ...
+%             {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
+%             );
+%         valFunBoolean = @(in) validateattributes(in, ...
+%                 {'logical', 'numeric'}, ...
+%                 {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+%                 );
+%             
+%         
+%         p = inputParser;
+%         p.FunctionName = mfilename;
+%         
+%         % total number of iterations
+%         p.addRequired('Total', @checkInputOfTotal);
+%         
+%         % unit of progress measure
+%         p.addParameter('Unit', self.Unit, ...
+%             @(in) any(validatestring(in, {'Iterations', 'Bytes'})) ...
+%             );
+%         
+%         % bar title
+%         p.addParameter('Title', self.Title, valFunStrings);
+%         
+%         % update rate
+%         p.addParameter('UpdateRate', self.UpdateRate, valFunNumeric);
+%         
+%         % progress bar width
+%         p.addParameter('Width', self.TotalBarWidth, valFunNumeric);
+%         
+%         % don't use Unicode symbols
+%         p.addParameter('Unicode', self.ShouldUseUnicode, valFunBoolean);
+%         
+%         % use with parallel toolbox
+%         p.addParameter('Parallel', self.IsParallel, valFunBoolean);
+%         
+%         % if IsParallel save the aux. files in this directory
+%         p.addParameter('WorkerDirectory', self.WorkerDirectory, valFunStrings);
+%        
+%         % parse all arguments...
+%         p.parse(total, varargin{:});
+%         
+%         % ...and grab them
+%         self.Total = p.Results.Total;
+%         self.Unit  = p.Results.Unit;
+%         self.Title = p.Results.Title;
+%         self.UpdateRate = p.Results.UpdateRate;
+%         self.TotalBarWidth = p.Results.Width;
+%         self.ShouldUseUnicode = p.Results.Unicode;
+%         self.IsParallel = p.Results.Parallel;
+%         self.WorkerDirectory = p.Results.WorkerDirectory;
+%         
+%         if ~isempty(self.Total)
+%             self.HasTotalIterations = true;
+%         end
+%         if isinf(self.UpdateRate)
+%             self.HasFiniteUpdateRate = false;
+%         end
+%     end
     
     
     
@@ -926,7 +1063,7 @@ end
 
 function [yesNo] = checkInputOfTotal(total)
 % This function is the input checker of the main constructor argument
-% 'total'. It is ok if it's empty but when not it must obey
+% 'total'. It is ok if it's empty but if not it must obey
 % validateattributes.
 
 isTotalEmpty = isempty(total);
