@@ -80,7 +80,10 @@ classdef ProgressBar < matlab.System
 %
 
 
-properties ( Nontunable )    
+properties ( Nontunable )
+    % Total number of iterations to compute progress and ETA
+    Total;
+    
     % Titel of the progress bar if desired. Shown in front of the bar
     Title = 'Processing';
     
@@ -94,9 +97,6 @@ properties ( Nontunable )
 end
 
 properties ( Nontunable, PositiveInteger)
-    % Total number of iterations to compute progress and ETA
-    Total;
-    
     % The visual printing rate in Hz. Default is 5 Hz
     UpdateRate = 5;
 end
@@ -160,7 +160,6 @@ methods
     % Class Constructor
     function [self] = ProgressBar(total, varargin)
         if nargin
-            checkInputOfTotal(total);
             self.Total = total;
             
             self.setProperties(nargin-1, varargin{:});
@@ -277,6 +276,32 @@ end
 
 
 methods (Access = protected)
+    function [] = validatePropertiesImpl(self)
+        valFunStrings = @(in) validateattributes(in, {'char'}, {'nonempty'});
+        valFunNumeric = @(in) validateattributes(in, ...
+            {'numeric'}, ...
+            {'scalar', 'positive', 'real', 'nonempty', 'nonnan'} ...
+            );
+        valFunBoolean = @(in) validateattributes(in, ...
+            {'logical', 'numeric'}, ...
+            {'scalar', 'binary', 'nonnan', 'nonempty'} ...
+            );
+        
+        assert(...
+            checkInputOfTotal(self.Total) ...
+            );
+        
+        assert(...
+            any(strcmpi(self.Unit, {'Iterations', 'Bytes'})) ...
+            );
+        
+        valFunStrings(self.Title);
+        valFunStrings(self.WorkerDirectory);
+        valFunNumeric(self.UpdateRate);
+        valFunBoolean(self.UseUnicode);
+        valFunBoolean(self.IsParallel);
+    end
+    
     function [] = setupImpl(self)
         self.printProgressBar();
     end
@@ -319,6 +344,7 @@ methods (Access = protected)
         if isempty(stepSize)
             stepSize = 1;
         end
+        
         validateattributes(stepSize, ...
             {'numeric'}, ...
             {'scalar', 'positive', 'real', 'nonnan', 'finite', 'nonempty'} ...
