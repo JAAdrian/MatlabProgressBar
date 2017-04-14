@@ -88,6 +88,8 @@ properties ( Nontunable )
     % Default is 'Iterations'.
     Unit = 'Iterations';
     
+    % Directory in which the worker binary files are being saved when in
+    % parallel mode.
     WorkerDirectory = tempdir;
 end
 
@@ -280,15 +282,13 @@ methods (Access = protected)
     end
     
     function [] = stepImpl(self, stepSize, wasSuccessful, shouldPrintNextProgBar)
-       %UPDATE class method to increment the object's progress state
+    %STEPIMPL class method to increment the object's progress state
     %----------------------------------------------------------------------
     % This method is the central update function in the loop to indicate
-    % the increment of the progress.
+    % the increment of the progress. Pass empty arrays for each input
+    % argument if default is desired.
     %
-    % Usage: obj.update()
-    %        obj.update(stepSize)
-    %        obj.update(stepSize, wasSuccessful)
-    %        obj.update(stepSize, wasSuccessful, shouldPrintNextProgBar)
+    % Usage: obj.step(stepSize, wasSuccessful, shouldPrintNextProgBar)
     %
     % Input: ---------
     %       stepSize - the size of the progress step when the method is
