@@ -13,16 +13,16 @@ numIterations = 100;
 %% Don't use unicode characters
 
 obj = ProgressBar(numIterations, ...
-    'Unicode', false, ...
+    'UseUnicode', false, ...
     'Title', 'ASCII' ...
     );
 
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step([], [], []);
 end
-obj.close();
+obj.release();
 
 
 

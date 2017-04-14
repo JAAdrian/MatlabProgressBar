@@ -13,13 +13,12 @@ numIterations = 50;
 %% Simple setup WITH known number of iterations
 
 obj = ProgressBar(numIterations);
-
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -33,9 +32,9 @@ obj = ProgressBar(numIterations, ...
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -51,9 +50,9 @@ stepSize = 2;
 for iIteration = 1:stepSize:numIterations
     pause(0.1);
     
-    obj.update(stepSize);
+    obj.step(stepSize, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -69,9 +68,9 @@ obj = ProgressBar(numIterations, ...
 for iIteration = 1:numIterations
     pause(pauses(iIteration));
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 %% Simulate a progress with it/sec < 1
 
@@ -83,9 +82,9 @@ obj = ProgressBar(numIterations, ...
 for iIteration = 1:numIterations
     pause(1.5);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 

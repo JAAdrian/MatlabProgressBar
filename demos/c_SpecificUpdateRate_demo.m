@@ -10,7 +10,7 @@ addpath('..');
 numIterations = 1e6;
 
 
-%% Desired update rate should be 5 Hz (the default is 10 Hz)
+%% Desired update rate should be 10 Hz (the default is 5 Hz)
 
 updateRateHz = 10;
 
@@ -20,9 +20,9 @@ obj = ProgressBar(numIterations, ...
     );
 
 for iIteration = 1:numIterations
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -40,11 +40,11 @@ obj = ProgressBar(numIterations, ...
     );
 
 for iIteration = 1:numIterations
-    obj.update();
+    obj.step(1, [], []);
     
     pause(0.1);
 end
-obj.close();
+obj.release();
 
 
 

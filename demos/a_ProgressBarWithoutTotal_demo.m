@@ -18,9 +18,9 @@ obj = ProgressBar();
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -32,9 +32,9 @@ obj = ProgressBar([], 'Title', 'Test');
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 

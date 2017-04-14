@@ -26,9 +26,9 @@ for iFile = 1:length(dummyFile)
     buffer = dummyFile{iFile};
     
     pause(filePause(iFile));
-    obj.update(length(buffer));
+    obj.step(length(buffer), [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -45,9 +45,9 @@ for iFile = 1:length(dummyFile)
     
         
     pause(filePause(iFile));
-    obj.update(length(buffer));
+    obj.step(length(buffer), [], []);
 end
-obj.close();
+obj.release();
 
 
 

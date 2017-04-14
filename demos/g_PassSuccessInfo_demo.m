@@ -23,9 +23,9 @@ wasSuccessful = logical(binornd(1, 0.95, numIterations, 1));
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update([], wasSuccessful(iIteration));
+    obj.step([], wasSuccessful(iIteration), []);
 end
-obj.close();
+obj.release();
 
 
 
