@@ -99,7 +99,6 @@ end
 
 properties ( Access = public, Logical, Nontunable )
     UseUnicode = true;
-    
     IsParallel = false;
 end
 
