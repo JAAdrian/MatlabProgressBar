@@ -80,10 +80,7 @@ classdef ProgressBar < matlab.System
 %
 
 
-properties ( Access = public, Nontunable )
-    % Total number of iterations to compute progress and ETA
-    Total;
-    
+properties ( Nontunable )    
     % Titel of the progress bar if desired. Shown in front of the bar
     Title = 'Progress';
     
@@ -91,13 +88,18 @@ properties ( Access = public, Nontunable )
     % Default is 'Iterations'.
     Unit = 'Iterations';
     
-    % The visual printing rate in Hz. Default is 5 Hz
-    UpdateRate = 5;
-    
     WorkerDirectory = tempdir;
 end
 
-properties ( Access = public, Logical, Nontunable )
+properties ( Nontunable, PositiveInteger)
+    % Total number of iterations to compute progress and ETA
+    Total;
+    
+    % The visual printing rate in Hz. Default is 5 Hz
+    UpdateRate = 5;
+end
+
+properties ( Logical, Nontunable )
     UseUnicode = true;
     IsParallel = false;
 end
