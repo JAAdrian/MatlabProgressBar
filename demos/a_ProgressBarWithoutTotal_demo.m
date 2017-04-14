@@ -25,7 +25,7 @@ obj.release();
 
 
 
-%% Simple setup WITHOUT known number of iterations and with title
+%% Simple setup WITHOUT known number of iterations and with custom title
 
 obj = ProgressBar([], 'Title', 'Test');
 
