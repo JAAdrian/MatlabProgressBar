@@ -18,10 +18,10 @@ end
 
 %% Without knowledge of total number of iterations
 
-% Instantiate the object with the 'Parallel' switch set to true and save
+% Instantiate the object with the 'IsParallel' switch set to true and save
 % the aux. files in the pwd.
 obj = ProgressBar([], ...
-    'Parallel', true, ...
+    'IsParallel', true, ...
     'WorkerDirectory', pwd, ...
     'Title', 'Parallel 1' ...
     );
@@ -30,10 +30,10 @@ obj = ProgressBar([], ...
 parfor iIteration = 1:numIterations
     pause(0.1);
     
-    % USE THIS FUNCTION AND NOT THE UPDATE() METHOD OF THE OBJECT!!!
+    % USE THIS FUNCTION AND NOT THE STEP() METHOD OF THE OBJECT!!!
     updateParallel([], pwd);
 end
-obj.close();
+obj.release();
 
 
 
@@ -43,7 +43,7 @@ obj.close();
 % Instantiate the object with the 'Parallel' switch set to true and save
 % the aux. files in the default directory (tempdir)
 obj = ProgressBar(numIterations, ...
-    'Parallel', true, ...
+    'IsParallel', true, ...
     'Title', 'Parallel 2' ...
     );
 
@@ -51,10 +51,10 @@ obj = ProgressBar(numIterations, ...
 parfor iIteration = 1:numIterations
     pause(0.1);
     
-    % USE THIS FUNCTION AND NOT THE UPDATE() METHOD OF THE OBJECT!!!
+    % USE THIS FUNCTION AND NOT THE STEP() METHOD OF THE OBJECT!!!
     updateParallel();
 end
-obj.close();
+obj.release();
 
 
 % End of file: k_parallelSetup.m

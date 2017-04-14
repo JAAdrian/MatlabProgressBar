@@ -16,6 +16,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 - [ ] display the bar name as a ticker. That way, a fixed bar width could be used
 - [ ] inherit from MATLAB System Object to gain benefits from the setup method
+    - [ ] use [this new functionality](https://de.mathworks.com/help/distcomp/send.html) for the parallel implementation. Introduced in R2017a.
 - [x] TQDM Unicode blocks
 - [x] optional constructor switch for ASCII number signs (hashes)
     - those will be used if `ProgressBar()` is used in deploy mode (MATLAB Compiler)
