@@ -82,7 +82,7 @@ classdef ProgressBar < matlab.System
 
 properties ( Nontunable )    
     % Titel of the progress bar if desired. Shown in front of the bar
-    Title = 'Progress';
+    Title = 'Processing';
     
     % The unit of each update. Can be either 'Iterations' or 'Bytes'.
     % Default is 'Iterations'.
