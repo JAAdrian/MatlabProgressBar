@@ -75,8 +75,11 @@ classdef ProgressBar < matlab.System
 %           v2.9.6  default update rate is now 5 Hz, 10-Aug-2016 (JA)
 %           v2.9.7  remove commas after if, for, etc., improve stability a
 %                   bit, 11-Oct-2016 (JA)
-%           v3.0.0  refactor the class to be a MATLAB System Object, 
-%                   14-Apr-2017 (JA)
+%           v3.0.0  - refactor the class to be a MATLAB System Object 
+%                   - support a title banner if title longer than
+%                     MaxTitleLength
+%                   - parallel support halted/unsupported until v3.1.0
+%                   16-Apr-2017 (JA)
 %
 
 
@@ -87,6 +90,9 @@ properties ( Nontunable )
     % Titel of the progress bar if desired. Shown in front of the bar
     Title = 'Processing';
     
+    % The visual printing rate in Hz. Default is 5 Hz
+    UpdateRate = 5;
+    
     % The unit of each update. Can be either 'Iterations' or 'Bytes'.
     % Default is 'Iterations'.
     Unit = 'Iterations';
@@ -94,11 +100,6 @@ properties ( Nontunable )
     % Directory in which the worker binary files are being saved when in
     % parallel mode.
     WorkerDirectory = tempdir;
-end
-
-properties ( Nontunable, PositiveInteger)
-    % The visual printing rate in Hz. Default is 5 Hz
-    UpdateRate = 5;
 end
 
 properties ( Logical, Nontunable )
@@ -126,14 +127,12 @@ properties ( Access = private )
     TicObject;
     TimerObject;
     
-    TotalBarWidth = 90;
+    MaxBarWidth = 90;
+    
+    CurrentTitleState = '';
 end
 
 properties ( Constant, Access = private )
-    % A Progressbar of less than 10 characters is rather useless, so
-    % constrain it
-    MinBarLength = 10;
-    
     % The number of sub blocks in one main block of width of a character.
     % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
     NumSubBlocks = 8;
@@ -141,12 +140,11 @@ properties ( Constant, Access = private )
     % Tag every timer with this to find it properly
     TimerTagName = 'ProgressBar';
     
-    % The speed of the title banner cycling
-    BannerRate = 2; % in Hz
     % The number of characters the title string should shift each cycle
-    NumCharactersShift = 1;
+    NumCharactersShift = 3;
+    
     % The maximum length of the title string without banner cycling
-    MaxTitleLength = 15;
+    MaxTitleLength = 20;
 end
 
 properties ( Access = private, Dependent)
@@ -172,11 +170,16 @@ methods
             self.HasFiniteUpdateRate = false;
         end
         
+        self.CurrentTitleState = self.Title;
+        if length(self.Title) > self.MaxTitleLength
+            self.CurrentTitleState = [self.CurrentTitleState, ' -- '];
+        end
+        
         % check if prog. bar runs in deployed mode and if yes switch to
         % ASCII symbols and a smaller bar width
         if isdeployed
             self.UseUnicode = false;
-            self.TotalBarWidth = 72;
+            self.MaxBarWidth = 72;
         end
         
         % setup ASCII symbols if desired
@@ -449,14 +452,19 @@ methods (Access = private)
         [~, preBarFormat, postBarFormat] = self.returnFormatString();
         
         % insert worst case inputs to get (almost) maximum length of bar
-        preBar = sprintf(preBarFormat, self.Title, 100);
-        postBar = sprintf(postBarFormat, ...
+        preBar = sprintf(...
+            preBarFormat, ...
+            blanks(min(length(self.CurrentTitleState), self.MaxTitleLength)), ...
+            100 ...
+            );
+        postBar = sprintf(...
+            postBarFormat, ...
             self.Total, ...
             self.Total, ...
-            100, 100, 100, 100, 100, 100, 1e3);
+            10, 60, 60, 10, 60, 60, 1e2 ...
+            );
         
-        lenBar = self.TotalBarWidth - length(preBar) - length(postBar);
-        lenBar = max(lenBar, self.MinBarLength);
+        lenBar = self.MaxBarWidth - length(preBar) - length(postBar);
         
         self.Bar = blanks(lenBar);
     end
@@ -471,8 +479,8 @@ methods (Access = private)
         % remove old previous bar
         fprintf(1, backspace(self.NumWrittenCharacters));
         
-        argumentList = self.returnArgumentList();
         formatString = self.returnFormatString();
+        argumentList = self.returnArgumentList();
         
         % print new bar
         self.NumWrittenCharacters = fprintf(1, ...
@@ -509,11 +517,7 @@ methods (Access = private)
         % consider a growing bar if the total number of iterations is known
         % and consider a title if one is given.
         if self.HasTotalIterations
-            if ~isempty(self.Title)
-                preString  = '%s:  %03.0f%%  ';
-            else
-                preString  = '%03.0f%%  ';
-            end
+            preString  = '%s:  %03.0f%%  ';
             
             centerString = '|%s|';
             
@@ -527,14 +531,9 @@ methods (Access = private)
             preString  = '';
             postString = '';
             
-            if ~isempty(self.Title)
-                format = ['%s:  %i', unitStrings{2}, ...
-                    ' [%02.0f:%02.0f:%02.0f, %.2f ', unitStrings{2}, '/', ...
-                    unitStrings{3}, ']'];
-            else
-                format = ['%i', unitStrings{2}, ' [%02.0f:%02.0f:%02.0f, %.2f ', ...
-                    unitStrings{2}, '/', unitStrings{3}, ']'];
-            end
+            format = ['%s:  %i', unitStrings{2}, ...
+                ' [%02.0f:%02.0f:%02.0f, %.2f ', unitStrings{2}, '/', ...
+                unitStrings{3}, ']'];
         end
     end
 
@@ -570,9 +569,6 @@ methods (Access = private)
             iterationsPerSecond = iterationsPerSecond / 1000;
         end
         
-        % cycle the bar's title
-        self.updateTitle();
-        
         if self.HasTotalIterations
             % 1 : Title
             % 2 : progress percent
@@ -599,7 +595,9 @@ methods (Access = private)
             end
             
             argList = {
-                self.Title, ...
+                self.CurrentTitleState(...
+                    1:min(length(self.Title), self.MaxTitleLength) ...
+                    ), ...
                 floor(self.IterationCounter / self.Total * 100), ...
                 barString, ...
                 scaledIteration, ...
@@ -621,7 +619,9 @@ methods (Access = private)
             % 6: it/s
             
             argList = {
-                self.Title, ...
+                self.CurrentTitleState(...
+                    1:min(length(self.Title), self.MaxTitleLength) ...
+                    ), ..., ...
                 scaledIteration, ...
                 etHoursMinsSecs(1), ...
                 etHoursMinsSecs(2), ...
@@ -629,11 +629,9 @@ methods (Access = private)
                 iterationsPerSecond ...
                 };
         end
-
-        % remove the title from list if not given
-        if isempty(self.Title)
-            argList = argList(2:end);
-        end
+        
+        % cycle the bar's title
+        self.updateCurrentTitle();
     end
     
     
@@ -801,14 +799,13 @@ end
     end
     
     
-    function [] = updateTitle(self)
-        strTitle = self.Title;
+    function [] = updateCurrentTitle(self)
+        strTitle = self.CurrentTitleState;
         
         if length(strTitle) > self.MaxTitleLength
-            
             strTitle = circshift(strTitle, -self.NumCharactersShift);
             
-            self.Title = strTitle;
+            self.CurrentTitleState = strTitle;
         end
     end
 end
@@ -869,6 +866,7 @@ if isTotalEmpty
     yesNo = isTotalEmpty;
     return;
 else
+    yesNo = ~isTotalEmpty;
     validateattributes(total, ...
         {'numeric'}, ...
         {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
