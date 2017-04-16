@@ -75,7 +75,7 @@ methods
     % method of ProgressBar. The actual input 'S' is passed to the default
     % subsref method of the class of self.IterationList.
     
-        self.ProgressBar.update();
+        self.ProgressBar.step([], [], []);
         varargout = {subsref(self.IterationList, S)};
     end
     

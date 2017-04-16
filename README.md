@@ -1,6 +1,8 @@
 MatlabProgressBar
 =======================
 
+This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
+
 A drawback in MATLAB's own `waitbar()` function is the lack of some functionalities and the loss of speed due to the rather laggy GUI updating process.
 Therefore, this MATLAB class aims to provide a smart progress bar in the command window and is optimized for progress information in simple iterations or large frameworks with full support of parallel *parfor* loops provided by the MATLAB Parallel Computing Toolbox.
 
@@ -13,6 +15,8 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 - [ ] display the bar name as a ticker. That way, a fixed bar width could be used
+- [ ] inherit from MATLAB System Object to gain benefits from the setup method
+    - [ ] use [this new functionality](https://de.mathworks.com/help/distcomp/send.html) for the parallel implementation. Introduced in R2017a.
 - [x] TQDM Unicode blocks
 - [x] optional constructor switch for ASCII number signs (hashes)
     - those will be used if `ProgressBar()` is used in deploy mode (MATLAB Compiler)

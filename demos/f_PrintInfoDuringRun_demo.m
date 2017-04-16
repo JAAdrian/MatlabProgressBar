@@ -17,7 +17,7 @@ obj = ProgressBar(numIterations, ...
     );
 
 for iIteration = 1:numIterations
-    obj.update();
+    obj.step(1, [], []);
     
     if iIteration == 30 || iIteration == 50 || iIteration == 70
         obj.printMessage(sprintf('Hello! @Iteration %i', iIteration));
@@ -25,7 +25,7 @@ for iIteration = 1:numIterations
     
     pause(1e-1);
 end
-obj.close();
+obj.release();
 
 
 

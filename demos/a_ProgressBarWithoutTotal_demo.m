@@ -18,23 +18,23 @@ obj = ProgressBar();
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
 
-%% Simple setup WITHOUT known number of iterations and with title
+%% Simple setup WITHOUT known number of iterations and with custom title
 
 obj = ProgressBar([], 'Title', 'Test');
 
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 

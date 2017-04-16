@@ -13,13 +13,12 @@ numIterations = 50;
 %% Simple setup WITH known number of iterations
 
 obj = ProgressBar(numIterations);
-
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step([], [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -27,15 +26,15 @@ obj.close();
 %% Simple setup WITH known number of iterations and title
 
 obj = ProgressBar(numIterations, ...
-    'Title', 'Progress' ...
+    'Title', 'Small' ...
     );
 
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step([], [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -43,7 +42,7 @@ obj.close();
 %% Now with a different step size
 
 obj = ProgressBar(numIterations, ...
-    'Title', 'Step Size 2' ...
+    'Title', 'Different Step Size' ...
     );
 
 stepSize = 2;
@@ -51,9 +50,9 @@ stepSize = 2;
 for iIteration = 1:stepSize:numIterations
     pause(0.1);
     
-    obj.update(stepSize);
+    obj.step(stepSize, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -69,23 +68,24 @@ obj = ProgressBar(numIterations, ...
 for iIteration = 1:numIterations
     pause(pauses(iIteration));
     
-    obj.update();
+    obj.step([], [], []);
 end
-obj.close();
+obj.release();
 
 %% Simulate a progress with it/sec < 1
 
 numIterations = 10;
 obj = ProgressBar(numIterations, ...
-    'Title', 'Slow Progress' ...
+    'Title', 'Slow Progress, Long Title' ...
     );
 
+obj.setup([], [], []);
 for iIteration = 1:numIterations
     pause(1.5);
     
-    obj.update();
+    obj.step([], [], []);
 end
-obj.close();
+obj.release();
 
 
 
