@@ -6,6 +6,8 @@
 %
 
 
+return;
+
 addpath('..');
 
 numIterations = 500;

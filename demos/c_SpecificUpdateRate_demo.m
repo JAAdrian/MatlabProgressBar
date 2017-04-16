@@ -7,7 +7,7 @@
 
 addpath('..');
 
-numIterations = 1e6;
+numIterations = 1e4;
 
 
 %% Desired update rate should be 10 Hz (the default is 5 Hz)
