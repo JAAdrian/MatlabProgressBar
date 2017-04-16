@@ -6,37 +6,37 @@ classdef ProgressBar < matlab.System
 % functionalities are set via name-value pairs in the constructor after the
 % argument of the total numbers of iterations used in the progress (which
 % can also be empty if unknown or even neglected if no name-value pairs are
-% passed). The central class' method is 'update()' to increment the
+% passed). The central class' method is 'step()' to increment the
 % progress state of the object.
 %
 % Usage:  obj = ProgressBar()
 %         obj = ProgressBar(total)
-%         obj = ProgressBar(total, varargin)
+%         obj = ProgressBar(total, Name, Value)
 %
 % where 'total' is the total number of iterations.
 %
 %
-% ProgressBar Properties (read-only):
+% ProgressBar Properties:
 %   Total - the total number of iterations [default: []]
-%   Title - the progress bar's title shown in front [default: '']
+%   Title - the progress bar's title shown in front [default: 'Processing']
 %   Unit - the unit of the update process. Can either be 'Iterations' or
 %          'Bytes' [default: 'Iterations']
 %   UpdateRate - the progress bar's update rate in Hz. Defines the printing
-%                update interval [default: 10 Hz]
+%                update interval [default: 5 Hz]
 %
 %
 % ProgressBar Methods:
 %   ProgressBar - class constructor
-%   close - clean up and finish the progress bar's internal state
+%   release - clean up and finish the progress bar's internal state
 %   printMessage - print some infos during the iterations. Messages get
 %                  printed above the bar and the latter shifts one row down
-%   start - normally not to be used! Tiny helper function when setting up
-%           nested loops to print a parent bar before the first update
-%           occured. When the inner loop takes long, a nasty white space is
-%           shown in place of the parent bar until the first update takes
-%           place. This function can be used to remedy this.
-%   update - the central update method to increment the internal progress
-%            state
+%   setup - not needed in a common application. Tiny helper function when
+%           setting up nested loops to print a parent bar before the first
+%           update occured. When the inner loop takes long, a nasty white
+%           space is shown in place of the parent bar until the first
+%           update takes place. This function can be used as a remedy.
+%   step - the central update method to increment the internal progress
+%          state
 %
 % Author :  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date   :  17-Jun-2016 16:08:45
