@@ -6,8 +6,6 @@
 %
 
 
-return;
-
 addpath('..');
 
 numIterations = 500;
@@ -28,7 +26,8 @@ obj = ProgressBar([], ...
     'Title', 'Parallel 1' ...
     );
 
-
+% ALWAYS CALL THE SETUP() METHOD FIRST!!!
+obj.setup([], [], []);
 parfor iIteration = 1:numIterations
     pause(0.1);
     
@@ -49,7 +48,8 @@ obj = ProgressBar(numIterations, ...
     'Title', 'Parallel 2' ...
     );
 
-
+% ALWAYS CALL THE SETUP() METHOD FIRST!!!
+obj.setup([], [], []);
 parfor iIteration = 1:numIterations
     pause(0.1);
     
