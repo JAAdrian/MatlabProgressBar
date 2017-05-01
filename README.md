@@ -129,7 +129,7 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 - are there remaining timer objects that haven't been deleted from canceled `for`/`parfor` loops or `parfeval()` calls when checking with `timerfindall('Tag', 'ProgressBar')`?
     - use `delete(timerfindall('Tag', 'ProgressBar'))`
 - does the progress exceed 100%?
-    - try to call `clear all` or, specifically `clear updateParallel` to clear the internal state (persistent variables) in the mentioned function. This should have been done by the class destructor but sometimes gets unrobust if there have been errors in parallel executed functions.
+    - try to call `clear all` or, specifically, `clear updateParallel` to clear the internal state (persistent variables) in the mentioned function. This should have been done by the class destructor but sometimes gets unrobust if there have been errors in parallel executed functions.
     - Also try to look into your temp directory (returned by `tempdir()`) if remaining `progbarworker_*` files exist. Delete those if necessary.
     
     
