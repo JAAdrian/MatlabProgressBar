@@ -1,7 +1,7 @@
 % Demo of another counting unit. At this point, only 'Bytes' is supported
 % as alternative.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  22-Jun-2016 12:32:50
 %
 
@@ -22,13 +22,13 @@ obj = ProgressBar([], ...
     'Title', 'Test Bytes 1' ...
     );
 
-for iFile = 1:length(dummyFile),
+for iFile = 1:length(dummyFile)
     buffer = dummyFile{iFile};
     
     pause(filePause(iFile));
-    obj.update(length(buffer));
+    obj.step(length(buffer), [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -40,14 +40,14 @@ obj = ProgressBar(numTotalBytes, ...
     'Title', 'Test Bytes 2' ...
     );
 
-for iFile = 1:length(dummyFile),
+for iFile = 1:length(dummyFile)
     buffer = dummyFile{iFile};
     
         
     pause(filePause(iFile));
-    obj.update(length(buffer));
+    obj.step(length(buffer), [], []);
 end
-obj.close();
+obj.release();
 
 
 

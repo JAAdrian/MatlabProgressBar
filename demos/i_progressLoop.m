@@ -2,7 +2,7 @@
 % get rid of the update() method. All supported constructor options will
 % internally be passed to the ProgressBar() constructor.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  25-Jun-2016 11:25:15
 %
 
@@ -14,7 +14,7 @@ numIterations = 1e5;
 
 %% No title and specialties
 
-for iIteration = progress(1:numIterations),
+for iIteration = progress(1:numIterations)
     % do nothing and print only
 end
 
@@ -24,7 +24,7 @@ end
 %% title and specific update rate
 for iIteration = progress(1:numIterations, ...
         'Title', 'Iterator', ...
-        'UpdateRate', 5),
+        'UpdateRate', 5)
    
     % do nothing and print only
 end

@@ -1,16 +1,16 @@
 % Demo how to manipulate the update rate
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:14:54
 %
 
 
 addpath('..');
 
-numIterations = 1e6;
+numIterations = 1e4;
 
 
-%% Desired update rate should be 5 Hz (the default is 10 Hz)
+%% Desired update rate should be 10 Hz (the default is 5 Hz)
 
 updateRateHz = 10;
 
@@ -19,10 +19,10 @@ obj = ProgressBar(numIterations, ...
     'UpdateRate', updateRateHz ...
     );
 
-for iIteration = 1:numIterations,
-    obj.update();
+for iIteration = 1:numIterations
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
@@ -39,12 +39,12 @@ obj = ProgressBar(numIterations, ...
     'UpdateRate', updateRateHz ...
     );
 
-for iIteration = 1:numIterations,
-    obj.update();
+for iIteration = 1:numIterations
+    obj.step(1, [], []);
     
     pause(0.1);
 end
-obj.close();
+obj.release();
 
 
 

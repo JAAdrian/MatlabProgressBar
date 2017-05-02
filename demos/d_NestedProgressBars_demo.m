@@ -1,6 +1,6 @@
 % Demo of nested bars. At this point only one nested bar is supported
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:14:36
 %
 
@@ -22,24 +22,25 @@ obj1 = ProgressBar(numOuterIterations, ...
     );
 
 % helper method to print a first progress bar before the inner loop starts.
-% This prevents a blank line until the first obj1.update() is called.
-obj1.start();
-for iOuterIteration = 1:numOuterIterations,
+% This prevents a blank line until the first obj1.step() is called.
+obj1.setup([], [], []);
+for iOuterIteration = 1:numOuterIterations
     obj2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', inf, ...
         'Title', 'Loop 2' ...
         );
+    obj2.setup([], [], []);
     
-    for jInnerIteration = 1:numInnerIterations,
-        obj2.update();
+    for jInnerIteration = 1:numInnerIterations
+        obj2.step(1, [], []);
         
         pause(0.1);
     end
-    obj2.close();
+    obj2.release();
     
-    obj1.update();
+    obj1.step(1, [], []);
 end
-obj1.close();
+obj1.release();
 
 
 
@@ -55,22 +56,23 @@ obj1 = ProgressBar(numOuterIterations, ...
     'Title', 'Loop 1' ...
     );
 
-obj1.start();
-for iOuterIteration = 1:numOuterIterations,
+obj1.setup([], [], []);
+for iOuterIteration = 1:numOuterIterations
     % this progress can have an update rate!
     obj2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', 5, ...
         'Title', 'Loop 2' ...
         );
+    obj2.setup([], [], []);
     
-    for jInnerIteration = 1:numInnerIterations,        
-        obj2.update();
+    for jInnerIteration = 1:numInnerIterations    
+        obj2.step(1, [], []);
     end
-    obj2.close();
+    obj2.release();
     
-    obj1.update();
+    obj1.step(1, [], []);
 end
-obj1.close();
+obj1.release();
 
 
 

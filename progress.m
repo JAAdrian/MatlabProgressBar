@@ -6,27 +6,27 @@ classdef progress < handle
 % example shows the usage. Although no ProgressBar() is called by the user,
 % a progress bar is shown. The input arguments are the same as for
 % ProgressBar(), so please refer to the documentation of ProgressBar().
-% 
+%
 % Note that this implementation is slower than the conventional
 % ProgressBar() class since the subsref() method is called with
 % non-optimized values in every iteration.
-% 
+%
 % =========================================================================
 % Example:
-% 
+%
 % for k = progress(1:100)
 %   % do some processing
 % end
-% 
+%
 % Or with additional name-value pairs:
-% 
+%
 % for k = progress(1:100, ...
 %     'Title', 'Computing...' ...
 %     )
-% 
+%
 %   % do some processing
 % end
-% 
+%
 % =========================================================================
 %
 % progress Properties:
@@ -34,14 +34,14 @@ classdef progress < handle
 %
 % progress Methods:
 %	progress - class constructor
-% 
 %
-% Author :  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+%
+% Author :  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date   :  23-Jun-2016 19:24:50
 %
 
 % Version:  v1.0  initial version, 23-Jun-2016 (JA)
-%           v1.1  rename variables and update documentation, 
+%           v1.1  rename variables and update documentation,
 %                 26-Jun-2016 (JA)
 %
 
@@ -67,7 +67,7 @@ methods
     % Class Destructor
     function delete(self)
         % call the destructor of the ProgressBar() object
-        delete(self.ProgressBar);
+        self.ProgressBar.release();
     end
     
     function [varargout] = subsref(self, S)
@@ -75,7 +75,7 @@ methods
     % method of ProgressBar. The actual input 'S' is passed to the default
     % subsref method of the class of self.IterationList.
     
-        self.ProgressBar.update();
+        self.ProgressBar.step([], [], []);
         varargout = {subsref(self.IterationList, S)};
     end
     

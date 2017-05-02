@@ -1,7 +1,7 @@
 % Demo of the success bool of the update() method. This can be used to
 % print failure messages during the loop.
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:48:54
 %
 
@@ -20,12 +20,12 @@ obj = ProgressBar(numIterations, ...
 % throw the dice to generate some booleans. This parameters produce a
 % success rate of 95%
 wasSuccessful = logical(binornd(1, 0.95, numIterations, 1));
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update([], wasSuccessful(iIteration));
+    obj.step([], wasSuccessful(iIteration), []);
 end
-obj.close();
+obj.release();
 
 
 

@@ -1,6 +1,6 @@
 % Demo for a simple progress bar without known total number of iterations
 %
-% Author:  J.-A. Adrian (JA) <jens-alrik.adrian AT jade-hs.de>
+% Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
 % Date  :  21-Jun-2016 17:13:27
 %
 
@@ -15,26 +15,26 @@ numIterations = 50;
 
 obj = ProgressBar();
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
 
-%% Simple setup WITHOUT known number of iterations and with title
+%% Simple setup WITHOUT known number of iterations and with custom title
 
 obj = ProgressBar([], 'Title', 'Test');
 
-for iIteration = 1:numIterations,
+for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.update();
+    obj.step(1, [], []);
 end
-obj.close();
+obj.release();
 
 
 
