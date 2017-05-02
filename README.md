@@ -15,6 +15,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
+- [ ] proper unit testing
 - [x] display the bar name as a ticker. That way, a fixed bar width could be used
 - [x] inherit from MATLAB System Object to gain benefits from the setup method
     - [ ] use [this new functionality](https://de.mathworks.com/help/distcomp/send.html) for the parallel implementation. Introduced in R2017a.
