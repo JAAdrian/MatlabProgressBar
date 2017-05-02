@@ -10,6 +10,7 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
+*Beware*: Obsolete method names are used in this demo (will be updated over time):
 ![Example GIF](example.gif)
 
 **Supported features include (or are planned)**:
@@ -55,9 +56,11 @@ Usage
 
 Detailed information and examples about all features of `ProgressBar` are stated in the demo scripts in the `./demos/` directory.
 
-Nevertheless, the basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. All settings are done using *name-value* pairs in the constructor. It is **strongly encouraged** to call the object's `release()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
+Nevertheless, the basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. Refer to the method's help for information about input parameters. The shown call is the *default* call and sufficient. If you want to pass information about the step size, the iteration's success or if a new bar should be printed immediately (e.g. when iterations take long time) you can pass these information instead of empty matrices.
 
-**Usage**  
+All settings are done using *name-value* pairs in the constructor. It is **strongly encouraged** to call the object's `release()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
+
+*Usage*  
 `obj = ProgressBar(totalIterations, varargin)`
 
 A simple but quite common example looks like this:
@@ -86,7 +89,7 @@ end
 progBar.release();
 ```
 
-A neat way to completely get rid of the conventional updating process is to use the `progress.m` wrapper class. It implements the `subsref()` method and, thus, acts similar to an iterator in Python. A progress bar will be printed without the further need to call `update()`. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`.
+A neat way to completely get rid of the conventional updating process is to use the `progress.m` wrapper class. It implements the `subsref()` method and, thus, acts similar to an iterator in Python. A progress bar will be printed without the further need to call `step()`. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`.
 
 See the example below:
 ```matlab
@@ -96,6 +99,30 @@ numIterations = 10e3;
 for iIteration = progress(1:numIterations)
     % do some processing
 end
+```
+
+#### Parallel Toolbox Support
+
+If you use MATLAB's Parallel Computing Toolbox, refer to the following example or the demo file `k_parallelSetup.m`. Tested parallel functionalities are `parfor` and `parfeval()` for asynchronous processing.
+
+```matlab
+numIterations = 10e3;
+
+% Instantiate the object with the 'IsParallel' switch set to true
+progBar = ProgressBar(numIterations, ...
+    'IsParallel', true, ...
+    'Title', 'Parallel Processing' ...
+    );
+    
+% ALWAYS CALL THE SETUP() METHOD FIRST!!!
+progBar.setup([], [], []);
+parfor iIteration = 1:numIterations
+    pause(0.1);
+    
+    % USE THIS FUNCTION AND NOT THE STEP() METHOD OF THE OBJECT!!!
+    updateParallel([], pwd);
+end
+progBar.release();
 ```
 
 
