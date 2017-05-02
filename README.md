@@ -10,8 +10,7 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
-*Beware*: Obsolete method names are used in this demo (will be updated over time):
-![Example GIF](example.gif)
+![Example 1](example.gif)
 
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
@@ -101,6 +100,8 @@ for iIteration = progress(1:numIterations)
     % do some processing
 end
 ```
+
+![Example 2](example2.gif)
 
 #### Parallel Toolbox Support
 
