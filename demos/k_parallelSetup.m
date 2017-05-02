@@ -19,10 +19,9 @@ end
 %% Without knowledge of total number of iterations
 
 % Instantiate the object with the 'IsParallel' switch set to true and save
-% the aux. files in the pwd.
+% the aux. files in the default directory (tempdir)
 obj = ProgressBar([], ...
     'IsParallel', true, ...
-    'WorkerDirectory', pwd, ...
     'Title', 'Parallel 1' ...
     );
 
@@ -32,7 +31,7 @@ parfor iIteration = 1:numIterations
     pause(0.1);
     
     % USE THIS FUNCTION AND NOT THE STEP() METHOD OF THE OBJECT!!!
-    updateParallel([], pwd);
+    updateParallel();
 end
 obj.release();
 
@@ -42,9 +41,10 @@ obj.release();
 %% With knowledge of total number of iterations
 
 % Instantiate the object with the 'Parallel' switch set to true and save
-% the aux. files in the default directory (tempdir)
+% the aux. files in the current working directory (pwd)
 obj = ProgressBar(numIterations, ...
     'IsParallel', true, ...
+    'WorkerDirectory', pwd, ...
     'Title', 'Parallel 2' ...
     );
 
@@ -54,7 +54,7 @@ parfor iIteration = 1:numIterations
     pause(0.1);
     
     % USE THIS FUNCTION AND NOT THE STEP() METHOD OF THE OBJECT!!!
-    updateParallel();
+    updateParallel([], pwd);
 end
 obj.release();
 
