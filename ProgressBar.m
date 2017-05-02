@@ -75,11 +75,10 @@ classdef ProgressBar < matlab.System
 %           v2.9.6  default update rate is now 5 Hz, 10-Aug-2016 (JA)
 %           v2.9.7  remove commas after if, for, etc., improve stability a
 %                   bit, 11-Oct-2016 (JA)
-%           v3.0.0  - refactor the class to be a MATLAB System Object 
+%           v3.0.0  - refactor the class to be a MATLAB System Object
 %                   - support a title banner if title longer than
 %                     MaxTitleLength
-%                   - parallel support halted/unsupported until v3.1.0
-%                   16-Apr-2017 (JA)
+%                   02-May-2017 (JA)
 %
 
 
@@ -393,7 +392,7 @@ methods (Access = protected)
                 && self.HasFiniteUpdateRate
             
             self.stopTimer();
-        end 
+        end
     end
     
     function [] = releaseImpl(self)
