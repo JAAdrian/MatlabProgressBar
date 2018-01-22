@@ -106,12 +106,12 @@ properties (Nontunable)
     WorkerDirectory = tempdir;
 end
 
-properties ( Logical, Nontunable )
+properties (Logical, Nontunable)
     UseUnicode = true;
     IsParallel = false;
 end
 
-properties ( Access = private )
+properties (Access = private)
     Bar = '';
     IterationCounter = 0;
     
@@ -136,7 +136,7 @@ properties ( Access = private )
     CurrentTitleState = '';
 end
 
-properties ( Constant, Access = private )
+properties (Constant, Access = private)
     % The number of sub blocks in one main block of width of a character.
     % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
     NumSubBlocks = 8;
@@ -148,7 +148,7 @@ properties ( Constant, Access = private )
     MaxTitleLength = 20;
 end
 
-properties ( Access = private, Dependent)
+properties (Access = private, Dependent)
     IsThisBarNested;
 end
 
@@ -894,8 +894,11 @@ function [files, numFiles] = findWorkerFiles(workerDir)
 files = dir(fullfile(workerDir, pattern));
 files = {files.name};
 
-files = cellfun(@(filename) fullfile(workerDir, filename), files, ...
-    'uni', false);
+files = cellfun(...
+    @(filename) fullfile(workerDir, filename), ...
+    files, ...
+    'uni', false ...
+    );
 numFiles = length(files);
 end
 
