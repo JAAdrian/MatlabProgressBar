@@ -145,10 +145,10 @@ The display of the updating progress bar is highly dependent on the **font** you
 
 #### Remaining Timer Objects in MATLAB's Background
 
-Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. If you encounter strange behavior like wrong line breaks or disappearing progress bars after the bar has finished, just call the following line to delete all remaining timer objects in memory.
+Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. If you encounter strange behavior like wrong line breaks or disappearing progress bars after the bar has finished, just call the following static method to delete all remaining timer objects in memory which belong(ed) to progress bars and start over.
 
 ```matlab
-delete(timerfindall('Tag', 'ProgressBar'));
+ProgressBar.deleteAllTimers();
 ```
 
 #### Issues concerning parallel processing

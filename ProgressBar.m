@@ -82,7 +82,12 @@ classdef ProgressBar < matlab.System
 %
 
 
-properties ( Nontunable )
+properties (Constant)
+   % Tag every timer with this to find it properly
+    TimerTagName = 'ProgressBar'; 
+end
+
+properties (Nontunable)
     % Total number of iterations to compute progress and ETA
     Total;
     
@@ -135,9 +140,6 @@ properties ( Constant, Access = private )
     % The number of sub blocks in one main block of width of a character.
     % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
     NumSubBlocks = 8;
-    
-    % Tag every timer with this to find it properly
-    TimerTagName = 'ProgressBar';
     
     % The number of characters the title string should shift each cycle
     NumCharactersShift = 3;
@@ -806,6 +808,12 @@ end
             
             self.CurrentTitleState = strTitle;
         end
+    end
+end
+
+methods (Static)
+    function deleteAllTimers()
+        delete(timerfindall('Tag', ProgressBar.TimerTagName));
     end
 end
 
