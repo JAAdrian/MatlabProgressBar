@@ -171,11 +171,6 @@ methods
             self.HasFiniteUpdateRate = false;
         end
         
-        self.CurrentTitleState = self.Title;
-        if length(self.Title) > self.MaxTitleLength
-            self.CurrentTitleState = [self.CurrentTitleState, ' -- '];
-        end
-        
         % check if prog. bar runs in deployed mode and if yes switch to
         % ASCII symbols and a smaller bar width
         if isdeployed
@@ -186,40 +181,7 @@ methods
         % setup ASCII symbols if desired
         if ~self.UseUnicode
             self.BlockCharacters = getAsciiSubBlocks();
-        end
-        
-        % get a new tic object
-        self.TicObject = tic;
-        
-        % add a new timer object with the standard tag name and hide it
-        self.TimerObject = timer(...
-            'Tag', self.TimerTagName, ...
-            'ObjectVisibility', 'off' ...
-            );
-        
-        % if 'Total' is known setup the bar correspondingly and compute
-        % some constant values
-        if self.HasTotalIterations
-            % initialize the progress bar and pre-compute some measures
-            self.setupBar();
-            self.computeBlockFractions();
-        end
-        
-        % if the bar should not be printed in every iteration setup the
-        % timer to the desired update rate
-        if self.HasFiniteUpdateRate
-            self.setupTimer();
-        end
-                
-        % if the bar is used in a parallel setup start the timer right now
-        if self.IsParallel
-            self.startTimer();
-        end
-        
-        % if this is a nested bar hit return
-        if self.IsThisBarNested
-            fprintf(1, '\n');
-        end
+        end 
     end
     
     function [] = printMessage(self, message, shouldPrintNextProgBar)
@@ -307,6 +269,43 @@ methods (Access = protected)
     end
     
     function [] = setupImpl(self)
+        % get a new tic object
+        self.TicObject = tic;
+        
+        % add a new timer object with the standard tag name and hide it
+        self.TimerObject = timer(...
+            'Tag', self.TimerTagName, ...
+            'ObjectVisibility', 'off' ...
+            );
+        
+        % if the bar should not be printed in every iteration setup the
+        % timer to the desired update rate
+        if self.HasFiniteUpdateRate
+            self.setupTimer();
+        end
+        
+        % if 'Total' is known setup the bar correspondingly and compute
+        % some constant values
+        if self.HasTotalIterations
+            % initialize the progress bar and pre-compute some measures
+            self.setupBar();
+            self.computeBlockFractions();
+        end
+        
+        self.CurrentTitleState = self.Title;
+        if length(self.Title) > self.MaxTitleLength
+            self.CurrentTitleState = [self.CurrentTitleState, ' -- '];
+        end
+        
+        % if the bar is used in a parallel setup start the timer right now
+        if self.IsParallel
+            self.startTimer();
+        end
+        
+        % if this is a nested bar hit return
+        if self.IsThisBarNested
+            fprintf(1, '\n');
+        end
         self.printProgressBar();
     end
     
