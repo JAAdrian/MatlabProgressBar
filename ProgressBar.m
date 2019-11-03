@@ -901,7 +901,3 @@ files = cellfun(...
 numFiles = length(files);
 end
 
-
-
-
-% End of file: ProgressBar.m

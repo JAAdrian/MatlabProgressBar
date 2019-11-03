@@ -87,8 +87,3 @@ methods
 end
 end
 
-
-
-
-
-% End of file: progress.m

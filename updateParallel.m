@@ -99,10 +99,3 @@ if fid > 0
     fclose(fid);
 end
 
-
-
-
-
-
-
-% End of file: updateParallel.m

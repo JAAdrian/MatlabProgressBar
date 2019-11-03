@@ -24,7 +24,3 @@ assert(isempty(timerObjects));
 
 
 
-
-
-
-% End of file: ProgressBar_test.m
