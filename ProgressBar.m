@@ -79,12 +79,17 @@ classdef ProgressBar < matlab.System
 %                   - support a title banner if title longer than
 %                     MaxTitleLength
 %                   02-May-2017 (JA)
+%           v3.1.0  timing initialization is now done in the object's setup phase. Previously, this
+%                   was done in the constructor so time book keeping could have been awkward if
+%                   step() methods wouldn't have been called immediately. Some private properties
+%                   have been renamed. 03-11-2019 (JA)
 %
 
 
 properties (Constant)
    % Tag every timer with this to find it properly
-    TIMER_TAG_NAME = 'ProgressBar'; 
+    TIMER_TAG_NAME = 'ProgressBar';
+    VERSION = '3.1.0';
 end
 
 properties (Nontunable)
