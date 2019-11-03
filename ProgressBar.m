@@ -84,7 +84,7 @@ classdef ProgressBar < matlab.System
 
 properties (Constant)
    % Tag every timer with this to find it properly
-    TimerTagName = 'ProgressBar'; 
+    TIMER_TAG_NAME = 'ProgressBar'; 
 end
 
 properties (Nontunable)
@@ -171,7 +171,7 @@ methods
             self.HasFiniteUpdateRate = false;
         end
         
-        % check if prog. bar runs in deployed mode and if yes switch to
+        % check if prog. bar runs in deployed mode and if so, switch to
         % ASCII symbols and a smaller bar width
         if isdeployed
             self.UseUnicode = false;
@@ -274,7 +274,7 @@ methods (Access = protected)
         
         % add a new timer object with the standard tag name and hide it
         self.TimerObject = timer(...
-            'Tag', self.TimerTagName, ...
+            'Tag', self.TIMER_TAG_NAME, ...
             'ObjectVisibility', 'off' ...
             );
         
@@ -331,7 +331,7 @@ methods (Access = protected)
     %       shouldPrintNextProgBar - Boolean to define wether to
     %                                immidiately print another prog. bar
     %                                after print the success message. Can
-    %                                be usefule when every iteration takes
+    %                                be useful when every iteration takes
     %                                a long time and a white space appears
     %                                where the progress bar used to be.
     %                                [default: shouldPrintNextProgBar = false]
@@ -795,7 +795,7 @@ end
     % This function returns the list of all hidden timers which are tagged
     % with our default tag
         
-        list = timerfindall('Tag', self.TimerTagName);
+        list = timerfindall('Tag', self.TIMER_TAG_NAME);
     end
     
     
@@ -812,7 +812,7 @@ end
 
 methods (Static)
     function deleteAllTimers()
-        delete(timerfindall('Tag', ProgressBar.TimerTagName));
+        delete(timerfindall('Tag', ProgressBar.TIMER_TAG_NAME));
     end
 end
 
