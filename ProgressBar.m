@@ -9,9 +9,9 @@ classdef ProgressBar < matlab.System
 % passed). The central class' method is 'step()' to increment the
 % progress state of the object.
 %
-% Usage:  obj = ProgressBar()
-%         obj = ProgressBar(total)
-%         obj = ProgressBar(total, Name, Value)
+% Usage:  pbar = ProgressBar()
+%         pbar = ProgressBar(total)
+%         pbar = ProgressBar(total, Name, Value)
 %
 % where 'total' is the total number of iterations.
 %
@@ -79,10 +79,20 @@ classdef ProgressBar < matlab.System
 %                   - support a title banner if title longer than
 %                     MaxTitleLength
 %                   02-May-2017 (JA)
+%           v3.1.0  timing initialization is now done in the object's setup phase. Previously, this
+%                   was done in the constructor so time book keeping could have been awkward if
+%                   step() methods wouldn't have been called immediately. Some private properties
+%                   have been renamed. 03-11-2019 (JA)
 %
 
 
-properties ( Nontunable )
+properties (Constant)
+   % Tag every timer with this to find it properly
+    TIMER_TAG_NAME = 'ProgressBar';
+    VERSION = '3.1.0';
+end
+
+properties (Nontunable)
     % Total number of iterations to compute progress and ETA
     Total;
     
@@ -101,12 +111,12 @@ properties ( Nontunable )
     WorkerDirectory = tempdir;
 end
 
-properties ( Logical, Nontunable )
+properties (Logical, Nontunable)
     UseUnicode = true;
     IsParallel = false;
 end
 
-properties ( Access = private )
+properties (Access = private)
     Bar = '';
     IterationCounter = 0;
     
@@ -131,13 +141,10 @@ properties ( Access = private )
     CurrentTitleState = '';
 end
 
-properties ( Constant, Access = private )
+properties (Constant, Access = private)
     % The number of sub blocks in one main block of width of a character.
     % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
     NumSubBlocks = 8;
-    
-    % Tag every timer with this to find it properly
-    TimerTagName = 'ProgressBar';
     
     % The number of characters the title string should shift each cycle
     NumCharactersShift = 3;
@@ -146,7 +153,7 @@ properties ( Constant, Access = private )
     MaxTitleLength = 20;
 end
 
-properties ( Access = private, Dependent)
+properties (Access = private, Dependent)
     IsThisBarNested;
 end
 
@@ -155,80 +162,42 @@ end
 
 methods
     % Class Constructor
-    function [self] = ProgressBar(total, varargin)
+    function [obj] = ProgressBar(total, varargin)
         if nargin
-            self.Total = total;
+            obj.Total = total;
             
-            self.setProperties(nargin-1, varargin{:});
+            obj.setProperties(nargin-1, varargin{:});
         end
         
-        if ~isempty(self.Total)
-            self.HasTotalIterations = true;
+        if ~isempty(obj.Total)
+            obj.HasTotalIterations = true;
         end
-        if isinf(self.UpdateRate)
-            self.HasFiniteUpdateRate = false;
-        end
-        
-        self.CurrentTitleState = self.Title;
-        if length(self.Title) > self.MaxTitleLength
-            self.CurrentTitleState = [self.CurrentTitleState, ' -- '];
+        if isinf(obj.UpdateRate)
+            obj.HasFiniteUpdateRate = false;
         end
         
-        % check if prog. bar runs in deployed mode and if yes switch to
+        % check if prog. bar runs in deployed mode and if so, switch to
         % ASCII symbols and a smaller bar width
         if isdeployed
-            self.UseUnicode = false;
-            self.MaxBarWidth = 72;
+            obj.UseUnicode = false;
+            obj.MaxBarWidth = 72;
         end
         
         % setup ASCII symbols if desired
-        if ~self.UseUnicode
-            self.BlockCharacters = getAsciiSubBlocks();
-        end
-        
-        % get a new tic object
-        self.TicObject = tic;
-        
-        % add a new timer object with the standard tag name and hide it
-        self.TimerObject = timer(...
-            'Tag', self.TimerTagName, ...
-            'ObjectVisibility', 'off' ...
-            );
-        
-        % if 'Total' is known setup the bar correspondingly and compute
-        % some constant values
-        if self.HasTotalIterations
-            % initialize the progress bar and pre-compute some measures
-            self.setupBar();
-            self.computeBlockFractions();
-        end
-        
-        % if the bar should not be printed in every iteration setup the
-        % timer to the desired update rate
-        if self.HasFiniteUpdateRate
-            self.setupTimer();
-        end
-                
-        % if the bar is used in a parallel setup start the timer right now
-        if self.IsParallel
-            self.startTimer();
-        end
-        
-        % if this is a nested bar hit return
-        if self.IsThisBarNested
-            fprintf(1, '\n');
-        end
+        if ~obj.UseUnicode
+            obj.BlockCharacters = getAsciiSubBlocks();
+        end 
     end
     
-    function [] = printMessage(self, message, shouldPrintNextProgBar)
+    function [] = printMessage(obj, message, shouldPrintNextProgBar)
     %PRINTMESSAGE class method to print a message while prog bar running
     %----------------------------------------------------------------------
     % This method lets the user print a message during the processing. A
     % normal fprintf() or disp() would break the bar so this method can be
     % used to print information about iterations or debug infos.
     %
-    % Usage: obj.printMessage(self, message)
-    %        obj.printMessage(self, message, shouldPrintNextProgBar)
+    % Usage: obj.printMessage(obj, message)
+    %        obj.printMessage(obj, message, shouldPrintNextProgBar)
     %
     % Input: ---------
     %       message - the message that should be printed to screen
@@ -253,7 +222,7 @@ methods
             );
         
         % remove the current prog bar
-        fprintf(1, backspace(self.NumWrittenCharacters));
+        fprintf(1, backspace(obj.NumWrittenCharacters));
         
         % print the message and break the line
         fprintf(1, '\t');
@@ -261,24 +230,24 @@ methods
         fprintf(1, '\n');
         
         % reset the number of written characters
-        self.NumWrittenCharacters = 0;
+        obj.NumWrittenCharacters = 0;
         
         % if the next prog bar should be printed immideately do this
         if shouldPrintNextProgBar
-            self.printProgressBar();
+            obj.printProgressBar();
         end
     end
     
-    function [yesNo] = get.IsThisBarNested(self)
+    function [yesNo] = get.IsThisBarNested(obj)
         % If there are more than one timer object with our tag, the current
         % bar must be nested
-        yesNo = length(self.getTimerList()) > 1;
+        yesNo = length(obj.getTimerList()) > 1;
     end
 end
 
 
 methods (Access = protected)
-    function [] = validatePropertiesImpl(self)
+    function [] = validatePropertiesImpl(obj)
         valFunStrings = @(in) validateattributes(in, {'char'}, {'nonempty'});
         valFunNumeric = @(in) validateattributes(in, ...
             {'numeric'}, ...
@@ -290,25 +259,62 @@ methods (Access = protected)
             );
         
         assert(...
-            checkInputOfTotal(self.Total) ...
+            checkInputOfTotal(obj.Total) ...
             );
         
         assert(...
-            any(strcmpi(self.Unit, {'Iterations', 'Bytes'})) ...
+            any(strcmpi(obj.Unit, {'Iterations', 'Bytes'})) ...
             );
         
-        valFunStrings(self.Title);
-        valFunStrings(self.WorkerDirectory);
-        valFunNumeric(self.UpdateRate);
-        valFunBoolean(self.UseUnicode);
-        valFunBoolean(self.IsParallel);
+        valFunStrings(obj.Title);
+        valFunStrings(obj.WorkerDirectory);
+        valFunNumeric(obj.UpdateRate);
+        valFunBoolean(obj.UseUnicode);
+        valFunBoolean(obj.IsParallel);
     end
     
-    function [] = setupImpl(self)
-        self.printProgressBar();
+    function [] = setupImpl(obj)
+        % get a new tic object
+        obj.TicObject = tic;
+        
+        % add a new timer object with the standard tag name and hide it
+        obj.TimerObject = timer(...
+            'Tag', obj.TIMER_TAG_NAME, ...
+            'ObjectVisibility', 'off' ...
+            );
+        
+        % if the bar should not be printed in every iteration setup the
+        % timer to the desired update rate
+        if obj.HasFiniteUpdateRate
+            obj.setupTimer();
+        end
+        
+        % if 'Total' is known setup the bar correspondingly and compute
+        % some constant values
+        if obj.HasTotalIterations
+            % initialize the progress bar and pre-compute some measures
+            obj.setupBar();
+            obj.computeBlockFractions();
+        end
+        
+        obj.CurrentTitleState = obj.Title;
+        if length(obj.Title) > obj.MaxTitleLength
+            obj.CurrentTitleState = [obj.CurrentTitleState, ' -- '];
+        end
+        
+        % if the bar is used in a parallel setup start the timer right now
+        if obj.IsParallel
+            obj.startTimer();
+        end
+        
+        % if this is a nested bar hit return
+        if obj.IsThisBarNested
+            fprintf(1, '\n');
+        end
+        obj.printProgressBar();
     end
     
-    function [] = stepImpl(self, stepSize, wasSuccessful, shouldPrintNextProgBar)
+    function [] = stepImpl(obj, stepSize, wasSuccessful, shouldPrintNextProgBar)
     %STEPIMPL class method to increment the object's progress state
     %----------------------------------------------------------------------
     % This method is the central update function in the loop to indicate
@@ -330,7 +336,7 @@ methods (Access = protected)
     %       shouldPrintNextProgBar - Boolean to define wether to
     %                                immidiately print another prog. bar
     %                                after print the success message. Can
-    %                                be usefule when every iteration takes
+    %                                be useful when every iteration takes
     %                                a long time and a white space appears
     %                                where the progress bar used to be.
     %                                [default: shouldPrintNextProgBar = false]
@@ -362,62 +368,62 @@ methods (Access = protected)
         
         
         % increment the iteration counter
-        self.incrementIterationCounter(stepSize);
+        obj.incrementIterationCounter(stepSize);
         
         % if the timer was stopped before, because no update was given,
         % start it now again.
-        if ~self.IsTimerRunning && self.HasFiniteUpdateRate
-            self.startTimer();
+        if ~obj.IsTimerRunning && obj.HasFiniteUpdateRate
+            obj.startTimer();
         end
         
         % if the iteration was not successful print a message saying so.
         if ~wasSuccessful
             infoMsg = sprintf('Iteration %i was not successful!', ...
-                self.IterationCounter);
-            self.printMessage(infoMsg, shouldPrintNextProgBar);
+                obj.IterationCounter);
+            obj.printMessage(infoMsg, shouldPrintNextProgBar);
         end
         
         % when the bar should be updated in every iteration, do this with
         % each time calling update()
-        if ~self.HasFiniteUpdateRate
-            self.printProgressBar();
+        if ~obj.HasFiniteUpdateRate
+            obj.printProgressBar();
         end
         
         % stop the timer after the last iteration if an update rate is
         % used. The first condition is needed to prevent the if-statement
-        % to fail if self.Total is empty. This happens when no total number
+        % to fail if obj.Total is empty. This happens when no total number
         % of iterations was passed / is known.
-        if         ~isempty(self.Total) ...
-                && self.IterationCounter == self.Total ...
-                && self.HasFiniteUpdateRate
+        if         ~isempty(obj.Total) ...
+                && obj.IterationCounter == obj.Total ...
+                && obj.HasFiniteUpdateRate
             
-            self.stopTimer();
+            obj.stopTimer();
         end
     end
     
-    function [] = releaseImpl(self)
+    function [] = releaseImpl(obj)
         % stop the timer
-        if self.IsTimerRunning
-            self.stopTimer();
+        if obj.IsTimerRunning
+            obj.stopTimer();
         end
         
-        if self.IsThisBarNested
+        if obj.IsThisBarNested
             % when this prog bar was nested, remove it from the command
             % line and get back to the end of the parent bar.
             % +1 due to the line break
-            fprintf(1, backspace(self.NumWrittenCharacters + 1));
-        elseif self.IterationCounter && ~self.IsThisBarNested
+            fprintf(1, backspace(obj.NumWrittenCharacters + 1));
+        elseif obj.IterationCounter && ~obj.IsThisBarNested
             % when a non-nested progress bar has been plotted, hit return
             fprintf(1, '\n');
         end
         
         % delete the timer object
-        delete(self.TimerObject);
+        delete(obj.TimerObject);
         
         % if used in parallel processing delete all aux. files and clear
         % the persistent variables inside of updateParallel()
-        if self.IsParallel
-            files = findWorkerFiles(self.WorkerDirectory);
+        if obj.IsParallel
+            files = findWorkerFiles(obj.WorkerDirectory);
             
             if ~isempty(files)
                 delete(files{:});
@@ -435,54 +441,54 @@ end
 
 
 methods (Access = private)
-    function [] = computeBlockFractions(self)
+    function [] = computeBlockFractions(obj)
     % Compute the progress percentage of a single main and a single sub
     % block
-        self.FractionMainBlock = 1 / length(self.Bar);
-        self.FractionSubBlock = self.FractionMainBlock / self.NumSubBlocks;
+        obj.FractionMainBlock = 1 / length(obj.Bar);
+        obj.FractionSubBlock = obj.FractionMainBlock / obj.NumSubBlocks;
     end
     
     
     
-    function [] = setupBar(self)
+    function [] = setupBar(obj)
     % Set up the growing bar part of the printed line by computing the
     % width of it
         
-        [~, preBarFormat, postBarFormat] = self.returnFormatString();
+        [~, preBarFormat, postBarFormat] = obj.returnFormatString();
         
         % insert worst case inputs to get (almost) maximum length of bar
         preBar = sprintf(...
             preBarFormat, ...
-            blanks(min(length(self.CurrentTitleState), self.MaxTitleLength)), ...
+            blanks(min(length(obj.CurrentTitleState), obj.MaxTitleLength)), ...
             100 ...
             );
         postBar = sprintf(...
             postBarFormat, ...
-            self.Total, ...
-            self.Total, ...
+            obj.Total, ...
+            obj.Total, ...
             10, 60, 60, 10, 60, 60, 1e2 ...
             );
         
-        lenBar = self.MaxBarWidth - length(preBar) - length(postBar);
+        lenBar = obj.MaxBarWidth - length(preBar) - length(postBar);
         
-        self.Bar = blanks(lenBar);
+        obj.Bar = blanks(lenBar);
     end
     
     
     
     
-    function [] = printProgressBar(self)
+    function [] = printProgressBar(obj)
     % This method removes the old and prints the current bar to the screen
     % and saves the number of written characters for the next iteration
         
         % remove old previous bar
-        fprintf(1, backspace(self.NumWrittenCharacters));
+        fprintf(1, backspace(obj.NumWrittenCharacters));
         
-        formatString = self.returnFormatString();
-        argumentList = self.returnArgumentList();
+        formatString = obj.returnFormatString();
+        argumentList = obj.returnArgumentList();
         
         % print new bar
-        self.NumWrittenCharacters = fprintf(1, ...
+        obj.NumWrittenCharacters = fprintf(1, ...
             formatString, ...
             argumentList{:} ...
             );
@@ -492,19 +498,19 @@ methods (Access = private)
     
     
     
-    function [format, preString, postString] = returnFormatString(self)
+    function [format, preString, postString] = returnFormatString(obj)
     % This method returns the format string for the fprintf() function in
     % printProgressBar()
 
         % use the correct units
-        if strcmp(self.Unit, 'Bytes')
-            if self.HasItPerSecBelow1
+        if strcmp(obj.Unit, 'Bytes')
+            if obj.HasItPerSecBelow1
                 unitStrings = {'K', 's', 'KB'};
             else
                 unitStrings = {'K', 'KB', 's'};
             end
         else
-            if self.HasItPerSecBelow1
+            if obj.HasItPerSecBelow1
                 unitStrings = {'', 's', 'it'};
             else
                 unitStrings = {'', 'it', 's'};
@@ -515,7 +521,7 @@ methods (Access = private)
         
         % consider a growing bar if the total number of iterations is known
         % and consider a title if one is given.
-        if self.HasTotalIterations
+        if obj.HasTotalIterations
             preString  = '%s:  %03.0f%%  ';
             
             centerString = '|%s|';
@@ -539,36 +545,36 @@ methods (Access = private)
     
     
     
-    function [argList] = returnArgumentList(self)
+    function [argList] = returnArgumentList(obj)
     % This method returns the argument list as a cell array for the
     % fprintf() function in printProgressBar()
         
         % elapsed time (ET)
-        thisTimeSec = toc(self.TicObject);
+        thisTimeSec = toc(obj.TicObject);
         etHoursMinsSecs = convertTime(thisTimeSec);
 
         % mean iterations per second counted from the start
-        iterationsPerSecond = self.IterationCounter / thisTimeSec;
+        iterationsPerSecond = obj.IterationCounter / thisTimeSec;
         
         if iterationsPerSecond < 1
             iterationsPerSecond = 1 / iterationsPerSecond;
-            self.HasItPerSecBelow1 = true;
+            obj.HasItPerSecBelow1 = true;
         else
-            self.HasItPerSecBelow1 = false;
+            obj.HasItPerSecBelow1 = false;
         end
         
         
         % consider the correct units
-        scaledIteration = self.IterationCounter;
-        scaledTotal     = self.Total;
-        if strcmp(self.Unit, 'Bytes')
+        scaledIteration = obj.IterationCounter;
+        scaledTotal     = obj.Total;
+        if strcmp(obj.Unit, 'Bytes')
             % let's show KB
             scaledIteration     = round(scaledIteration / 1000);
             scaledTotal         = round(scaledTotal / 1000);
             iterationsPerSecond = iterationsPerSecond / 1000;
         end
         
-        if self.HasTotalIterations
+        if obj.HasTotalIterations
             % 1 : Title
             % 2 : progress percent
             % 3 : progBar string
@@ -583,21 +589,21 @@ methods (Access = private)
             % 12: it/s
             
             % estimated time of arrival (ETA)
-            [etaHoursMinsSecs] = self.estimateETA(thisTimeSec);
+            [etaHoursMinsSecs] = obj.estimateETA(thisTimeSec);
             
-            if self.IterationCounter
+            if obj.IterationCounter
                 % usual case -> the iteration counter is > 0
-                barString = self.getCurrentBar;
+                barString = obj.getCurrentBar;
             else
                 % if startMethod() calls this method return the empty bar
-                barString = self.Bar;
+                barString = obj.Bar;
             end
             
             argList = {
-                self.CurrentTitleState(...
-                    1:min(length(self.Title), self.MaxTitleLength) ...
+                obj.CurrentTitleState(...
+                    1:min(length(obj.Title), obj.MaxTitleLength) ...
                     ), ...
-                floor(self.IterationCounter / self.Total * 100), ...
+                floor(obj.IterationCounter / obj.Total * 100), ...
                 barString, ...
                 scaledIteration, ...
                 scaledTotal, ...
@@ -618,8 +624,8 @@ methods (Access = private)
             % 6: it/s
             
             argList = {
-                self.CurrentTitleState(...
-                    1:min(length(self.Title), self.MaxTitleLength) ...
+                obj.CurrentTitleState(...
+                    1:min(length(obj.Title), obj.MaxTitleLength) ...
                     ), ..., ...
                 scaledIteration, ...
                 etHoursMinsSecs(1), ...
@@ -630,51 +636,51 @@ methods (Access = private)
         end
         
         % cycle the bar's title
-        self.updateCurrentTitle();
+        obj.updateCurrentTitle();
     end
     
     
     
     
-    function [barString] = getCurrentBar(self)
+    function [barString] = getCurrentBar(obj)
     % This method constructs the growing bar part of the printed line by
     % indexing the correct part of the blank bar and getting either a
     % Unicode or ASCII symbol.
         
         % set up the bar and the current progress as a ratio
-        lenBar = length(self.Bar);
-        currProgress = self.IterationCounter / self.Total;
+        lenBar = length(obj.Bar);
+        currProgress = obj.IterationCounter / obj.Total;
         
         % index of the current main block
-        thisMainBlock = min(ceil(currProgress / self.FractionMainBlock), lenBar);
+        thisMainBlock = min(ceil(currProgress / obj.FractionMainBlock), lenBar);
         
         % index of the current sub block
-        continuousBlockIndex = ceil(currProgress / self.FractionSubBlock);
-        thisSubBlock = mod(continuousBlockIndex - 1, self.NumSubBlocks) + 1;
+        continuousBlockIndex = ceil(currProgress / obj.FractionSubBlock);
+        thisSubBlock = mod(continuousBlockIndex - 1, obj.NumSubBlocks) + 1;
         
         % fix for non-full last blocks when steps are large: make them full
-        self.Bar(1:max(thisMainBlock-1, 0)) = ...
-            repmat(self.BlockCharacters(end), 1, thisMainBlock - 1);
+        obj.Bar(1:max(thisMainBlock-1, 0)) = ...
+            repmat(obj.BlockCharacters(end), 1, thisMainBlock - 1);
         
         % return a full bar in the last iteration or update the current
         % main block
-        if self.IterationCounter == self.Total
-            self.Bar = repmat(self.BlockCharacters(end), 1, lenBar);
+        if obj.IterationCounter == obj.Total
+            obj.Bar = repmat(obj.BlockCharacters(end), 1, lenBar);
         else
-            self.Bar(thisMainBlock) = self.BlockCharacters(thisSubBlock);
+            obj.Bar(thisMainBlock) = obj.BlockCharacters(thisSubBlock);
         end
         
-        barString = self.Bar;
+        barString = obj.Bar;
     end
     
     
     
     
-    function [etaHoursMinsSecs] = estimateETA(self, elapsedTime)
+    function [etaHoursMinsSecs] = estimateETA(obj, elapsedTime)
     % This method estimates linearly the remaining time
         
         % the current progress as ratio
-        progress = self.IterationCounter / self.Total;
+        progress = obj.IterationCounter / obj.Total;
         
         % the remaining seconds
         remainingSeconds = elapsedTime * ((1 / progress) - 1);
@@ -686,48 +692,48 @@ methods (Access = private)
     
     
     
-    function [] = setupTimer(self)
+    function [] = setupTimer(obj)
     % This method initializes the timer object if an upate rate is used
         
-        self.TimerObject.BusyMode = 'drop';
-        self.TimerObject.ExecutionMode = 'fixedSpacing';
+        obj.TimerObject.BusyMode = 'drop';
+        obj.TimerObject.ExecutionMode = 'fixedSpacing';
         
-        if ~self.IsParallel
-            self.TimerObject.TimerFcn = @(~, ~) self.timerCallback();
-            self.TimerObject.StopFcn  = @(~, ~) self.timerCallback();
+        if ~obj.IsParallel
+            obj.TimerObject.TimerFcn = @(~, ~) obj.timerCallback();
+            obj.TimerObject.StopFcn  = @(~, ~) obj.timerCallback();
         else
-            self.TimerObject.TimerFcn = @(~, ~) self.timerCallbackParallel();
-            self.TimerObject.StopFcn  = @(~, ~) self.timerCallbackParallel();
+            obj.TimerObject.TimerFcn = @(~, ~) obj.timerCallbackParallel();
+            obj.TimerObject.StopFcn  = @(~, ~) obj.timerCallbackParallel();
         end
-        updatePeriod = round(1 / self.UpdateRate * 1000) / 1000;
-        self.TimerObject.Period = updatePeriod;
+        updatePeriod = round(1 / obj.UpdateRate * 1000) / 1000;
+        obj.TimerObject.Period = updatePeriod;
     end
     
     
     
-    function [] = timerCallback(self)
+    function [] = timerCallback(obj)
     % This method is the timer callback. If an update came in between the
     % last printing and now print a new prog bar, else stop the timer and
     % wait.
-    if self.HasBeenUpdated
-        self.printProgressBar();
+    if obj.HasBeenUpdated
+        obj.printProgressBar();
     else
-        self.stopTimer();
+        obj.stopTimer();
     end
     
-    self.HasBeenUpdated = false;
+    obj.HasBeenUpdated = false;
     end
     
     
     
     
-    function [] = timerCallbackParallel(self)
+    function [] = timerCallbackParallel(obj)
         % find the aux. worker files
-        [files, numFiles] = findWorkerFiles(self.WorkerDirectory);
+        [files, numFiles] = findWorkerFiles(obj.WorkerDirectory);
         
         % if none have been written yet just print a progressbar and return
         if ~numFiles
-            self.printProgressBar();
+            obj.printProgressBar();
             
             return;
         end
@@ -744,68 +750,74 @@ methods (Access = private)
         end
         
         % the sum of all files should be the current iteration
-        self.IterationCounter = sum(results);
+        obj.IterationCounter = sum(results);
         
         % print the progress bar
-        self.printProgressBar();
+        obj.printProgressBar();
         
         % if total is known and we are at the end stop the timer
-        if ~isempty(self.Total) && self.IterationCounter == self.Total
-            self.stopTimer();
+        if ~isempty(obj.Total) && obj.IterationCounter == obj.Total
+            obj.stopTimer();
         end
 end
     
     
     
     
-    function [] = startTimer(self)
+    function [] = startTimer(obj)
     % This method starts the timer object and updates the status bool
     
-        start(self.TimerObject);
-        self.IsTimerRunning = true;
+        start(obj.TimerObject);
+        obj.IsTimerRunning = true;
     end
     
     
     
     
-    function [] = stopTimer(self)
+    function [] = stopTimer(obj)
     % This method stops the timer object and updates the status bool
         
-        stop(self.TimerObject);
-        self.IsTimerRunning = false;
+        stop(obj.TimerObject);
+        obj.IsTimerRunning = false;
     end
     
     
     
     
-    function [] = incrementIterationCounter(self, stepSize)
+    function [] = incrementIterationCounter(obj, stepSize)
     % This method increments the iteration counter and updates the status
     % bool
         
-        self.IterationCounter = self.IterationCounter + stepSize;
+        obj.IterationCounter = obj.IterationCounter + stepSize;
         
-        self.HasBeenUpdated = true;
+        obj.HasBeenUpdated = true;
     end
     
     
     
     
-    function [list] = getTimerList(self)
+    function [list] = getTimerList(obj)
     % This function returns the list of all hidden timers which are tagged
     % with our default tag
         
-        list = timerfindall('Tag', self.TimerTagName);
+        list = timerfindall('Tag', obj.TIMER_TAG_NAME);
     end
     
     
-    function [] = updateCurrentTitle(self)
-        strTitle = self.CurrentTitleState;
+    function [] = updateCurrentTitle(obj)
+        strTitle = obj.CurrentTitleState;
         
-        if length(strTitle) > self.MaxTitleLength
-            strTitle = circshift(strTitle, -self.NumCharactersShift);
+        if length(strTitle) > obj.MaxTitleLength
+            strTitle = circshift(strTitle, -obj.NumCharactersShift);
             
-            self.CurrentTitleState = strTitle;
+            obj.CurrentTitleState = strTitle;
         end
+    end
+end
+
+methods (Static)
+    function deleteAllTimers()
+        delete(timerfindall('Tag', ProgressBar.TIMER_TAG_NAME));
     end
 end
 
@@ -886,12 +898,11 @@ function [files, numFiles] = findWorkerFiles(workerDir)
 files = dir(fullfile(workerDir, pattern));
 files = {files.name};
 
-files = cellfun(@(filename) fullfile(workerDir, filename), files, ...
-    'uni', false);
+files = cellfun(...
+    @(filename) fullfile(workerDir, filename), ...
+    files, ...
+    'uni', false ...
+    );
 numFiles = length(files);
 end
 
-
-
-
-% End of file: ProgressBar.m

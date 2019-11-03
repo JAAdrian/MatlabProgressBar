@@ -8,7 +8,7 @@
 addpath('..');
 
 numOuterIterations = 3;
-numInnerIterations = 20;
+numInnerIterations = 15;
 
 
 
