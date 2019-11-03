@@ -1,5 +1,19 @@
-MatlabProgressBar
-=======================
+# MatlabProgressBar
+
+- [MatlabProgressBar](#matlabprogressbar)
+  - [Dependencies](#dependencies)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Extended Use with all Features](#extended-use-with-all-features)
+    - [Proposed Use for Simple Loops](#proposed-use-for-simple-loops)
+    - [Parallel Toolbox Support](#parallel-toolbox-support)
+  - [Known Issues](#known-issues)
+    - [Flickering Bar or Flooding of the Command Window](#flickering-bar-or-flooding-of-the-command-window)
+    - [The Bar Gets Longer With Each Iteration](#the-bar-gets-longer-with-each-iteration)
+    - [Strange Symbols in the Progress Bar](#strange-symbols-in-the-progress-bar)
+    - [Remaining Timer Objects in MATLAB's Background](#remaining-timer-objects-in-matlabs-background)
+    - [Issues concerning parallel processing](#issues-concerning-parallel-processing)
+  - [License](#license)
 
 This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
 
@@ -37,26 +51,24 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 **Note**:  
 Be sure to have a look at the [Known Issues](#known-issues) section for current known bugs and possible work-arounds.
 
-Dependencies
--------------------------
+## Dependencies
 
 No dependencies to toolboxes.
 
 The code has been tested with MATLAB R2016a and R2016b on Windows 7 and Xubuntu 16.04.2 LTS.
 
 
-Installation
--------------------------
+## Installation
 
 Put the files `ProgressBar.m`, `progress.m` and `updateParallel.m` into your MATLAB path or the directory of your MATLAB project.
 
 
-Usage
--------------------------
+## Usage
 
 Detailed information and examples about all features of `ProgressBar` are stated in the demo scripts in the `./demos/` directory.
 
-Nevertheless, the basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. Refer to the method's help for information about input parameters. The shown call is the *default* call and sufficient. If you want to pass information about the step size, the iteration's success or if a new bar should be printed immediately (e.g. when iterations take long time) you can pass these information instead of empty matrices.
+### Extended Use with all Features
+The basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. Refer to the method's help for information about input parameters. The shown call is the *default* call and sufficient. If you want to pass information about the step size, the iteration's success or if a new bar should be printed immediately (e.g. when iterations take long time) you can pass these information instead of empty matrices.
 
 All settings are done using *name-value* pairs in the constructor. It is **strongly encouraged** to call the object's `release()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
 
@@ -89,6 +101,7 @@ end
 progBar.release();
 ```
 
+### Proposed Use for Simple Loops
 A neat way to completely get rid of the conventional updating process is to use the `progress.m` wrapper class. It implements the `subsref()` method and, thus, acts similar to an iterator in Python. A progress bar will be printed without the further need to call `step()`. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`.
 
 See the example below:
@@ -103,7 +116,7 @@ end
 
 ![Example 2](example2.gif)
 
-#### Parallel Toolbox Support
+### Parallel Toolbox Support
 
 If you use MATLAB's Parallel Computing Toolbox, refer to the following example or the demo file `k_parallelSetup.m`. Tested parallel functionalities are `parfor` and `parfeval()` for asynchronous processing.
 
@@ -128,22 +141,21 @@ progBar.release();
 ```
 
 
-Known Issues
--------------------------------
+## Known Issues
 
-#### Flickering Bar or Flooding of the Command Window
+### Flickering Bar or Flooding of the Command Window
 
 MATLAB's speed to print to the command window is actually pretty low. If the update rate of the progress bar is high the mentioned effects can occur. Try to reduce the update rate from the default 5 Hz to something lower (say 3 Hz) with the `'UpdateRate', 3` name-value pair.
 
-#### The Bar Gets Longer With Each Iteration
+### The Bar Gets Longer With Each Iteration
 
 There seems to be a problem with the default font `Monospaced` at least on Windows. If this behavior is problematic change the font for the command window to a different monospaced font, preferably with proper Unicode support.
 
-#### Strange Symbols in the Progress Bar
+### Strange Symbols in the Progress Bar
 
 The display of the updating progress bar is highly dependent on the **font** you use in the command window. Be sure to use a proper font that can handle Unicode characters. Otherwise be sure to always use the `'Unicode', false` switch in the constructor.
 
-#### Remaining Timer Objects in MATLAB's Background
+### Remaining Timer Objects in MATLAB's Background
 
 Sometimes, if the user cancels a loop in which a progress bar was used, the destructor is not called properly and the timer object remains in memory. This can lead to strange behavior of the next progress bar instantiated because it thinks it is nested. If you encounter strange behavior like wrong line breaks or disappearing progress bars after the bar has finished, just call the following static method to delete all remaining timer objects in memory which belong(ed) to progress bars and start over.
 
@@ -151,7 +163,7 @@ Sometimes, if the user cancels a loop in which a progress bar was used, the dest
 ProgressBar.deleteAllTimers();
 ```
 
-#### Issues concerning parallel processing
+### Issues concerning parallel processing
 
 The work-flow when using the progress bar in a parallel setup is to instantiate the object with the `IsParallel` switch set to `true` and using the `updateParallel()` function to update the progress state instead of the `step()` method of the object. If this results in strange behavior check the following list. Generally, it is advisable to **first be sure that the executed code or functions in the parallel setup run without errors or warnings.** If not the execution may prevent the class destructor to properly clean up all files and timer objects.
 
@@ -166,7 +178,6 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 `clear all` and `delete(timerfindall('Tag', 'ProgressBar'))` are your friend! Be sure that no files following the pattern `progbarworker_*` remain in the directory returned by `tempdir()`.
 
 
-License
-----------------------
+## License
 
 The code is licensed under BSD 3-Clause as stated in the `LICENSE` file
