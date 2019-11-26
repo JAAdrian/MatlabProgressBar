@@ -1,3 +1,5 @@
+[![View MatlabProgressBar on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar)
+
 # MatlabProgressBar
 
 - [MatlabProgressBar](#matlabprogressbar)
