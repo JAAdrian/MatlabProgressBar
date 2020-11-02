@@ -49,15 +49,20 @@ classdef progress < handle
 properties (Access = private)
     IterationList;
     ProgressBar;
+    CurrentFont
 end
 
 methods
     % Class Constructor
     function self = progress(in, varargin)
+        s = settings;
+        if ~isunix && strcmp(s.matlab.fonts.codefont.Name.ActiveValue,'Monospaced') % workaround for bug "Bar Gets Longer With Each Iteration" on windows systems
+            self.CurrentFont = s.matlab.fonts.codefont.Name.ActiveValue; % store current font
+            s.matlab.fonts.codefont.Name.TemporaryValue = 'Courier New'; % change to Courier New Font, which is shipped by every windows distro since Windows 3.1
+        end
         if ~nargin
             return;
         end
-        
         self.IterationList = in;
         
         % pass all varargins to ProgressBar()
@@ -66,6 +71,10 @@ methods
     
     % Class Destructor
     function delete(self)
+        if ~isunix && ~isempty(self.CurrentFont) % restore previously used font
+            s = settings;
+            s.matlab.fonts.codefont.Name.TemporaryValue = self.CurrentFont;
+        end
         % call the destructor of the ProgressBar() object
         self.ProgressBar.release();
     end
