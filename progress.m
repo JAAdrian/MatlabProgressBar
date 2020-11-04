@@ -37,12 +37,6 @@ classdef progress < handle
 %
 %
 % Author :  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date   :  23-Jun-2016 19:24:50
-%
-
-% Version:  v1.0  initial version, 23-Jun-2016 (JA)
-%           v1.1  rename variables and update documentation,
-%                 26-Jun-2016 (JA)
 %
 
 
@@ -53,36 +47,36 @@ end
 
 methods
     % Class Constructor
-    function self = progress(in, varargin)
+    function obj = progress(in, varargin)
         if ~nargin
             return;
         end
         
-        self.IterationList = in;
+        obj.IterationList = in;
         
         % pass all varargins to ProgressBar()
-        self.ProgressBar = ProgressBar(length(in), varargin{:});
+        obj.ProgressBar = ProgressBar(length(in), varargin{:});
     end
     
     % Class Destructor
-    function delete(self)
+    function delete(obj)
         % call the destructor of the ProgressBar() object
-        self.ProgressBar.release();
+        obj.ProgressBar.release();
     end
     
-    function [varargout] = subsref(self, S)
+    function [varargout] = subsref(obj, S)
     % This method implements the subsref method and only calls the update()
     % method of ProgressBar. The actual input 'S' is passed to the default
-    % subsref method of the class of self.IterationList.
+    % subsref method of the class of obj.IterationList.
     
-        self.ProgressBar.step([], [], []);
-        varargout = {subsref(self.IterationList, S)};
+        obj.ProgressBar.step([], [], []);
+        varargout = {subsref(obj.IterationList, S)};
     end
     
-    function [m, n] = size(self)
+    function [m, n] = size(obj)
     % This method implements the size() function for the progress() class.
     
-        [m, n] = size(self.IterationList);
+        [m, n] = size(obj.IterationList);
     end
 end
 end
