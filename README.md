@@ -151,7 +151,13 @@ MATLAB's speed to print to the command window is actually pretty low. If the upd
 
 ### The Bar Gets Longer With Each Iteration
 
-There seems to be a problem with the default font `Monospaced` at least on Windows. If this behavior is problematic change the font for the command window to a different monospaced font, preferably with proper Unicode support.
+There seems to be a problem with the default font `Monospaced` in Windows. If this behavior is problematic, change the font for the command window to a different monospaced font, preferably with proper Unicode support.
+
+If you do not want to or cannot change the font in the setting, you can set the class's `OverrideDefaultFont` to `true` while you are in the configuration phase. This will change MATLAB's coding font to `Courier New` for the duration in which the bar is alive (until the `release()` method is executed). After the object's lifetime, your previous font will be restored automatically. 
+
+For convenience, this property can also be set in the `progress()` wrapper to always trigger for the wrapper if desired.
+
+Thanks [@GenosseFlosse](https://github.com/GenosseFlosse) for the fix!
 
 ### Strange Symbols in the Progress Bar
 
