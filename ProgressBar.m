@@ -39,50 +39,6 @@ classdef ProgressBar < matlab.System
 %          state
 %
 % Author :  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date   :  17-Jun-2016 16:08:45
-%
-
-% History:  v1.0    working ProgressBar with and without knowledge of total
-%                   number of iterations, 21-Jun-2016 (JA)
-%           v2.0    support for update rate, 21-Jun-2016 (JA)
-%           v2.1    colored progress bar, 22-Jun-2016 (JA)
-%           v2.2    support custom step size, 22-Jun-2016 (JA)
-%           v2.3    nested bars, 22-Jun-2016 (JA)
-%           v2.4    printMessage() and info when iteration was not
-%                   successful, 23-Jun-2016 (JA)
-%           v2.5    support 'Bytes' as unit, 23-Jun-2016 (JA)
-%           v2.5.1  bug fixing, 23-Jun-2016 (JA)
-%           v2.6    timer stops when no updates arrive, 23-Jun-2016 (JA)
-%           v2.7    introduce progress loop via wrapper class,
-%                   23- Jun-2016 (JA)
-%           v2.7.1  bug fixing, 25-Jun-2016 (JA)
-%           v2.8    support ASCII symbols, 25-Jun-2016 (JA)
-%           v2.8.1  consider isdeployed
-%           v2.8.2  fix a bug concerning bar updating, 27-Jun-2016 (JA)
-%           v2.8.3  update documentation and demos, 27-Jun-2016 (JA)
-%           v2.8.4  update known issues
-%           v2.8.5  bug fixes
-%           v2.9    support of parallel parfor loops, 28-Jun-2016 (JA)
-%           v2.9.1  bug fixing (deploy mode) and optimization,
-%                   28-Jun-2016 (JA)
-%           v2.9.2  fix bug in updateParallel(), 29-Jun-2016 (JA)
-%           v2.9.3  fix bug where updateParallel() doesn't return the
-%                   correct write-directory, 30-June-2016 (JA)
-%           v2.9.4  the directory of the worker aux. files can now be
-%                   specified, 03-Jul-2016 (JA)
-%           v2.9.5  show s/it if it/s < 1 for easier overview,
-%                   10-Aug-2016 (JA)
-%           v2.9.6  default update rate is now 5 Hz, 10-Aug-2016 (JA)
-%           v2.9.7  remove commas after if, for, etc., improve stability a
-%                   bit, 11-Oct-2016 (JA)
-%           v3.0.0  - refactor the class to be a MATLAB System Object
-%                   - support a title banner if title longer than
-%                     MaxTitleLength
-%                   02-May-2017 (JA)
-%           v3.1.0  timing initialization is now done in the object's setup phase. Previously, this
-%                   was done in the constructor so time book keeping could have been awkward if
-%                   step() methods wouldn't have been called immediately. Some private properties
-%                   have been renamed. 03-11-2019 (JA)
 %
 
 
@@ -112,8 +68,14 @@ properties (Nontunable)
 end
 
 properties (Logical, Nontunable)
+    % Boolean whether to use Unicode symbols or ASCII hash symbols (i.e. #)
     UseUnicode = true;
+
+    % Boolean whether the progress bar is to be used in parallel computing setup
     IsParallel = false;
+
+    % Boolean whether to override Windows' monospaced font to cure "growing bar" syndrome
+    OverrideDefaultFont = false;
 end
 
 properties (Access = private)
@@ -139,6 +101,8 @@ properties (Access = private)
     MaxBarWidth = 90;
     
     CurrentTitleState = '';
+
+    CurrentFont;
 end
 
 properties (Constant, Access = private)
@@ -258,13 +222,9 @@ methods (Access = protected)
             {'scalar', 'binary', 'nonnan', 'nonempty'} ...
             );
         
-        assert(...
-            checkInputOfTotal(obj.Total) ...
-            );
+        assert(checkInputOfTotal(obj.Total));
         
-        assert(...
-            any(strcmpi(obj.Unit, {'Iterations', 'Bytes'})) ...
-            );
+        assert(any(strcmpi(obj.Unit, {'Iterations', 'Bytes'})));
         
         valFunStrings(obj.Title);
         valFunStrings(obj.WorkerDirectory);
@@ -277,6 +237,16 @@ methods (Access = protected)
         % get a new tic object
         obj.TicObject = tic;
         
+        % workaround for issue "Bar Gets Longer With Each Iteration" on windows systems
+        s = settings;
+        if obj.OverrideDefaultFont && ispc()
+            % store current font to reset the code font back to this value in the release() method
+            obj.CurrentFont = s.matlab.fonts.codefont.Name.ActiveValue;
+
+            % change to Courier New which is shipped by every Windows distro since Windows 3.1
+            s.matlab.fonts.codefont.Name.TemporaryValue = 'Courier New';
+        end
+
         % add a new timer object with the standard tag name and hide it
         obj.TimerObject = timer(...
             'Tag', obj.TIMER_TAG_NAME, ...
@@ -420,6 +390,12 @@ methods (Access = protected)
         % delete the timer object
         delete(obj.TimerObject);
         
+        % restore previously used font
+        if obj.OverrideDefaultFont && ~isempty(obj.CurrentFont)
+            s = settings;
+            s.matlab.fonts.codefont.Name.TemporaryValue = obj.CurrentFont;
+        end
+
         % if used in parallel processing delete all aux. files and clear
         % the persistent variables inside of updateParallel()
         if obj.IsParallel
