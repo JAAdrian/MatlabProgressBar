@@ -34,6 +34,12 @@ classdef ProgressBar_test < matlab.unittest.TestCase
         end
     end
     
+    methods (TestMethodTeardown)
+        function deleteRogueTimers(~)
+            delete(timerfindall('Tag', ProgressBar.TIMER_TAG_NAME));
+        end
+    end
+    
     
     
     methods (Test)
@@ -114,6 +120,69 @@ classdef ProgressBar_test < matlab.unittest.TestCase
             testCase.verifyEqual(foundFiles, {fullfile(pwd(), workerFilename)});
             
             delete(workerFilename);
+        end
+        
+        
+        function barHasDefaults(testCase)
+            unit = testCase.getUnit();
+            
+            testCase.verifyEqual(unit.TIMER_TAG_NAME, 'ProgressBar');
+            testCase.verifyEmpty(unit.Total);
+            testCase.verifyEqual(unit.UpdateRate, 5);
+            testCase.verifyEqual(unit.Unit, 'Iterations');
+            testCase.verifyTrue(unit.UseUnicode);
+            testCase.verifyFalse(unit.IsParallel);
+            testCase.verifyFalse(unit.OverrideDefaultFont);
+        end
+        
+        
+        function canSetBarTotal(testCase)
+            unit = testCase.getUnit(10);
+            
+            testCase.verifyEqual(unit.Total, 10);
+        end
+        
+        
+        function canPrintSimpleBar(testCase)
+            unit = testCase.getUnit();
+            
+            firstBar = evalc('unit([], [], [])');
+            pause(0.2);
+            secondBar = evalc('unit([], [], [])');
+            
+            testCase.verifyTrue(contains(firstBar, 'Processing'));
+            testCase.verifyTrue(contains(firstBar, '1it'));
+            
+            testCase.verifyTrue(contains(secondBar, '2it'));
+            unit.release();
+        end
+        
+        
+        function canPrintBarWithTotal(testCase)
+            unit = testCase.getUnit(2);
+            
+            firstBar = evalc('unit([], [], [])');
+            testCase.verifyTrue(contains(firstBar, 'Processing'));
+            testCase.verifyTrue(contains(firstBar, '050%'));
+            testCase.verifyTrue(contains(firstBar, '1/2'));
+            
+            secondBar = evalc('unit([], [], [])');
+            testCase.verifyTrue(contains(secondBar, '100%'));
+            testCase.verifyTrue(contains(secondBar, '2/2'));
+            
+            unit.release();
+        end
+        
+        
+        function canPrintLongTitle(testCase)
+            unit = testCase.getUnit(2);
+            unit.Title = 'This is a long title string';
+            
+            firstBar = evalc('unit([], [], [])');
+            secondBar = evalc('unit([], [], [])');
+            unit.release();
+            
+            testCase.verifyNotEqual(firstBar, secondBar);
         end
     end
     

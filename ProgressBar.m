@@ -413,11 +413,8 @@ classdef ProgressBar < matlab.System
                 pause(0.1);
             end
         end
-    end
-    
-    
-    
-    methods (Access = ?ProgressBar_test)
+        
+        
         function [] = computeBlockFractions(obj)
             % Compute the progress percentage of a single main and a single sub
             % block
@@ -475,16 +472,20 @@ classdef ProgressBar < matlab.System
             
             % use the correct units
             if strcmp(obj.Unit, 'Bytes')
+                unitString = 'K';
+                
                 if obj.HasItPerSecBelow1
-                    unitStrings = {'K', 's', 'KB'};
+                    fractionString = {'s', 'KB'};
                 else
-                    unitStrings = {'K', 'KB', 's'};
+                    fractionString = {'KB', 's'};
                 end
             else
-                if obj.HasItPerSecBelow1
-                    unitStrings = {'', 's', 'it'};
+                unitString = 'it';
+                
+                if obj.HasItPerSecBelow1    
+                    fractionString = {'s', 'it'};
                 else
-                    unitStrings = {'', 'it', 's'};
+                    fractionString = {'it', 's'};
                 end
             end
             
@@ -496,18 +497,21 @@ classdef ProgressBar < matlab.System
                 centerString = '|%s|';
                 
                 postString = ...
-                    [' %i', unitStrings{1}, '/%i', unitStrings{1}, ...
+                    [
+                    ' %i/%i', unitString, ...
                     ' [%02.0f:%02.0f:%02.0f<%02.0f:%02.0f:%02.0f, %.2f ', ...
-                    unitStrings{2}, '/', unitStrings{3}, ']'];
+                    fractionString{1}, '/', fractionString{2}, ']'
+                    ];
                 
                 format = [preString, centerString, postString];
             else
                 preString  = '';
                 postString = '';
                 
-                format = ['%s:  %i', unitStrings{2}, ...
-                    ' [%02.0f:%02.0f:%02.0f, %.2f ', unitStrings{2}, '/', ...
-                    unitStrings{3}, ']'];
+                format = [
+                    '%s:  %i', unitString, ' [%02.0f:%02.0f:%02.0f, %.2f ', ...
+                    fractionString{1}, '/', fractionString{2}, ']'
+                    ];
             end
         end
         
@@ -533,7 +537,7 @@ classdef ProgressBar < matlab.System
             
             % consider the correct units
             scaledIteration = obj.IterationCounter;
-            scaledTotal     = obj.Total;
+            scaledTotal = obj.Total;
             if strcmp(obj.Unit, 'Bytes')
                 % let's show KB
                 scaledIteration     = round(scaledIteration / 1000);
@@ -811,19 +815,21 @@ classdef ProgressBar < matlab.System
         end
         
         
-        function [isTotalEmpty] = checkInputOfTotal(total)
+        function [isOk] = checkInputOfTotal(total)
             % This function is the input checker of the main constructor argument 'total'. It is ok
             % if it's empty but if not it must obey validateattributes.
             
             isTotalEmpty = isempty(total);
             
             if isTotalEmpty
+                isOk = true;
                 return;
             else
                 validateattributes(total, ...
                     {'numeric'}, ...
                     {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
                     );
+                isOk = true;
             end
         end
         
