@@ -64,6 +64,58 @@ methods (Test)
         blocks = unit.getAsciiSubBlocks();
         testCase.verifyEqual(blocks, '########');
     end
+    
+    
+    function testBackspaces(testCase)
+        unit = testCase.getUnit();
+        
+        backspaces = unit.backspace(3);
+        testCase.verifyEqual(backspaces, sprintf('\b\b\b'));
+    end
+    
+    
+    function testTimeConversion(testCase)
+        unit = testCase.getUnit();
+        
+        testCase.verifyEqual(unit.convertTime(0), [0, 0, 0]);
+        testCase.verifyEqual(unit.convertTime(30), [0, 0, 30]);
+        testCase.verifyEqual(unit.convertTime(60), [0, 1, 0]);
+        testCase.verifyEqual(unit.convertTime(60*60), [1, 0, 0]);
+    end
+    
+    
+    function checkBarLengthInput(testCase)
+        unit = testCase.getUnit();
+        
+        testCase.verifyEqual(unit.checkInputOfTotal([]), true);
+        testCase.verifyEqual(unit.checkInputOfTotal(10), false);
+        
+        testCase.verifyError(@() unit.checkInputOfTotal('char'), 'MATLAB:invalidType');
+        testCase.verifyError(@() unit.checkInputOfTotal(-1), 'MATLAB:expectedPositive');
+        testCase.verifyError(@() unit.checkInputOfTotal([1, 1]), 'MATLAB:expectedScalar');
+        testCase.verifyError(@() unit.checkInputOfTotal(1j), 'MATLAB:expectedInteger');
+        testCase.verifyError(@() unit.checkInputOfTotal(1.5), 'MATLAB:expectedInteger');
+        testCase.verifyError(@() unit.checkInputOfTotal(inf), 'MATLAB:expectedInteger');
+        testCase.verifyError(@() unit.checkInputOfTotal(nan), 'MATLAB:expectedInteger');
+    end
+    
+    
+    function findWorkerFiles(testCase)
+        unit = testCase.getUnit();
+        
+        pattern = updateParallel();
+        testCase.assertEmpty(dir(pattern));
+        
+        workerFilename = [pattern(1:end-1), 'test'];
+        fid = fopen(workerFilename, 'w');
+        fclose(fid);
+        
+        foundFiles = unit.findWorkerFiles(pwd());
+        testCase.verifyEqual(length(foundFiles), 1);
+        testCase.verifyEqual(foundFiles, {fullfile(pwd(), workerFilename)});
+        
+        delete(workerFilename);
+    end
 end
 
 

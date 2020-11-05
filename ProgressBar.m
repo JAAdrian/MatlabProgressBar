@@ -811,23 +811,22 @@ classdef ProgressBar < matlab.System
         end
         
         
-        function [yesNo] = checkInputOfTotal(total)
+        function [isTotalEmpty] = checkInputOfTotal(total)
             % This function is the input checker of the main constructor argument 'total'. It is ok
             % if it's empty but if not it must obey validateattributes.
             
             isTotalEmpty = isempty(total);
             
             if isTotalEmpty
-                yesNo = isTotalEmpty;
                 return;
             else
-                yesNo = ~isTotalEmpty;
                 validateattributes(total, ...
                     {'numeric'}, ...
                     {'scalar', 'integer', 'positive', 'real', 'nonnan', 'finite'} ...
                     );
             end
         end
+        
         
         function [files, numFiles] = findWorkerFiles(workerDir)
             % This function returns file names and the number of files that were written by the
