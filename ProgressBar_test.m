@@ -1,26 +1,63 @@
-% ProgressBar test file to be run by the MATLAB unit test function
-% 'runtests.m'
+classdef ProgressBar_test < matlab.unittest.TestCase
+%PROGRESSBAR_TEST Unit test for ProgressBar.m
+% -------------------------------------------------------------------------
+% Run it by calling 'runtests()'
+%   or specifically 'runtests('ProgressBar_test')'
 %
 % Author :  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date   :  26-Jun-2016 19:30:27
+% Date   :  05-Nov-2020 19:26:43
 %
 
-clear;
-close all;
 
-fileList = dir(fullfile('demos', '*.m'));
-fileNames = {fileList.name}.';
-fileNames = cellfun(@(x) fullfile('demos', x), fileNames, 'uni', false);
-
-
-%% run the demo files to ensure that they don't throw error
-for iDemoFile = 1:length(fileList)
-    run(fileNames{iDemoFile});
+properties (Constant)
+	DEFAULT_SEED = 123;
 end
 
-%% be sure that no timer objects are left
-timerObjects = timerfindall('Tag', 'ProgressBar');
-assert(isempty(timerObjects));
+properties 
+    UnitName = "ProgressBar";
+    
+    Seed;
+end
+
+
+methods (TestClassSetup)
+	function setClassRng(testCase)
+		testCase.Seed = rng();
+		testCase.addTeardown(@rng, testCase.Seed);
+		
+		rng(testCase.DEFAULT_SEED);
+	end
+end
+
+methods (TestMethodSetup)
+	function setMethodRng(testCase)
+		rng(testCase.DEFAULT_SEED);
+    end
+end
 
 
 
+methods (Test)
+	function testDeleteAllTimers(testCase)
+        unit = testCase.getUnit(1);
+        
+		tagName = unit.TIMER_TAG_NAME;
+        timer('Tag', tagName);
+        testCase.verifyNotEmpty(timerfindall('Tag', tagName));
+        
+        unit.deleteAllTimers();
+        testCase.verifyEmpty(timerfindall('Tag', tagName));
+    end
+end
+
+
+
+methods
+    function [unit] = getUnit(testCase, len)
+        unitHandle = str2func(testCase.UnitName);
+        unit = unitHandle(len);
+    end
+end
+
+
+end
