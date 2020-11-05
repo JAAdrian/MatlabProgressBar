@@ -38,8 +38,8 @@ end
 
 
 methods (Test)
-	function testDeleteAllTimers(testCase)
-        unit = testCase.getUnit(1);
+	function testTimerDeletion(testCase)
+        unit = testCase.getUnit();
         
 		tagName = unit.TIMER_TAG_NAME;
         timer('Tag', tagName);
@@ -48,12 +48,32 @@ methods (Test)
         unit.deleteAllTimers();
         testCase.verifyEmpty(timerfindall('Tag', tagName));
     end
+    
+    
+    function testUnicodeBlocks(testCase)
+        unit = testCase.getUnit();
+
+        blocks = unit.getUnicodeSubBlocks();
+        testCase.verifyEqual(blocks, '▏▎▍▌▋▊▉█');
+    end
+    
+    
+    function testAsciiBlocks(testCase)
+        unit = testCase.getUnit();
+        
+        blocks = unit.getAsciiSubBlocks();
+        testCase.verifyEqual(blocks, '########');
+    end
 end
 
 
 
 methods
     function [unit] = getUnit(testCase, len)
+        if nargin < 2 || isempty(len)
+            len = [];
+        end
+        
         unitHandle = str2func(testCase.UnitName);
         unit = unitHandle(len);
     end
