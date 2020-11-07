@@ -190,7 +190,7 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 You can run all available tests in the project directory by navigating into the `tests` folder and executing `runtests` in MATLAB. However, if you want to omit the parallel tests (e.g. you don't have the Parallel Toolbox installed), just execute
 
 ```matlab
-runtests tests Tag NonParallel
+runtests Tag NonParallel
 ```
 
 ## License
