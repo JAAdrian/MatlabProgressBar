@@ -61,7 +61,9 @@ methods
     % Class Destructor
     function delete(obj)
         % call the destructor of the ProgressBar() object
-        obj.ProgressBar.release();
+        if ~isempty(obj.ProgressBar)
+            obj.ProgressBar.release();
+        end
     end
     
     function [varargout] = subsref(obj, S)

@@ -6,15 +6,16 @@
   - [Dependencies](#dependencies)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [Extended Use with all Features](#extended-use-with-all-features)
-    - [Proposed Use for Simple Loops](#proposed-use-for-simple-loops)
+    - [Proposed Usage for Simple Loops](#proposed-usage-for-simple-loops)
+    - [Extended Usage with all Features](#extended-usage-with-all-features)
     - [Parallel Toolbox Support](#parallel-toolbox-support)
   - [Known Issues](#known-issues)
     - [Flickering Bar or Flooding of the Command Window](#flickering-bar-or-flooding-of-the-command-window)
     - [The Bar Gets Longer With Each Iteration](#the-bar-gets-longer-with-each-iteration)
     - [Strange Symbols in the Progress Bar](#strange-symbols-in-the-progress-bar)
     - [Remaining Timer Objects in MATLAB's Background](#remaining-timer-objects-in-matlabs-background)
-    - [Issues concerning parallel processing](#issues-concerning-parallel-processing)
+    - [Issues Concerning Parallel Processing](#issues-concerning-parallel-processing)
+  - [Unit Tests](#unit-tests)
   - [License](#license)
 
 This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
@@ -26,7 +27,7 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
-![Example 1](example1.gif)
+![Example 1](images/example1.gif)
 
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
@@ -69,7 +70,22 @@ Put the files `ProgressBar.m`, `progress.m` and `updateParallel.m` into your MAT
 
 Detailed information and examples about all features of `ProgressBar` are stated in the demo scripts in the `./demos/` directory.
 
-### Extended Use with all Features
+### Proposed Usage for Simple Loops
+The simplest use in `for`-loops is to use the `progress()` function. It wraps the main `ProgressBar` class and is intended to only support the usual progress bar. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`. Also, this only works for **non-parallel** loops.
+
+See the example below:
+```matlab
+numIterations = 10e3;
+
+% create the loop using the progress() class
+for iIteration = progress(1:numIterations)
+    % do some processing
+end
+```
+
+![Example 2](images/example2.gif)
+
+### Extended Usage with all Features
 The basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. Refer to the method's help for information about input parameters. The shown call is the *default* call and sufficient. If you want to pass information about the step size, the iteration's success or if a new bar should be printed immediately (e.g. when iterations take long time) you can pass these information instead of empty matrices.
 
 All settings are done using *name-value* pairs in the constructor. It is **strongly encouraged** to call the object's `release()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
@@ -102,21 +118,6 @@ end
 % call the 'release()' method to clean up
 progBar.release();
 ```
-
-### Proposed Use for Simple Loops
-A neat way to completely get rid of the conventional updating process is to use the `progress.m` wrapper class. It implements the `subsref()` method and, thus, acts similar to an iterator in Python. A progress bar will be printed without the further need to call `step()`. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`.
-
-See the example below:
-```matlab
-numIterations = 10e3;
-
-% create the loop using the progress() class
-for iIteration = progress(1:numIterations)
-    % do some processing
-end
-```
-
-![Example 2](example2.gif)
 
 ### Parallel Toolbox Support
 
@@ -171,7 +172,7 @@ Sometimes, if the user cancels a loop in which a progress bar was used, the dest
 ProgressBar.deleteAllTimers();
 ```
 
-### Issues concerning parallel processing
+### Issues Concerning Parallel Processing
 
 The work-flow when using the progress bar in a parallel setup is to instantiate the object with the `IsParallel` switch set to `true` and using the `updateParallel()` function to update the progress state instead of the `step()` method of the object. If this results in strange behavior check the following list. Generally, it is advisable to **first be sure that the executed code or functions in the parallel setup run without errors or warnings.** If not the execution may prevent the class destructor to properly clean up all files and timer objects.
 
@@ -185,6 +186,12 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 **TL/DR**:  
 `clear all` and `delete(timerfindall('Tag', 'ProgressBar'))` are your friend! Be sure that no files following the pattern `progbarworker_*` remain in the directory returned by `tempdir()`.
 
+## Unit Tests
+You can run all available tests in the project directory by executing simply `runtests` in MATLAB. However, if you want to omit the parallel tests (e.g. you don't have the Parallel Toolbox installed), just execute
+
+```matlab
+runtests Tag NonParallel
+```
 
 ## License
 
