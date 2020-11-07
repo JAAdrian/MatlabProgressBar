@@ -14,7 +14,6 @@ classdef ProgressBar_test < matlab.unittest.TestCase
     
     properties
         UnitName = "ProgressBar";
-        
         Seed;
     end
     
@@ -25,6 +24,15 @@ classdef ProgressBar_test < matlab.unittest.TestCase
             testCase.addTeardown(@rng, testCase.Seed);
             
             rng(testCase.DEFAULT_SEED);
+        end
+        
+        function addPath(testCase)
+            defaultPath = matlabpath();
+            
+            myLocation = fileparts(mfilename('fullpath'));
+            addpath(fullfile(myLocation, '..'));
+            
+            testCase.addTeardown(@() matlabpath(defaultPath));
         end
     end
     
