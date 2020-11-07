@@ -42,7 +42,7 @@ classdef ProgressBar_test < matlab.unittest.TestCase
     
     
     
-    methods (Test)
+    methods (Test, TestTags = {'Normal'})
         function testTimerDeletion(testCase)
             unit = testCase.getUnit();
             
@@ -93,7 +93,7 @@ classdef ProgressBar_test < matlab.unittest.TestCase
             unit = testCase.getUnit();
             
             testCase.verifyEqual(unit.checkInputOfTotal([]), true);
-            testCase.verifyEqual(unit.checkInputOfTotal(10), false);
+            testCase.verifyEqual(unit.checkInputOfTotal(10), true);
             
             testCase.verifyError(@() unit.checkInputOfTotal('char'), 'MATLAB:invalidType');
             testCase.verifyError(@() unit.checkInputOfTotal(-1), 'MATLAB:expectedPositive');
@@ -184,18 +184,59 @@ classdef ProgressBar_test < matlab.unittest.TestCase
             
             testCase.verifyNotEqual(firstBar, secondBar);
         end
+        
+        
+        function canRunWithoutUpdateTimer(testCase)
+            unit = testCase.getUnit(2, 'UpdateRate', inf);
+            
+            firstBar = evalc('unit([], [], [])');
+            secondBar = evalc('unit([], [], [])');
+            unit.release();
+            
+            testCase.verifyTrue(contains(firstBar, '1/2it'));
+            testCase.verifyTrue(contains(secondBar, '2/2it'));
+        end
+    end
+    
+    
+    methods (Test, TestTags = {'Parallel'})
+        function canRunInParallel(testCase)
+            numIterations = 100;
+            
+            unit = testCase.getUnit(numIterations, ...
+                'IsParallel', true, ...
+                'WorkerDirectory', pwd() ...
+                );
+            
+            init = evalc('unit.setup([], [], []);');
+            parfor iIteration = 1:numIterations
+                pause(0.1);
+                updateParallel([], pwd());
+            end
+            unit.release();
+            
+            testCase.verifyTrue(contains(init, '000%'));
+            testCase.verifyTrue(contains(init, sprintf('0/%dit', numIterations)));
+            testCase.verifyEmpty(timerfindall('Tag', 'ProgressBar'));
+            
+            pause(0.5);
+            files = unit.findWorkerFiles(pwd());
+            testCase.verifyEmpty(files);
+        end
     end
     
     
     
     methods
-        function [unit] = getUnit(testCase, len)
-            if nargin < 2 || isempty(len)
-                len = [];
+        function [unit] = getUnit(testCase, total, varargin)
+            % Factory to get a bar object with desired 'total'
+            
+            if nargin < 2
+                total = [];
             end
             
             unitHandle = str2func(testCase.UnitName);
-            unit = unitHandle(len);
+            unit = unitHandle(total, varargin{:});
         end
     end
     
