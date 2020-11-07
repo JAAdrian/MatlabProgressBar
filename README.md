@@ -15,6 +15,7 @@
     - [Strange Symbols in the Progress Bar](#strange-symbols-in-the-progress-bar)
     - [Remaining Timer Objects in MATLAB's Background](#remaining-timer-objects-in-matlabs-background)
     - [Issues Concerning Parallel Processing](#issues-concerning-parallel-processing)
+  - [Unit Tests](#unit-tests)
   - [License](#license)
 
 This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
@@ -185,6 +186,12 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 **TL/DR**:  
 `clear all` and `delete(timerfindall('Tag', 'ProgressBar'))` are your friend! Be sure that no files following the pattern `progbarworker_*` remain in the directory returned by `tempdir()`.
 
+## Unit Tests
+You can run all available tests in the project directory by executing simply `runtests` in MATLAB. However, if you want to omit the parallel tests (e.g. you don't have the Parallel Toolbox installed), just execute
+
+```matlab
+runtests Tag NonParallel
+```
 
 ## License
 

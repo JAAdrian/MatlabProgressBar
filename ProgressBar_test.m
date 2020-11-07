@@ -42,7 +42,7 @@ classdef ProgressBar_test < matlab.unittest.TestCase
     
     
     
-    methods (Test, TestTags = {'Normal'})
+    methods (Test, TestTags = {'NonParallel'})
         function testTimerDeletion(testCase)
             unit = testCase.getUnit();
             
