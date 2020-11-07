@@ -14,7 +14,7 @@
     - [The Bar Gets Longer With Each Iteration](#the-bar-gets-longer-with-each-iteration)
     - [Strange Symbols in the Progress Bar](#strange-symbols-in-the-progress-bar)
     - [Remaining Timer Objects in MATLAB's Background](#remaining-timer-objects-in-matlabs-background)
-    - [Issues concerning parallel processing](#issues-concerning-parallel-processing)
+    - [Issues Concerning Parallel Processing](#issues-concerning-parallel-processing)
   - [License](#license)
 
 This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
@@ -26,7 +26,7 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
-![Example 1](example1.gif)
+![Example 1](images/example1.gif)
 
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
@@ -116,7 +116,7 @@ for iIteration = progress(1:numIterations)
 end
 ```
 
-![Example 2](example2.gif)
+![Example 2](images/example2.gif)
 
 ### Parallel Toolbox Support
 
@@ -171,7 +171,7 @@ Sometimes, if the user cancels a loop in which a progress bar was used, the dest
 ProgressBar.deleteAllTimers();
 ```
 
-### Issues concerning parallel processing
+### Issues Concerning Parallel Processing
 
 The work-flow when using the progress bar in a parallel setup is to instantiate the object with the `IsParallel` switch set to `true` and using the `updateParallel()` function to update the progress state instead of the `step()` method of the object. If this results in strange behavior check the following list. Generally, it is advisable to **first be sure that the executed code or functions in the parallel setup run without errors or warnings.** If not the execution may prevent the class destructor to properly clean up all files and timer objects.
 
