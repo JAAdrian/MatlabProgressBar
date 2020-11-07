@@ -50,7 +50,7 @@ classdef progress_test < matlab.unittest.TestCase
     
     
     
-    methods (Test)
+    methods (Test, TestTags = {'NonParallel'})
         function earlyExit(testCase)
             obj = progress();
             

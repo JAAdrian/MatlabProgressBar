@@ -187,10 +187,10 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 `clear all` and `delete(timerfindall('Tag', 'ProgressBar'))` are your friend! Be sure that no files following the pattern `progbarworker_*` remain in the directory returned by `tempdir()`.
 
 ## Unit Tests
-You can run all available tests in the project directory by executing simply `runtests` in MATLAB. However, if you want to omit the parallel tests (e.g. you don't have the Parallel Toolbox installed), just execute
+You can run all available tests in the project directory by navigating into the `tests` folder and executing `runtests` in MATLAB. However, if you want to omit the parallel tests (e.g. you don't have the Parallel Toolbox installed), just execute
 
 ```matlab
-runtests Tag NonParallel
+runtests tests Tag NonParallel
 ```
 
 ## License
