@@ -6,8 +6,8 @@
   - [Dependencies](#dependencies)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [Extended Use with all Features](#extended-use-with-all-features)
-    - [Proposed Use for Simple Loops](#proposed-use-for-simple-loops)
+    - [Proposed Usage for Simple Loops](#proposed-usage-for-simple-loops)
+    - [Extended Usage with all Features](#extended-usage-with-all-features)
     - [Parallel Toolbox Support](#parallel-toolbox-support)
   - [Known Issues](#known-issues)
     - [Flickering Bar or Flooding of the Command Window](#flickering-bar-or-flooding-of-the-command-window)
@@ -69,7 +69,22 @@ Put the files `ProgressBar.m`, `progress.m` and `updateParallel.m` into your MAT
 
 Detailed information and examples about all features of `ProgressBar` are stated in the demo scripts in the `./demos/` directory.
 
-### Extended Use with all Features
+### Proposed Usage for Simple Loops
+The simplest use in `for`-loops is to use the `progress()` function. It wraps the main `ProgressBar` class and is intended to only support the usual progress bar. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`. Also, this only works for **non-parallel** loops.
+
+See the example below:
+```matlab
+numIterations = 10e3;
+
+% create the loop using the progress() class
+for iIteration = progress(1:numIterations)
+    % do some processing
+end
+```
+
+![Example 2](images/example2.gif)
+
+### Extended Usage with all Features
 The basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. Refer to the method's help for information about input parameters. The shown call is the *default* call and sufficient. If you want to pass information about the step size, the iteration's success or if a new bar should be printed immediately (e.g. when iterations take long time) you can pass these information instead of empty matrices.
 
 All settings are done using *name-value* pairs in the constructor. It is **strongly encouraged** to call the object's `release()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
@@ -102,21 +117,6 @@ end
 % call the 'release()' method to clean up
 progBar.release();
 ```
-
-### Proposed Use for Simple Loops
-A neat way to completely get rid of the conventional updating process is to use the `progress.m` wrapper class. It implements the `subsref()` method and, thus, acts similar to an iterator in Python. A progress bar will be printed without the further need to call `step()`. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`.
-
-See the example below:
-```matlab
-numIterations = 10e3;
-
-% create the loop using the progress() class
-for iIteration = progress(1:numIterations)
-    % do some processing
-end
-```
-
-![Example 2](images/example2.gif)
 
 ### Parallel Toolbox Support
 
