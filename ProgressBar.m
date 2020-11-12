@@ -99,22 +99,22 @@ classdef ProgressBar < matlab.System
         TimerObject;
         
         MaxBarWidth = 90;
-        
         CurrentTitleState = '';
-        
         CurrentFont;
     end
     
-    properties (Constant, Access = private)
+    properties (Constant, Hidden)
         % The number of sub blocks in one main block of width of a character.
         % HTML 'left blocks' go in eigths -> 8 sub blocks in one main block
-        NumSubBlocks = 8;
+        NUM_SUB_BLOCKS = 8;
         
         % The number of characters the title string should shift each cycle
-        NumCharactersShift = 3;
+        NUM_CHARACTERS_SHIFT = 3;
         
         % The maximum length of the title string without banner cycling
-        MaxTitleLength = 20;
+        MAX_TITLE_LENGTH = 20;
+
+        OVERRIDE_FONT_NAME = 'Courier New';
     end
     
     properties (Access = private, Dependent)
@@ -246,7 +246,7 @@ classdef ProgressBar < matlab.System
                 obj.CurrentFont = s.matlab.fonts.codefont.Name.ActiveValue;
                 
                 % change to Courier New which is shipped by every Windows distro since Windows 3.1
-                s.matlab.fonts.codefont.Name.TemporaryValue = 'Courier New';
+                s.matlab.fonts.codefont.Name.TemporaryValue = ob.OVERRIDE_FONT_NAME;
             end
             
             % add a new timer object with the standard tag name and hide it
@@ -270,7 +270,7 @@ classdef ProgressBar < matlab.System
             end
             
             obj.CurrentTitleState = obj.Title;
-            if length(obj.Title) > obj.MaxTitleLength
+            if length(obj.Title) > obj.MAX_TITLE_LENGTH
                 obj.CurrentTitleState = [obj.CurrentTitleState, ' -- '];
             end
             
@@ -419,7 +419,7 @@ classdef ProgressBar < matlab.System
             % Compute the progress percentage of a single main and a single sub
             % block
             obj.FractionMainBlock = 1 / length(obj.Bar);
-            obj.FractionSubBlock = obj.FractionMainBlock / obj.NumSubBlocks;
+            obj.FractionSubBlock = obj.FractionMainBlock / obj.NUM_SUB_BLOCKS;
         end
         
         
@@ -432,7 +432,7 @@ classdef ProgressBar < matlab.System
             % insert worst case inputs to get (almost) maximum length of bar
             preBar = sprintf(...
                 preBarFormat, ...
-                blanks(min(length(obj.CurrentTitleState), obj.MaxTitleLength)), ...
+                blanks(min(length(obj.CurrentTitleState), obj.MAX_TITLE_LENGTH)), ...
                 100 ...
                 );
             postBar = sprintf(...
@@ -572,7 +572,7 @@ classdef ProgressBar < matlab.System
                 
                 argList = {
                     obj.CurrentTitleState(...
-                    1:min(length(obj.Title), obj.MaxTitleLength) ...
+                    1:min(length(obj.Title), obj.MAX_TITLE_LENGTH) ...
                     ), ...
                     floor(obj.IterationCounter / obj.Total * 100), ...
                     barString, ...
@@ -596,7 +596,7 @@ classdef ProgressBar < matlab.System
                 
                 argList = {
                     obj.CurrentTitleState(...
-                    1:min(length(obj.Title), obj.MaxTitleLength) ...
+                    1:min(length(obj.Title), obj.MAX_TITLE_LENGTH) ...
                     ), ..., ...
                     scaledIteration, ...
                     etHoursMinsSecs(1), ...
@@ -625,7 +625,7 @@ classdef ProgressBar < matlab.System
             
             % index of the current sub block
             continuousBlockIndex = ceil(currProgress / obj.FractionSubBlock);
-            thisSubBlock = mod(continuousBlockIndex - 1, obj.NumSubBlocks) + 1;
+            thisSubBlock = mod(continuousBlockIndex - 1, obj.NUM_SUB_BLOCKS) + 1;
             
             % fix for non-full last blocks when steps are large: make them full
             obj.Bar(1:max(thisMainBlock-1, 0)) = ...
@@ -761,8 +761,8 @@ classdef ProgressBar < matlab.System
         function [] = updateCurrentTitle(obj)
             strTitle = obj.CurrentTitleState;
             
-            if length(strTitle) > obj.MaxTitleLength
-                strTitle = circshift(strTitle, -obj.NumCharactersShift);
+            if length(strTitle) > obj.MAX_TITLE_LENGTH
+                strTitle = circshift(strTitle, -obj.NUM_CHARACTERS_SHIFT);
                 
                 obj.CurrentTitleState = strTitle;
             end
