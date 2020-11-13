@@ -30,7 +30,6 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 ![Easy progress bar example](images/example2.gif)
 
 **Supported features include (or are planned)**:
-- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 - [x] proper unit testing
 - [x] display the bar name as a ticker. That way, a fixed bar width could be used
 - [x] inherit from MATLAB System Object to gain benefits from the setup method
@@ -49,6 +48,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
 - [x] show s/it if it/sec < 1
+- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
 **Note**:  
@@ -58,7 +58,7 @@ Be sure to have a look at the [Known Issues](#known-issues) section for current 
 
 No dependencies to toolboxes.
 
-The code has been tested with MATLAB R2016a and R2016b on Windows 7 and Xubuntu 16.04.2 LTS.
+The code has been tested with MATLAB R2016a, R2016b and R2020b on Windows 10, Xubuntu 16.04.2 LTS and Linux Mint 20.
 
 
 ## Installation
