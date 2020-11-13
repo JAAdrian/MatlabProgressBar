@@ -6,15 +6,16 @@
   - [Dependencies](#dependencies)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [Extended Use with all Features](#extended-use-with-all-features)
-    - [Proposed Use for Simple Loops](#proposed-use-for-simple-loops)
+    - [Proposed Usage for Simple Loops](#proposed-usage-for-simple-loops)
+    - [Extended Usage with all Features](#extended-usage-with-all-features)
     - [Parallel Toolbox Support](#parallel-toolbox-support)
   - [Known Issues](#known-issues)
     - [Flickering Bar or Flooding of the Command Window](#flickering-bar-or-flooding-of-the-command-window)
     - [The Bar Gets Longer With Each Iteration](#the-bar-gets-longer-with-each-iteration)
     - [Strange Symbols in the Progress Bar](#strange-symbols-in-the-progress-bar)
     - [Remaining Timer Objects in MATLAB's Background](#remaining-timer-objects-in-matlabs-background)
-    - [Issues concerning parallel processing](#issues-concerning-parallel-processing)
+    - [Issues Concerning Parallel Processing](#issues-concerning-parallel-processing)
+  - [Unit Tests](#unit-tests)
   - [License](#license)
 
 This project hosts the source code to the [original MATLAB FileExchange project](https://de.mathworks.com/matlabcentral/fileexchange/57895-matlabprogressbar) and is place of active development.
@@ -26,11 +27,10 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
-![Example 1](example1.gif)
+![Easy progress bar example](images/example2.gif)
 
 **Supported features include (or are planned)**:
-- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
-- [ ] proper unit testing
+- [x] proper unit testing
 - [x] display the bar name as a ticker. That way, a fixed bar width could be used
 - [x] inherit from MATLAB System Object to gain benefits from the setup method
     - [ ] use [this new functionality](https://de.mathworks.com/help/distcomp/send.html) for the parallel implementation. Introduced in R2017a.
@@ -48,6 +48,7 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
 - [x] show s/it if it/sec < 1
+- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
 
 
 **Note**:  
@@ -57,7 +58,7 @@ Be sure to have a look at the [Known Issues](#known-issues) section for current 
 
 No dependencies to toolboxes.
 
-The code has been tested with MATLAB R2016a and R2016b on Windows 7 and Xubuntu 16.04.2 LTS.
+The code has been tested with MATLAB R2016a, R2016b and R2020b on Windows 10, Xubuntu 16.04.2 LTS and Linux Mint 20.
 
 
 ## Installation
@@ -69,7 +70,22 @@ Put the files `ProgressBar.m`, `progress.m` and `updateParallel.m` into your MAT
 
 Detailed information and examples about all features of `ProgressBar` are stated in the demo scripts in the `./demos/` directory.
 
-### Extended Use with all Features
+### Proposed Usage for Simple Loops
+The simplest use in `for`-loops is to use the `progress()` function. It wraps the main `ProgressBar` class and is intended to only support the usual progress bar. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`. Also, this only works for **non-parallel** loops.
+
+See the example below:
+```matlab
+numIterations = 10e3;
+
+% create the loop using the progress() class
+for iIteration = progress(1:numIterations)
+    % do some processing
+end
+```
+
+![Example 2](images/example2.gif)
+
+### Extended Usage with all Features
 The basic work flow is to instantiate a `ProgressBar` object and use either the `step()` method to update the progress state (MATLAB <= R2015b) or use the instantiated object directly as seen below. Refer to the method's help for information about input parameters. The shown call is the *default* call and sufficient. If you want to pass information about the step size, the iteration's success or if a new bar should be printed immediately (e.g. when iterations take long time) you can pass these information instead of empty matrices.
 
 All settings are done using *name-value* pairs in the constructor. It is **strongly encouraged** to call the object's `release()` method after the loop is finished to clean up the internal state and avoid possibly unrobust behavior of following progress bars.
@@ -103,20 +119,7 @@ end
 progBar.release();
 ```
 
-### Proposed Use for Simple Loops
-A neat way to completely get rid of the conventional updating process is to use the `progress.m` wrapper class. It implements the `subsref()` method and, thus, acts similar to an iterator in Python. A progress bar will be printed without the further need to call `step()`. Be aware that functionalities like `printMessage()`, printing success information or a step size different to 1 are not supported with `progress.m`.
-
-See the example below:
-```matlab
-numIterations = 10e3;
-
-% create the loop using the progress() class
-for iIteration = progress(1:numIterations)
-    % do some processing
-end
-```
-
-![Example 2](example2.gif)
+![Extended usage with the object method calls](images/example1.gif)
 
 ### Parallel Toolbox Support
 
@@ -151,7 +154,13 @@ MATLAB's speed to print to the command window is actually pretty low. If the upd
 
 ### The Bar Gets Longer With Each Iteration
 
-There seems to be a problem with the default font `Monospaced` at least on Windows. If this behavior is problematic change the font for the command window to a different monospaced font, preferably with proper Unicode support.
+There seems to be a problem with the default font `Monospaced` in Windows. If this behavior is problematic, change the font for the command window to a different monospaced font, preferably with proper Unicode support.
+
+If you do not want to or cannot change the font in the setting, you can set the class's `OverrideDefaultFont` to `true` while you are in the configuration phase. This will change MATLAB's coding font to `Courier New` for the duration in which the bar is alive (until the `release()` method is executed). After the object's lifetime, your previous font will be restored automatically. 
+
+For convenience, this property can also be set in the `progress()` wrapper to always trigger for the wrapper if desired.
+
+Thanks [@GenosseFlosse](https://github.com/GenosseFlosse) for the fix!
 
 ### Strange Symbols in the Progress Bar
 
@@ -165,7 +174,7 @@ Sometimes, if the user cancels a loop in which a progress bar was used, the dest
 ProgressBar.deleteAllTimers();
 ```
 
-### Issues concerning parallel processing
+### Issues Concerning Parallel Processing
 
 The work-flow when using the progress bar in a parallel setup is to instantiate the object with the `IsParallel` switch set to `true` and using the `updateParallel()` function to update the progress state instead of the `step()` method of the object. If this results in strange behavior check the following list. Generally, it is advisable to **first be sure that the executed code or functions in the parallel setup run without errors or warnings.** If not the execution may prevent the class destructor to properly clean up all files and timer objects.
 
@@ -179,6 +188,12 @@ The work-flow when using the progress bar in a parallel setup is to instantiate 
 **TL/DR**:  
 `clear all` and `delete(timerfindall('Tag', 'ProgressBar'))` are your friend! Be sure that no files following the pattern `progbarworker_*` remain in the directory returned by `tempdir()`.
 
+## Unit Tests
+You can run all available tests in the project directory by navigating into the `tests` folder and executing `runtests` in MATLAB. However, if you want to omit the parallel tests (e.g. you don't have the Parallel Toolbox installed), just execute
+
+```matlab
+runtests Tag NonParallel
+```
 
 ## License
 

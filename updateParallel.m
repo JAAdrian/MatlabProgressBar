@@ -38,13 +38,7 @@ function [pattern] = updateParallel(stepSize, workerDirName)
 %
 %
 % Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date  :  28-Jun-2016 16:52
-%
-
-% History:  v0.1  initial version, 28-Jun-2016 (JA)
-%           v1.0  the worker directory can be specified and will not be
-%                 returned if called w/o input arguments, 03-Jul-2016 (JA)
-%
+% 
 
 
 % some constants

@@ -1,19 +1,19 @@
-% Demo of the success bool of the update() method. This can be used to
-% print failure messages during the loop.
+% Demo of the success bool of the update() method. This can be used to print failure messages during
+% the loop.
 %
 % Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date  :  21-Jun-2016 17:48:54
 %
 
+clear;
+close all;
 
 addpath('..');
 
 numIterations = 1e2;
 
 
-%% Pass success information of the current iteration
-
-obj = ProgressBar(numIterations, ...
+%% Pass Success Information of the Current Iteration
+b = ProgressBar(numIterations, ...
     'Title', 'Test Success' ...
     );
 
@@ -23,13 +23,9 @@ wasSuccessful = logical(binornd(1, 0.95, numIterations, 1));
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.step([], wasSuccessful(iIteration), []);
+    b([], wasSuccessful(iIteration), []);
 end
-obj.release();
+b.release();
 
 
 
-
-
-
-% End of file: g_PassSuccessInfo_demo.m
