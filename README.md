@@ -27,7 +27,7 @@ A design target was to mimic the best features of the progress bar [tqdm](https:
 
 Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/?term=progress+bar) but none incorporates the feature set shown below. That's why I decided to start this project.
 
-![Example 1](images/example1.gif)
+![Easy progress bar example](images/example2.gif)
 
 **Supported features include (or are planned)**:
 - [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
@@ -118,6 +118,8 @@ end
 % call the 'release()' method to clean up
 progBar.release();
 ```
+
+![Extended usage with the object method calls](images/example1.gif)
 
 ### Parallel Toolbox Support
 
