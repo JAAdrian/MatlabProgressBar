@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Demos should now be a bit prettier
 
+### Fixed
+- Progress bar in non-finite and iteration mode (not having a konwn total number of iterations) will now show correct unit string `it` instead of toggling wrongly between `it` and `s`
 
 ## [3.1.1] - 2019-11-26
 ### Fixed
