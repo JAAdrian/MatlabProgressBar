@@ -15,16 +15,13 @@ classdef progress < handle
     % Example:
     %
     % for k = progress(1:100)
-    %   % do some processing
+    %     % do some processing
     % end
     %
     % Or with additional name-value pairs:
     %
-    % for k = progress(1:100, ...
-    %     'Title', 'Computing...' ...
-    %     )
-    %
-    %   % do some processing
+    % for k = progress(1:100, 'Title', 'Computing')
+    %     % do some processing
     % end
     %
     % =========================================================================
