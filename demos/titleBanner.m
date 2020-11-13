@@ -1,39 +1,38 @@
-% <purpose of this file>
+% If the title is chosen very long it will work as a banner, rotating each step a bit further.
 %
 % Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date  :  14-Apr-2017 21:49:26
 %
 
+clear;
+close all;
 
 addpath('..');
 
-numIterations = 100;
+numIterations = 50;
 
 %% Short Title
-obj = ProgressBar(numIterations, ...
+b = ProgressBar(numIterations, ...
     'Title', 'Short' ...
     );
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.step(1, [], []);
+    b(1, [], []);
 end
-obj.release();
+b.release();
 
 %% Long Title
 numIterations = 100;
 
-obj = ProgressBar(numIterations, ...
+b = ProgressBar(numIterations, ...
     'Title', 'A Long Long Long Title' ...
     );
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.step(1, [], []);
+    b(1, [], []);
 end
-obj.release();
+b.release();
 
 
 
-
-% End of file: h_titleBanner.m

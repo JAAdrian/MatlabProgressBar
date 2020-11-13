@@ -1,18 +1,18 @@
 % Demo of using ASCII hashes instead of the fancy Unicode blocks.
 %
 % Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date  :  25-Jun-2016 14:26:43
 %
 
+clear;
+close all;
 
 addpath('..');
 
 numIterations = 100;
 
 
-%% Don't use unicode characters
-
-obj = ProgressBar(numIterations, ...
+%% Demo of Not Using Unicode Characters
+b = ProgressBar(numIterations, ...
     'UseUnicode', false, ...
     'Title', 'ASCII' ...
     );
@@ -20,13 +20,7 @@ obj = ProgressBar(numIterations, ...
 for iIteration = 1:numIterations
     pause(0.1);
     
-    obj.step([], [], []);
+    b([], [], []);
 end
-obj.release();
+b.release();
 
-
-
-
-
-
-% End of file: j_NonUnicodeProgressBar.m

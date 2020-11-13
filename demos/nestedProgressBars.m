@@ -1,7 +1,6 @@
 % Demo of nested bars. At this point only one nested bar is supported
 %
 % Author:  J.-A. Adrian (JA) <jensalrik.adrian AT gmail.com>
-% Date  :  21-Jun-2016 17:14:36
 %
 
 
@@ -11,71 +10,61 @@ numOuterIterations = 3;
 numInnerIterations = 15;
 
 
-
-%% Nested Bars without inner update rate
-
-% be sure to set the update rate to inf to disable a timed printing of the
-% bar!
-obj1 = ProgressBar(numOuterIterations, ...
+%% Nested Bars without Inner Update Rate
+% be sure to set the update rate to inf to disable a timed printing of the bar!
+b1 = ProgressBar(numOuterIterations, ...
     'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
 
 % helper method to print a first progress bar before the inner loop starts.
-% This prevents a blank line until the first obj1.step() is called.
-obj1.setup([], [], []);
+% This prevents a blank line until the first b1.step() is called.
+b1.setup([], [], []);
 for iOuterIteration = 1:numOuterIterations
-    obj2 = ProgressBar(numInnerIterations, ...
+    b2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', inf, ...
         'Title', 'Loop 2' ...
         );
-    obj2.setup([], [], []);
+    b2.setup([], [], []);
     
     for jInnerIteration = 1:numInnerIterations
-        obj2.step(1, [], []);
+        b2(1, [], []);
         
         pause(0.1);
     end
-    obj2.release();
+    b2.release();
     
-    obj1.step(1, [], []);
+    b1(1, [], []);
 end
-obj1.release();
+b1.release();
 
 
 
-
-%% Nested Bars WITH inner update rate
-
+%% Nested Bars WITH Inner Update Rate
 numInnerIterations = 50e3;
 
-% be sure to set the update rate to inf to disable a timed printing of the
-% bar!
-obj1 = ProgressBar(numOuterIterations, ...
+% be sure to set the update rate to inf to disable a timed printing of the bar!
+b1 = ProgressBar(numOuterIterations, ...
     'UpdateRate', inf, ...
     'Title', 'Loop 1' ...
     );
 
-obj1.setup([], [], []);
+b1.setup([], [], []);
 for iOuterIteration = 1:numOuterIterations
     % this progress can have an update rate!
-    obj2 = ProgressBar(numInnerIterations, ...
+    b2 = ProgressBar(numInnerIterations, ...
         'UpdateRate', 5, ...
         'Title', 'Loop 2' ...
         );
-    obj2.setup([], [], []);
+    b2.setup([], [], []);
     
     for jInnerIteration = 1:numInnerIterations    
-        obj2.step(1, [], []);
+        b2.step(1, [], []);
     end
-    obj2.release();
+    b2.release();
     
-    obj1.step(1, [], []);
+    b1.step(1, [], []);
 end
-obj1.release();
+b1.release();
 
 
-
-
-
-% End of file: d_NestedProgressBars_demo.m
