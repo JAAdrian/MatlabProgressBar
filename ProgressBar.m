@@ -68,6 +68,10 @@ classdef ProgressBar < matlab.System
     end
     
     properties (Logical, Nontunable)
+        % Boolean whether to activate progress bar at all
+        % useful for non-interactive / batch / hpc usage
+        IsActive = true;
+        
         % Boolean whether to use Unicode symbols or ASCII hash symbols (i.e. #)
         UseUnicode = true;
         
@@ -451,18 +455,19 @@ classdef ProgressBar < matlab.System
         function [] = printProgressBar(obj)
             % This method removes the old and prints the current bar to the screen
             % and saves the number of written characters for the next iteration
-            
-            % remove old previous bar
-            fprintf(1, ProgressBar.backspace(obj.NumWrittenCharacters));
-            
-            formatString = obj.returnFormatString();
-            argumentList = obj.returnArgumentList();
-            
-            % print new bar
-            obj.NumWrittenCharacters = fprintf(1, ...
-                formatString, ...
-                argumentList{:} ...
-                );
+            if obj.IsActive
+                % remove old previous bar
+                fprintf(1, ProgressBar.backspace(obj.NumWrittenCharacters));
+
+                formatString = obj.returnFormatString();
+                argumentList = obj.returnArgumentList();
+
+                % print new bar
+                obj.NumWrittenCharacters = fprintf(1, ...
+                    formatString, ...
+                    argumentList{:} ...
+                    );
+            end
         end
         
         
