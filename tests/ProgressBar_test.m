@@ -204,6 +204,18 @@ classdef ProgressBar_test < matlab.unittest.TestCase
             testCase.verifyTrue(contains(firstBar, '1/2it'));
             testCase.verifyTrue(contains(secondBar, '2/2it'));
         end
+        
+        
+        function canBeDisabled(testCase)
+            unit = testCase.getUnit(2, 'IsActive', false);
+            
+            firstBar = evalc('unit([], [], [])');
+            secondBar = evalc('unit([], [], [])');
+            unit.release();
+            
+            testCase.verifyEmpty(firstBar);
+            testCase.verifyEmpty(secondBar);
+        end
     end
     
     
