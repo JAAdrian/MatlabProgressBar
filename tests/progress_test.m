@@ -68,6 +68,13 @@ classdef progress_test < matlab.unittest.TestCase
             testCase.verifyTrue(contains(str, '100%'));
             testCase.verifyTrue(contains(str, '1/1it'));
         end
+        
+        
+        function disabledProgress(testCase)
+            str = evalc('for k = progress(1, ''IsActive'', false); end;');
+            
+            testCase.verifyEmpty(str);
+        end
     end
     
 end
