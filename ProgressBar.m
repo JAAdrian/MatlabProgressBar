@@ -45,7 +45,7 @@ classdef ProgressBar < matlab.System
     properties (Constant)
         % Tag every timer with this to find it properly
         TIMER_TAG_NAME = 'ProgressBar';
-        VERSION = '3.2.0';
+        VERSION = '3.3.0';
     end
     
     properties (Nontunable)
@@ -68,6 +68,10 @@ classdef ProgressBar < matlab.System
     end
     
     properties (Logical, Nontunable)
+        % Boolean whether to activate progress bar at all
+        % useful for non-interactive / batch / hpc usage
+        IsActive = true;
+        
         % Boolean whether to use Unicode symbols or ASCII hash symbols (i.e. #)
         UseUnicode = true;
         
@@ -113,7 +117,7 @@ classdef ProgressBar < matlab.System
         
         % The maximum length of the title string without banner cycling
         MAX_TITLE_LENGTH = 20;
-
+        
         OVERRIDE_FONT_NAME = 'Courier New';
     end
     
@@ -236,54 +240,56 @@ classdef ProgressBar < matlab.System
         end
         
         function [] = setupImpl(obj)
-            % get a new tic object
-            obj.TicObject = tic;
-            
-            % workaround for issue "Bar Gets Longer With Each Iteration" on windows systems
-            s = settings;
-            if obj.OverrideDefaultFont && ispc()
-                % store current font to reset the code font back to this value in the release() method
-                obj.CurrentFont = s.matlab.fonts.codefont.Name.ActiveValue;
+            if obj.IsActive
+                % get a new tic object
+                obj.TicObject = tic;
                 
-                % change to Courier New which is shipped by every Windows distro since Windows 3.1
-                s.matlab.fonts.codefont.Name.TemporaryValue = ob.OVERRIDE_FONT_NAME;
+                % workaround for issue "Bar Gets Longer With Each Iteration" on windows systems
+                s = settings;
+                if obj.OverrideDefaultFont && ispc()
+                    % store current font to reset the code font back to this value in the release() method
+                    obj.CurrentFont = s.matlab.fonts.codefont.Name.ActiveValue;
+                    
+                    % change to Courier New which is shipped by every Windows distro since Windows 3.1
+                    s.matlab.fonts.codefont.Name.TemporaryValue = ob.OVERRIDE_FONT_NAME;
+                end
+                
+                % add a new timer object with the standard tag name and hide it
+                obj.TimerObject = timer(...
+                    'Tag', obj.TIMER_TAG_NAME, ...
+                    'ObjectVisibility', 'off' ...
+                    );
+                
+                % if the bar should not be printed in every iteration setup the
+                % timer to the desired update rate
+                if obj.HasFiniteUpdateRate
+                    obj.setupTimer();
+                end
+                
+                % if 'Total' is known setup the bar correspondingly and compute
+                % some constant values
+                if obj.HasTotalIterations
+                    % initialize the progress bar and pre-compute some measures
+                    obj.setupBar();
+                    obj.computeBlockFractions();
+                end
+                
+                obj.CurrentTitleState = obj.Title;
+                if length(obj.Title) > obj.MAX_TITLE_LENGTH
+                    obj.CurrentTitleState = [obj.CurrentTitleState, ' -- '];
+                end
+                
+                % if the bar is used in a parallel setup start the timer right now
+                if obj.IsParallel
+                    obj.startTimer();
+                end
+                
+                % if this is a nested bar hit return
+                if obj.IsThisBarNested
+                    fprintf(1, '\n');
+                end
+                obj.printProgressBar();
             end
-            
-            % add a new timer object with the standard tag name and hide it
-            obj.TimerObject = timer(...
-                'Tag', obj.TIMER_TAG_NAME, ...
-                'ObjectVisibility', 'off' ...
-                );
-            
-            % if the bar should not be printed in every iteration setup the
-            % timer to the desired update rate
-            if obj.HasFiniteUpdateRate
-                obj.setupTimer();
-            end
-            
-            % if 'Total' is known setup the bar correspondingly and compute
-            % some constant values
-            if obj.HasTotalIterations
-                % initialize the progress bar and pre-compute some measures
-                obj.setupBar();
-                obj.computeBlockFractions();
-            end
-            
-            obj.CurrentTitleState = obj.Title;
-            if length(obj.Title) > obj.MAX_TITLE_LENGTH
-                obj.CurrentTitleState = [obj.CurrentTitleState, ' -- '];
-            end
-            
-            % if the bar is used in a parallel setup start the timer right now
-            if obj.IsParallel
-                obj.startTimer();
-            end
-            
-            % if this is a nested bar hit return
-            if obj.IsThisBarNested
-                fprintf(1, '\n');
-            end
-            obj.printProgressBar();
         end
         
         function [] = stepImpl(obj, stepSize, wasSuccessful, shouldPrintNextProgBar)
@@ -338,38 +344,39 @@ classdef ProgressBar < matlab.System
                 {'scalar', 'binary', 'nonnan', 'nonempty'} ...
                 );
             
-            
-            % increment the iteration counter
-            obj.incrementIterationCounter(stepSize);
-            
-            % if the timer was stopped before, because no update was given,
-            % start it now again.
-            if ~obj.IsTimerRunning && obj.HasFiniteUpdateRate
-                obj.startTimer();
-            end
-            
-            % if the iteration was not successful print a message saying so.
-            if ~wasSuccessful
-                infoMsg = sprintf('Iteration %i was not successful!', ...
-                    obj.IterationCounter);
-                obj.printMessage(infoMsg, shouldPrintNextProgBar);
-            end
-            
-            % when the bar should be updated in every iteration, do this with
-            % each time calling update()
-            if ~obj.HasFiniteUpdateRate
-                obj.printProgressBar();
-            end
-            
-            % stop the timer after the last iteration if an update rate is
-            % used. The first condition is needed to prevent the if-statement
-            % to fail if obj.Total is empty. This happens when no total number
-            % of iterations was passed / is known.
-            if         ~isempty(obj.Total) ...
-                    && obj.IterationCounter == obj.Total ...
-                    && obj.HasFiniteUpdateRate
+            if obj.IsActive
+                % increment the iteration counter
+                obj.incrementIterationCounter(stepSize);
                 
-                obj.stopTimer();
+                % if the timer was stopped before, because no update was given,
+                % start it now again.
+                if ~obj.IsTimerRunning && obj.HasFiniteUpdateRate
+                    obj.startTimer();
+                end
+                
+                % if the iteration was not successful print a message saying so.
+                if ~wasSuccessful
+                    infoMsg = sprintf('Iteration %i was not successful!', ...
+                        obj.IterationCounter);
+                    obj.printMessage(infoMsg, shouldPrintNextProgBar);
+                end
+                
+                % when the bar should be updated in every iteration, do this with
+                % each time calling update()
+                if ~obj.HasFiniteUpdateRate
+                    obj.printProgressBar();
+                end
+                
+                % stop the timer after the last iteration if an update rate is
+                % used. The first condition is needed to prevent the if-statement
+                % to fail if obj.Total is empty. This happens when no total number
+                % of iterations was passed / is known.
+                if         ~isempty(obj.Total) ...
+                        && obj.IterationCounter == obj.Total ...
+                        && obj.HasFiniteUpdateRate
+                    
+                    obj.stopTimer();
+                end
             end
         end
         
@@ -482,7 +489,7 @@ classdef ProgressBar < matlab.System
             else
                 unitString = 'it';
                 
-                if obj.HasItPerSecBelow1    
+                if obj.HasItPerSecBelow1
                     fractionString = {'s', 'it'};
                 else
                     fractionString = {'it', 's'};
@@ -856,5 +863,4 @@ classdef ProgressBar < matlab.System
     end
     
 end
-
 
