@@ -48,7 +48,8 @@ Several projects exist on MATLAB's [File Exchange](https://www.mathworks.com/mat
 - [x] linear ETA estimate over all last iterations
 - [x] support parfor loops provided by the Parallel Computing Toolbox
 - [x] show s/it if it/sec < 1
-- [ ] have a template functionality like in [minibar](https://github.com/canassa/minibar). Maybe use `regexprep()`?
+- [x] override MATLAB's default non-UTF font if `OverrideDefaultFont` is `true`. This will switch the font for the command line to `Courier New` for the lifetime of the bar. Default is `false`
+- [x] disable the progress bar if `IsActive` is `false`. This will disable the functionality completely and can be used in situations in which the bar is not beneficial (e.g. if the bar is used in a sub-application of a processing cluster). Default is `true`.
 
 
 **Note**:  
