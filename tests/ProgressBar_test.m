@@ -155,7 +155,7 @@ classdef ProgressBar_test < matlab.unittest.TestCase
             unit = testCase.getUnit();
             
             firstBar = evalc('unit([], [], [])');
-            pause(0.2);
+            pause(0.5);
             secondBar = evalc('unit([], [], [])');
             
             testCase.verifyTrue(contains(firstBar, 'Processing'));

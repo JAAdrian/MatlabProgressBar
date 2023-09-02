@@ -45,7 +45,7 @@ classdef ProgressBar < matlab.System
     properties (Constant)
         % Tag every timer with this to find it properly
         TIMER_TAG_NAME = 'ProgressBar';
-        VERSION = '3.3.0';
+        VERSION = '3.4.0';
     end
     
     properties (Nontunable)
@@ -279,14 +279,14 @@ classdef ProgressBar < matlab.System
                     obj.CurrentTitleState = [obj.CurrentTitleState, ' -- '];
                 end
                 
-                % if the bar is used in a parallel setup start the timer right now
-                if obj.IsParallel
-                    obj.startTimer();
-                end
-                
                 % if this is a nested bar hit return
                 if obj.IsThisBarNested
                     fprintf(1, '\n');
+                end
+                
+                % if the bar is used in a parallel setup start the timer right now
+                if obj.IsParallel
+                    obj.startTimer();
                 end
                 obj.printProgressBar();
             end
