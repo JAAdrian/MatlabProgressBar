@@ -251,7 +251,7 @@ classdef ProgressBar < matlab.System
                     obj.CurrentFont = s.matlab.fonts.codefont.Name.ActiveValue;
                     
                     % change to Courier New which is shipped by every Windows distro since Windows 3.1
-                    s.matlab.fonts.codefont.Name.TemporaryValue = ob.OVERRIDE_FONT_NAME;
+                    s.matlab.fonts.codefont.Name.TemporaryValue = obj.OVERRIDE_FONT_NAME;
                 end
                 
                 % add a new timer object with the standard tag name and hide it
