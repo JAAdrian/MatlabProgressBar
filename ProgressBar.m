@@ -45,7 +45,7 @@ classdef ProgressBar < matlab.System
     properties (Constant)
         % Tag every timer with this to find it properly
         TIMER_TAG_NAME = 'ProgressBar';
-        VERSION = '3.4.0';
+        VERSION = '3.4.1';
     end
     
     properties (Nontunable)
